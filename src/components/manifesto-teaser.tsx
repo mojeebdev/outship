@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const checklist = [
   { label: "shipped today", checked: true },
   { label: "in progress", checked: false },
@@ -29,9 +31,9 @@ export function ManifestoTeaser() {
         <p className="max-w-sm text-center text-lg sm:text-left">
           this isn&apos;t a portfolio. it&apos;s proof you&apos;re still
           shipping.{" "}
-          <a href="#manifesto" className="text-base-blue hover:underline">
+          <Link href="/manifesto" className="text-base-blue hover:underline">
             read the manifesto →
-          </a>
+          </Link>
         </p>
       </div>
     </section>

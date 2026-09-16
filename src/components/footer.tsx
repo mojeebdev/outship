@@ -25,19 +25,19 @@ const columns: Array<{ heading: string; links: Array<{ label: string; href: stri
   {
     heading: "info",
     links: [
-      { label: "about", href: "#about" },
-      { label: "manifesto", href: "#manifesto" },
-      { label: "changelog", href: "#changelog" },
-      { label: "contact", href: "#contact" },
+      { label: "about", href: "/about" },
+      { label: "manifesto", href: "/manifesto" },
+      { label: "changelog", href: "/changelog" },
+      { label: "contact", href: "/contact" },
     ],
   },
   {
     heading: "product",
     links: [
-      { label: "leaderboard", href: "#leaderboard" },
-      { label: "index", href: "#index" },
-      { label: "streaks", href: "#streaks" },
-      { label: "profile", href: "#profile" },
+      { label: "leaderboard", href: "/leaderboard" },
+      { label: "index", href: "/index" },
+      { label: "streaks", href: "/streaks" },
+      { label: "profile", href: "/profile" },
     ],
   },
 ];
@@ -107,7 +107,9 @@ export function Footer() {
               <IconGithub className="h-5 w-5" />
             </a>
             <a
-              href="#"
+              href="https://x.com/outshipdev"
+              target="_blank"
+              rel="noreferrer"
               aria-label="outship on X"
               className="text-white/80 hover:text-base-blue"
             >
@@ -133,10 +135,10 @@ export function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
         <span>© 2026 BlindspotLab Limited</span>
         <div className="flex items-center gap-4">
-          <Link href="#terms" className="hover:text-white/70">
+          <Link href="/terms" className="hover:text-white/70">
             terms
           </Link>
-          <Link href="#privacy" className="hover:text-white/70">
+          <Link href="/privacy" className="hover:text-white/70">
             privacy
           </Link>
           <span>made in lagos</span>

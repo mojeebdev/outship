@@ -14,7 +14,7 @@ export function Nav() {
           <span className="hidden text-text-muted-1 sm:inline">
             v0.1 · always shipping
           </span>
-          <Link href="#leaderboard" className="hover:text-base-blue">
+          <Link href="/leaderboard" className="hover:text-base-blue">
             leaderboard
           </Link>
           <button

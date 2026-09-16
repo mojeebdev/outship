@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { IconNode, IconSeal, IconShip, IconStreak } from "@/components/icons";
 
 export function Hero() {
@@ -36,12 +37,12 @@ export function Hero() {
           >
             connect github →
           </a>
-          <a
-            href="#leaderboard"
+          <Link
+            href="/leaderboard"
             className="rounded-md border border-void px-6 py-3 text-sm font-medium transition hover:bg-void hover:text-white"
           >
             see the leaderboard
-          </a>
+          </Link>
         </div>
       </div>
     </section>
