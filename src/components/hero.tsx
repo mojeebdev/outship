@@ -32,7 +32,7 @@ export function Hero() {
 
         <div className="mt-2 flex flex-col gap-3 sm:flex-row">
           <a
-            href="#"
+            href="/api/auth/github/login"
             className="rounded-md bg-base-blue px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
           >
             connect github →
