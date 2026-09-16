@@ -4,6 +4,8 @@ import { SiteShell } from "@/components/site-shell";
 import { getCurrentBuilder } from "@/lib/auth/current-builder";
 import { getDb } from "@/lib/db";
 import { IconGrid, IconNode, IconSeal, IconShip, IconStreak } from "@/components/icons";
+import { AttestShipButton } from "@/components/attest-ship-button";
+import { AttestationBadge } from "@/components/attestation-badge";
 
 export const metadata: Metadata = {
   title: "profile — outship",
@@ -44,6 +46,7 @@ export default async function ProfilePage() {
       where: { builderId: builder.id },
       orderBy: { shippedAt: "desc" },
       take: 20,
+      include: { attestation: true },
     }),
   ]);
 
@@ -126,6 +129,24 @@ export default async function ProfilePage() {
                       year: "numeric",
                     })}
                   </span>
+                  {ship.attestation ? (
+                    <AttestationBadge
+                      chain={ship.attestation.chain}
+                      easUid={ship.attestation.easUid}
+                    />
+                  ) : (
+                    <AttestShipButton
+                      ship={{
+                        id: ship.id,
+                        repo: ship.repo,
+                        shipType: ship.shipType,
+                        identifier: ship.identifier,
+                        commitSha: ship.commitSha,
+                        shippedAtIso: ship.shippedAt.toISOString(),
+                      }}
+                      score={builder.score}
+                    />
+                  )}
                 </li>
               ))}
             </ol>
