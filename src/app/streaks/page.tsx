@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
 import { IconSeal, IconStreak } from "@/components/icons";
@@ -38,9 +39,9 @@ export default async function StreaksPage() {
         {builders.length === 0 ? (
           <p className="rounded-lg border border-border bg-white p-8 text-center text-text-muted-1">
             no active streaks yet —{" "}
-            <a href="/api/auth/github/login" className="text-base-blue hover:underline">
+            <Link href="/api/auth/github/login" className="text-base-blue hover:underline">
               connect github
-            </a>{" "}
+            </Link>{" "}
             and ship today to start one.
           </p>
         ) : (
@@ -55,7 +56,12 @@ export default async function StreaksPage() {
                   <span className="w-8 shrink-0 text-sm font-medium text-text-muted-2">
                     #{index + 1}
                   </span>
-                  <span className="flex-1 font-medium">{builder.githubLogin}</span>
+                  <Link
+                    href={`/@${builder.githubLogin}`}
+                    className="flex-1 font-medium hover:text-base-blue"
+                  >
+                    {builder.githubLogin}
+                  </Link>
                   {inThirtyDayClub && (
                     <span className="flex items-center gap-1.5 rounded-full bg-blue-tint px-3 py-1 text-xs font-medium text-base-blue">
                       <IconSeal className="h-3 w-3" />

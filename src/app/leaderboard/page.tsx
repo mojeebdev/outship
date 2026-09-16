@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
 import { IconSeal, IconShip, IconStreak } from "@/components/icons";
@@ -36,9 +37,9 @@ export default async function LeaderboardPage() {
         {builders.length === 0 ? (
           <p className="rounded-lg border border-border bg-white p-8 text-center text-text-muted-1">
             no builders yet — be the first to{" "}
-            <a href="/api/auth/github/login" className="text-base-blue hover:underline">
+            <Link href="/api/auth/github/login" className="text-base-blue hover:underline">
               connect github
-            </a>
+            </Link>
             .
           </p>
         ) : (
@@ -51,7 +52,12 @@ export default async function LeaderboardPage() {
                 <span className="w-8 shrink-0 text-sm font-medium text-text-muted-2">
                   #{index + 1}
                 </span>
-                <span className="flex-1 font-medium">{builder.githubLogin}</span>
+                <Link
+                  href={`/@${builder.githubLogin}`}
+                  className="flex-1 font-medium hover:text-base-blue"
+                >
+                  {builder.githubLogin}
+                </Link>
                 <span className="flex items-center gap-1.5 text-sm text-text-muted-1">
                   <IconStreak className="h-3.5 w-3.5" />
                   {builder.currentStreak}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 
 export const metadata: Metadata = {
@@ -17,9 +18,9 @@ export default function TermsPage() {
         </p>
         <p className="text-sm text-text-muted-2">
           questions in the meantime — see{" "}
-          <a href="/contact" className="text-base-blue hover:underline">
+          <Link href="/contact" className="text-base-blue hover:underline">
             contact
-          </a>
+          </Link>
           . outship is built by BlindspotLab Limited.
         </p>
       </article>

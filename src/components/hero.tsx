@@ -31,12 +31,12 @@ export function Hero() {
         </p>
 
         <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-          <a
+          <Link
             href="/api/auth/github/login"
             className="rounded-md bg-base-blue px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
           >
             connect github →
-          </a>
+          </Link>
           <Link
             href="/leaderboard"
             className="rounded-md border border-void px-6 py-3 text-sm font-medium transition hover:bg-void hover:text-white"

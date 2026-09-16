@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
 import { IconGrid, IconShip, IconStreak } from "@/components/icons";
@@ -33,17 +34,18 @@ export default async function IndexPage() {
         {builders.length === 0 ? (
           <p className="rounded-lg border border-border bg-white p-8 text-center text-text-muted-1">
             the directory opens once the first cohort connects github —{" "}
-            <a href="/api/auth/github/login" className="text-base-blue hover:underline">
+            <Link href="/api/auth/github/login" className="text-base-blue hover:underline">
               be the first
-            </a>
+            </Link>
             .
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {builders.map((builder) => (
-              <div
+              <Link
                 key={builder.githubLogin}
-                className="flex flex-col gap-3 rounded-lg border border-border bg-white p-4"
+                href={`/@${builder.githubLogin}`}
+                className="flex flex-col gap-3 rounded-lg border border-border bg-white p-4 transition hover:border-base-blue"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded bg-blue-tint">
                   <IconGrid className="h-4 w-4 text-base-blue" />
@@ -59,7 +61,7 @@ export default async function IndexPage() {
                     {builder._count.ships}
                   </span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
