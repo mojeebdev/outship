@@ -30,6 +30,11 @@
 			// `wrangler r2 bucket create outship-cache`.
 			"binding": "NEXT_INC_CACHE_R2_BUCKET",
 			"bucket_name": "outship-cache"
+		},
+		{
+			"bucket_name": "outship-cache",
+			"binding": "outship_cache",
+			"remote": true
 		}
 	],
 	"kv_namespaces": [
