@@ -4,6 +4,12 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-01-01",
   "compatibility_flags": ["nodejs_compat"],
+  // Cloudflare's Git-connected "Workers Builds" runs the deploy command
+  // (`wrangler deploy`) directly, with no separate build step configured.
+  // This hook makes wrangler run the OpenNext build itself first.
+  "build": {
+    "command": "npx opennextjs-cloudflare build"
+  },
   "assets": {
     "binding": "ASSETS",
     "directory": ".open-next/assets"
@@ -16,6 +22,22 @@
       // then run `wrangler d1 migrations apply outship-db` (add --remote for prod).
       "database_id": "REPLACE_WITH_D1_DATABASE_ID",
       "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      // Next.js page/route cache (see open-next.config.ts). Create with
+      // `wrangler r2 bucket create outship-cache`.
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "outship-cache"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      // Tag-based cache revalidation bookkeeping (see open-next.config.ts).
+      // Replace with the real ID from `wrangler kv namespace create outship-tag-cache`.
+      "binding": "NEXT_TAG_CACHE_KV",
+      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
     }
   ],
   "observability": {
