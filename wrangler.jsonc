@@ -8,6 +8,16 @@
     "binding": "ASSETS",
     "directory": ".open-next/assets"
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "outship-db",
+      // Replace with the real ID from `wrangler d1 create outship-db`,
+      // then run `wrangler d1 migrations apply outship-db` (add --remote for prod).
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
   "observability": {
     "enabled": true
   }

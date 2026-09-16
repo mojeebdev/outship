@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local `wrangler dev` / `next dev` runs.
+# Never commit the real .dev.vars file — it's gitignored.
+
+GITHUB_WEBHOOK_SECRET=
+GITHUB_APP_ID=
+GITHUB_APP_PRIVATE_KEY=

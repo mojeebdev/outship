@@ -1,0 +1,58 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ShipType {
+  RELEASE
+  MERGE
+}
+
+model Builder {
+  id             String    @id @default(cuid())
+  githubId       Int       @unique
+  githubLogin    String    @unique
+  installationId Int?
+  walletAddress  String?
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastShipDate   DateTime?
+  score          Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  ships          Ship[]
+
+  @@index([score])
+}
+
+model Ship {
+  id          String       @id @default(cuid())
+  builder     Builder      @relation(fields: [builderId], references: [id])
+  builderId   String
+  repo        String
+  shipType    ShipType
+  identifier  String
+  commitSha   String
+  shippedAt   DateTime
+  createdAt   DateTime     @default(now())
+  attestation Attestation?
+
+  @@unique([repo, shipType, identifier])
+  @@index([builderId, shippedAt])
+}
+
+model Attestation {
+  id            String   @id @default(cuid())
+  ship          Ship     @relation(fields: [shipId], references: [id])
+  shipId        String   @unique
+  easUid        String   @unique
+  txHash        String
+  chain         String   @default("base")
+  scoreSnapshot Int
+  attestedAt    DateTime @default(now())
+}
