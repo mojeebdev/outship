@@ -67,10 +67,7 @@ export async function GET(request: Request) {
   const sessionValue = await createSessionCookieValue(builder.id, env.SESSION_SECRET);
 
   const headers = new Headers();
-  headers.set(
-    "Location",
-    new URL(`/@${builder.githubLogin}`, request.url).toString(),
-  );
+  headers.set("Location", new URL("/profile", request.url).toString());
   headers.append("Set-Cookie", sessionCookieHeader(sessionValue));
   headers.append(
     "Set-Cookie",

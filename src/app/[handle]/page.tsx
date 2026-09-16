@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
-import { getCurrentBuilder } from "@/lib/auth/current-builder";
 import { getDb } from "@/lib/db";
 import { IconGrid, IconSeal, IconShip, IconStreak } from "@/components/icons";
 
@@ -31,6 +29,11 @@ export async function generateMetadata({
   return { title: `${builder.githubLogin} — outship` };
 }
 
+/**
+ * A purely public profile — anyone can view this, logged in or not, and
+ * it never branches on who's viewing. Your own private dashboard (with
+ * log out, etc.) lives separately at /profile.
+ */
 export default async function BuilderProfilePage({
   params,
 }: {
@@ -40,9 +43,7 @@ export default async function BuilderProfilePage({
   const builder = await loadBuilder(handle);
   if (!builder) notFound();
 
-  const [currentBuilder, db] = await Promise.all([getCurrentBuilder(), getDb()]);
-  const isOwnProfile = currentBuilder?.id === builder.id;
-
+  const db = await getDb();
   const [rankAbove, totalShips, recentShips] = await Promise.all([
     db.builder.count({ where: { score: { gt: builder.score } } }),
     db.ship.count({ where: { builderId: builder.id } }),
@@ -63,20 +64,7 @@ export default async function BuilderProfilePage({
   return (
     <SiteShell>
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
-        <div className="flex items-center justify-between">
-          <div>
-            {isOwnProfile && <p className="text-sm text-text-muted-1">welcome back</p>}
-            <h1 className="text-2xl font-medium">{builder.githubLogin}</h1>
-          </div>
-          {isOwnProfile && (
-            <Link
-              href="/api/auth/logout"
-              className="text-sm text-text-muted-1 hover:text-base-blue"
-            >
-              log out
-            </Link>
-          )}
-        </div>
+        <h1 className="text-2xl font-medium">{builder.githubLogin}</h1>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {stats.map(({ label, value, Icon }) => (
