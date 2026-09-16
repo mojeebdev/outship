@@ -56,3 +56,9 @@ model Attestation {
   scoreSnapshot Int
   attestedAt    DateTime @default(now())
 }
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
