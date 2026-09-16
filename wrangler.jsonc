@@ -6,12 +6,13 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-	// Cloudflare's Git-connected "Workers Builds" runs the deploy command
-	// (`wrangler deploy`) directly, with no separate build step configured.
-	// This hook makes wrangler run the OpenNext build itself first.
-	"build": {
-		"command": "npx opennextjs-cloudflare build"
-	},
+	// The actual build step for Cloudflare's Git-connected "Workers Builds"
+	// is configured in the dashboard (Settings -> Build), not here:
+	// Build command: npm run cf-typegen && npx opennextjs-cloudflare build
+	// Deploy command: npx wrangler deploy
+	// (wrangler.jsonc's own `build.command` hook isn't honored by that
+	// pipeline, and re-triggers itself oddly when combined with
+	// `wrangler types`, so it's intentionally left out here.)
 	"assets": {
 		"binding": "ASSETS",
 		"directory": ".open-next/assets"
