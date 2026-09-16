@@ -147,8 +147,11 @@ export async function POST(request: Request) {
     where: { builderId: builder.id },
     _count: true,
   });
-  const releases = counts.find((c) => c.shipType === "RELEASE")?._count ?? 0;
-  const merges = counts.find((c) => c.shipType === "MERGE")?._count ?? 0;
+  type ShipCount = { shipType: "RELEASE" | "MERGE"; _count: number };
+  const releases =
+    (counts as ShipCount[]).find((c) => c.shipType === "RELEASE")?._count ?? 0;
+  const merges =
+    (counts as ShipCount[]).find((c) => c.shipType === "MERGE")?._count ?? 0;
 
   const streak = applyShipToStreak(
     {
