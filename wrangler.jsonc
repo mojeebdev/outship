@@ -20,16 +20,8 @@
 		{
 			"binding": "DB",
 			"database_name": "outship-db",
-			// Replace with the real ID from `wrangler d1 create outship-db`,
-			// then run `wrangler d1 migrations apply outship-db` (add --remote for prod).
-			"database_id": "REPLACE_WITH_D1_DATABASE_ID",
-			"migrations_dir": "migrations"
-		},
-		{
-			"binding": "outship_db",
-			"database_name": "outship-db",
 			"database_id": "fa90a9a2-77ac-4594-ae24-b5ceea9f3e7e",
-			"remote": true
+			"migrations_dir": "migrations"
 		}
 	],
 	"r2_buckets": [
@@ -43,9 +35,8 @@
 	"kv_namespaces": [
 		{
 			// Tag-based cache revalidation bookkeeping (see open-next.config.ts).
-			// Replace with the real ID from `wrangler kv namespace create outship-tag-cache`.
 			"binding": "NEXT_TAG_CACHE_KV",
-			"id": "REPLACE_WITH_KV_NAMESPACE_ID"
+			"id": "1f79279d71ee40bbb6c39f829a7c2a46"
 		}
 	],
 	"observability": {
