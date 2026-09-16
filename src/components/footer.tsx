@@ -35,7 +35,7 @@ const columns: Array<{ heading: string; links: Array<{ label: string; href: stri
     heading: "product",
     links: [
       { label: "leaderboard", href: "/leaderboard" },
-      { label: "index", href: "/index" },
+      { label: "index", href: "/builders" },
       { label: "streaks", href: "/streaks" },
       { label: "profile", href: "/profile" },
     ],
