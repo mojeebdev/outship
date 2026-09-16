@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
 import { IconGrid, IconSeal, IconShip, IconStreak } from "@/components/icons";
+import { AttestationBadge } from "@/components/attestation-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function BuilderProfilePage({
       where: { builderId: builder.id },
       orderBy: { shippedAt: "desc" },
       take: 20,
+      include: { attestation: true },
     }),
   ]);
 
@@ -114,6 +116,12 @@ export default async function BuilderProfilePage({
                       year: "numeric",
                     })}
                   </span>
+                  {ship.attestation && (
+                    <AttestationBadge
+                      chain={ship.attestation.chain}
+                      easUid={ship.attestation.easUid}
+                    />
+                  )}
                 </li>
               ))}
             </ol>
