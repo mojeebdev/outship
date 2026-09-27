@@ -19,26 +19,46 @@ Word hostname, and outship.dev is unchanged.
 
 ## Routing
 
-`src/proxy.ts` is a Next.js 16 Proxy (the renamed `middleware`). It runs on page
-requests only:
+**https://word.outship.dev is Word's canonical home.** `src/proxy.ts` is a
+Next.js 16 Proxy (the renamed `middleware`) and runs on page requests only:
 
 ```
 matcher: ["/((?!api/|_next/|_vercel/|.*\\.[^/]+$).*)"]
 ```
 
 so API routes, framework internals and anything with a file extension are never
-rewritten and resolve identically on both hostnames.
+rewritten or redirected, and resolve identically on every hostname.
 
-On a request whose `Host` is a Word hostname:
+The rules themselves live in `src/lib/word/routing.ts` as a pure function,
+`decideRoute(host, pathname, search)`, so they can be tested directly rather
+than through a request object. `proxy.ts` only turns a decision into a
+response. Three hostnames matter:
 
-| Request on word.outship.dev | Internally serves | Public URL |
+**word.outship.dev** — serves Word from the root.
+
+| Request | Internally serves | Public URL |
 | --- | --- | --- |
 | `/` | `/word` | unchanged |
 | `/anything?q=1` | `/word/anything?q=1` | unchanged |
-| `/word` or `/word/…` | — | 308 redirect to `/…` |
+| `/word` or `/word/…` | — | 308 to `/…` |
 
-Anything else (outship.dev, localhost) falls through to `NextResponse.next()`
-with no change at all.
+**outship.dev** (and `www.`) — the main site, where Word is not canonical.
+
+| Request | Result |
+| --- | --- |
+| `/word` | 308 to `https://word.outship.dev/` |
+| `/word/result/{id}?utm_source=x` | 308 to `https://word.outship.dev/result/{id}?utm_source=x` |
+| `/word/…` (any Word page, now or later) | 308 to the same path on the subdomain |
+| `/wordpress`, `/words`, `/wordle`, `/sword` | untouched |
+| every other outship route | untouched |
+
+**Everything else** — localhost, preview deployments — falls through
+unchanged, which is what keeps `/word` usable in local development and on a
+preview URL without a subdomain.
+
+Extra hostnames can be added at runtime without a code change: `WORD_HOSTS`
+for hosts that should serve Word at the root, `MAIN_HOSTS` for hosts that
+should redirect `/word` away.
 
 Notes:
 
@@ -55,6 +75,17 @@ Notes:
   (`src/lib/word/paths.ts`), which resolve to `""` on the Word hostname and
   `"/word"` everywhere else. The same host header drives both, so server and
   client markup agree.
+- Only `/word` and `/word/...` redirect, never `/wordpress` and friends: the
+  test is an exact match or a following slash, not `startsWith("/word")`.
+- Redirects cannot chain into a loop. The main host sends `/word*` to the
+  subdomain, and the subdomain *rewrites* rather than redirecting, so the
+  destination is terminal. A request for `/word/` takes two hops — Next
+  normalises the trailing slash to `/word` before the proxy sees it, then the
+  proxy redirects — which is correct, just not a single hop.
+- Every public URL Word emits is absolute against `WORD_CANONICAL_ORIGIN`:
+  `alternates.canonical`, `og:url`, `og:image`, `twitter:image`, the share
+  link and the download link. There is no sitemap or `robots.txt` in this
+  project, so there are no entries to point anywhere.
 
 Extra hostnames (a preview deployment, for instance) can be added at runtime
 with a comma-separated `WORD_HOSTS` variable — no code change needed.
@@ -302,11 +333,32 @@ quietly edit the constant — then bump `COUNTING_RULE_VERSION`.
 
 ### Author image — missing asset
 
-There is **no author image in the repository**. Finding one meant reaching
-Wikimedia Commons or a museum open-access collection to check an individual
-image's licence, and both are blocked by the same egress allowlist. Rather than
-ship an unverified file or a modern imagined portrait presented as a likeness,
-the comparison uses a **text-only treatment**.
+There is **no author image in the repository**, and the comparison uses a
+**text-only treatment**.
+
+Sources were checked and every one is unreachable from this environment; its
+network policy denies them at the proxy, before any TLS handshake:
+
+| Source | Result |
+| --- | --- |
+| `commons.wikimedia.org` | blocked (also via the fetch tool) |
+| `upload.wikimedia.org` | blocked |
+| `commons.m.wikimedia.org` | blocked |
+| `www.penn.museum` | blocked (also via the fetch tool) |
+| `www.metmuseum.org` | blocked |
+| `www.britishmuseum.org` | blocked |
+| `api.britannica.com` | blocked |
+
+So no individual image licence could be read, and no file could be downloaded.
+Shipping a picture on that basis would mean asserting a licence nobody had
+verified, and inventing a likeness is worse still — the disk is a damaged
+Akkadian artefact, not a portrait, and a modern imagining presented as one
+would be a fabrication. The text-only treatment stands until an image can be
+verified properly.
+
+The lead to start from, **unverified**: the Disk of Enheduanna is generally
+catalogued as Penn Museum object B16665, excavated at Ur. Confirm that against
+the museum's own record rather than taking it from here.
 
 To add one later:
 

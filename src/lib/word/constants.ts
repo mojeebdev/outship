@@ -29,6 +29,42 @@ export function wordHosts(): string[] {
   return [WORD_CANONICAL_HOST, ...extra];
 }
 
+/**
+ * The main site's production hostnames.
+ *
+ * Word is canonical at word.outship.dev, so `/word` on these hosts is
+ * permanently redirected there. Anywhere else — local development, a preview
+ * deployment — `/word` keeps serving directly, which is what makes it usable
+ * without a subdomain. Extra hosts can be added with `MAIN_HOSTS`.
+ */
+export const MAIN_PRODUCTION_HOST = "outship.dev";
+
+export function mainProductionHosts(): string[] {
+  const extra = (process.env.MAIN_HOSTS ?? "")
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean);
+
+  return [MAIN_PRODUCTION_HOST, `www.${MAIN_PRODUCTION_HOST}`, ...extra];
+}
+
+/** Compare a `Host` header, with or without a port, against a host list. */
+function hostMatches(hostHeader: string | null | undefined, hosts: string[]): boolean {
+  if (!hostHeader) return false;
+  const hostname = hostHeader.split(":")[0]!.trim().toLowerCase();
+  return hosts.includes(hostname);
+}
+
+/** True when this request arrived on a hostname that serves Word at the root. */
+export function isWordHost(hostHeader: string | null | undefined): boolean {
+  return hostMatches(hostHeader, wordHosts());
+}
+
+/** True when this request arrived on the main site's production hostname. */
+export function isMainProductionHost(hostHeader: string | null | undefined): boolean {
+  return hostMatches(hostHeader, mainProductionHosts());
+}
+
 /** Safety and cost limits for the page-fetching endpoint. */
 export const FETCH_LIMITS = {
   /** Redirect hops we are willing to follow. Each hop is re-validated. */

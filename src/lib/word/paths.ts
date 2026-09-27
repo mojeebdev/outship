@@ -10,17 +10,14 @@
 
 import { headers } from "next/headers";
 
-import { WORD_BASE_PATH, wordHosts } from "./constants";
+import { WORD_BASE_PATH, isWordHost } from "./constants";
+
+// The host predicates themselves live in ./constants, which stays free of
+// server-only imports so the routing rules can be used and tested anywhere.
+export { isMainProductionHost, isWordHost } from "./constants";
 
 /** "" on the Word hostname, "/word" everywhere else. */
 export type WordBasePath = "" | typeof WORD_BASE_PATH;
-
-/** True when this request arrived on a hostname that serves Word at the root. */
-export function isWordHost(hostHeader: string | null | undefined): boolean {
-  if (!hostHeader) return false;
-  const hostname = hostHeader.split(":")[0]!.trim().toLowerCase();
-  return wordHosts().includes(hostname);
-}
 
 /** Read the base path for the current request. Server components only. */
 export async function getWordBasePath(): Promise<WordBasePath> {
