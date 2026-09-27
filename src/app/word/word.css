@@ -731,3 +731,64 @@
   font-size: 12px;
   text-align: center;
 }
+
+/* ── Author image ────────────────────────────────────────────────────────── */
+
+.word-compare-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.word-compare-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.word-compare-figure {
+  flex: 0 0 auto;
+  width: 112px;
+  margin: 0;
+}
+
+.word-compare-figure img {
+  display: block;
+  width: 112px;
+  height: 112px;
+  /* The object is a disk, so a circular mask is faithful to it — and it drops
+     the museum plinth showing at the corners of the square photograph. */
+  border-radius: 50%;
+  border: 1px solid var(--word-border);
+  background: var(--word-surface);
+  object-fit: cover;
+}
+
+.word-compare-figure figcaption {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--word-ink-3);
+}
+
+@media (max-width: 520px) {
+  .word-compare-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .word-compare-figure {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .word-compare-figure img {
+    width: 72px;
+    height: 72px;
+  }
+
+  .word-compare-figure figcaption {
+    margin-top: 0;
+  }
+}

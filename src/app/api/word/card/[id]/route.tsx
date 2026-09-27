@@ -13,7 +13,8 @@
 
 import { ImageResponse } from "next/og";
 
-import { BENCHMARK } from "@/lib/word/benchmark";
+import { AUTHOR_IMAGE_DATA_URI } from "@/lib/word/author-image";
+import { AUTHOR_IMAGE, BENCHMARK } from "@/lib/word/benchmark";
 import { getResult } from "@/lib/word/results";
 
 export const dynamic = "force-dynamic";
@@ -100,10 +101,21 @@ export async function GET(request: Request, context: RouteContext<"/api/word/car
           <span style={{ fontSize: 34, color: ACCENT, marginTop: 10 }}>
             {result.comparison.headline}
           </span>
-          <span style={{ fontSize: 22, color: INK_3, marginTop: 6 }}>
-            Compared with {BENCHMARK.title}, attributed to {BENCHMARK.author} —{" "}
-            {BENCHMARK.authorDescription}.
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 10 }}>
+            {/* The artefact, not a likeness of the author. CC0; see AUTHOR_IMAGE. */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- satori renders plain <img> only; next/image has no meaning inside an ImageResponse */}
+            <img
+              src={AUTHOR_IMAGE_DATA_URI}
+              alt={AUTHOR_IMAGE.label}
+              width={104}
+              height={104}
+              style={{ width: 104, height: 104, borderRadius: "50%", objectFit: "cover" }}
+            />
+            <span style={{ fontSize: 22, color: INK_3, maxWidth: 900 }}>
+              Compared with {BENCHMARK.title}, attributed to {BENCHMARK.author} —{" "}
+              {BENCHMARK.authorDescription}.
+            </span>
+          </div>
         </div>
 
         {/* Footer */}

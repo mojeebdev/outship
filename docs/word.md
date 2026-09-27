@@ -331,48 +331,47 @@ quietly edit the constant — then bump `COUNTING_RULE_VERSION`.
 >
 > Re-run the command after any change to the tokeniser or these rules.
 
-### Author image — missing asset
+### Author image
 
-There is **no author image in the repository**, and the comparison uses a
-**text-only treatment**.
+`public/enheduanna-disk.jpg`, shown beside the comparison and on the share
+card, labelled **"Depiction of Enheduanna on an ancient disk."**
 
-Sources were checked and every one is unreachable from this environment; its
-network policy denies them at the proxy, before any TLS handshake:
+It is the artefact, not a likeness. No contemporary portrait of Enheduanna
+exists, and a modern imagining presented as one would be a fabrication — the
+label says exactly what the picture is and claims nothing more.
 
-| Source | Result |
+| | |
 | --- | --- |
-| `commons.wikimedia.org` | blocked (also via the fetch tool) |
-| `upload.wikimedia.org` | blocked |
-| `commons.m.wikimedia.org` | blocked |
-| `www.penn.museum` | blocked (also via the fetch tool) |
-| `www.metmuseum.org` | blocked |
-| `www.britishmuseum.org` | blocked |
-| `api.britannica.com` | blocked |
+| Object | Disk of Enheduanna. Alabaster, c. 2350-2300 BCE, from Ur. Penn Museum, object B16665 |
+| Creator | Mefman00 |
+| Licence | CC0 1.0 Universal (Public Domain Dedication) — no conditions, attribution not required |
+| Licence URL | https://creativecommons.org/publicdomain/zero/1.0/ |
+| File page | https://commons.wikimedia.org/wiki/File:Disk_of_Enheduanna.JPG |
+| Original | https://upload.wikimedia.org/wikipedia/commons/a/ad/Disk_of_Enheduanna.JPG |
+| Modifications | Cropped square to the disk, resized to 480px (page) and 220px (card) |
+| Licence verified | 2026-09-27, against the Commons file page's own metadata |
 
-So no individual image licence could be read, and no file could be downloaded.
-Shipping a picture on that basis would mean asserting a licence nobody had
-verified, and inventing a likeness is worse still — the disk is a damaged
-Akkadian artefact, not a portrait, and a modern imagining presented as one
-would be a fabrication. The text-only treatment stands until an image can be
-verified properly.
+The licence was read from Commons' structured metadata rather than assumed, and
+the same record confirmed the Penn Museum catalogue number. CC0 requires no
+credit at all; Word credits the photographer anyway, under "How we count".
 
-The lead to start from, **unverified**: the Disk of Enheduanna is generally
-catalogued as Penn Museum object B16665, excavated at Ur. Confirm that against
-the museum's own record rather than taking it from here.
+Two candidates were checked. The other, `Disk of Enheduanna (2).jpg`, is a
+cropped and contrast-adjusted derivative under **CC BY 4.0** with attribution
+required. The CC0 original was chosen: it is the source photograph and carries
+no conditions.
 
-To add one later:
+All of this is configuration, in `AUTHOR_IMAGE` (`src/lib/word/benchmark.ts`).
+To replace the image, swap the file, update that record, and regenerate the
+inlined copy used by the card (`src/lib/word/author-image.ts`).
 
-1. Find a reusable photograph of the **Disk of Enheduanna** — Wikimedia Commons
-   or a museum open-access collection — and check that *individual image's*
-   licence, not just the collection's.
-2. Save it to `public/word/enheduanna-disk.jpg` (or `.png`).
-3. Record its source URL, creator, licence and required attribution alongside
-   the other benchmark configuration in `src/lib/word/benchmark.ts`.
-4. Render it in `BenchmarkComparison` (`src/components/word/result-view.tsx`)
-   and in the share card (`src/app/api/word/card/[id]/route.tsx`), labelled
-   **"Depiction of Enheduanna on an ancient disk."**
+**Why the card inlines its own copy.** `next/og` renders inside the Worker, so
+a remote fetch mid-render would add latency and a failure mode to every card.
+The card carries a 220px base64 copy of the same photograph instead.
 
-Do not present a modern imagined portrait as an authentic likeness.
+**Why it is masked to a circle.** The object is a disk, so a circular crop is
+faithful to it — and the source is a museum-case photograph whose red display
+plinth would otherwise show at the corners of a square frame. The disk's centre
+and diameter were measured from the photograph rather than eyeballed.
 
 ---
 

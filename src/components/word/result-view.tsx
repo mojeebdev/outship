@@ -1,5 +1,5 @@
 import { AnimatedCount } from "@/components/word/animated-count";
-import { BENCHMARK, BENCHMARK_CLARIFICATION } from "@/lib/word/benchmark";
+import { AUTHOR_IMAGE, BENCHMARK, BENCHMARK_CLARIFICATION } from "@/lib/word/benchmark";
 import type { ComparisonDirection } from "@/lib/word/benchmark";
 
 /** Everything the result screen needs, from a scan or from a saved snapshot. */
@@ -31,9 +31,11 @@ export function formatDuration(ms: number): string {
  * The historical comparison.
  *
  * Deliberately says "Your page has", never "You wrote": submitting a website
- * does not establish authorship of it. No image is shipped yet (see
- * docs/word.md), so this is the text-only treatment — a modern imagined
- * portrait would not be an authentic likeness.
+ * does not establish authorship of it.
+ *
+ * The image is the artefact, not a likeness of the author — no contemporary
+ * portrait of Enheduanna exists. Its label says exactly that, and its licence
+ * and provenance are recorded in `AUTHOR_IMAGE`.
  */
 export function BenchmarkComparison({
   headline,
@@ -44,13 +46,30 @@ export function BenchmarkComparison({
 }) {
   return (
     <section className="word-compare" aria-label="Historical comparison">
-      <p className="word-compare-headline">{headline}</p>
+      <div className="word-compare-top">
+        <figure className="word-compare-figure">
+          {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size local asset; the Workers image optimiser adds nothing at 112px */}
+          <img
+            src={AUTHOR_IMAGE.src}
+            alt={AUTHOR_IMAGE.label}
+            width={112}
+            height={112}
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>{AUTHOR_IMAGE.label}</figcaption>
+        </figure>
 
-      <p className="word-compare-work">
-        <em>{BENCHMARK.title}</em>
-      </p>
+        <div className="word-compare-copy">
+          <p className="word-compare-headline">{headline}</p>
 
-      <p className="word-compare-note">{BENCHMARK_CLARIFICATION}</p>
+          <p className="word-compare-work">
+            <em>{BENCHMARK.title}</em>
+          </p>
+
+          <p className="word-compare-note">{BENCHMARK_CLARIFICATION}</p>
+        </div>
+      </div>
 
       <div className="word-compare-bars">
         <ComparisonBar
@@ -94,6 +113,18 @@ export function BenchmarkComparison({
           <p className="word-how-source">
             Source: {BENCHMARK.source}. Counting rules{" "}
             {BENCHMARK.countingRuleVersion}, checked {BENCHMARK.verifiedAt}.
+          </p>
+          <p className="word-how-source">
+            Image: {AUTHOR_IMAGE.object}{" "}
+            <a
+              className="word-inline-link"
+              href={AUTHOR_IMAGE.sourcePage}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {AUTHOR_IMAGE.credit}
+            </a>
+            , cropped and resized.
           </p>
         </div>
       </details>

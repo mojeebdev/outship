@@ -45,6 +45,39 @@ export const BENCHMARK = {
   scope: "the main English translation, lines 1-154",
 } as const;
 
+/**
+ * A photograph of the artefact, with the provenance that makes it usable.
+ *
+ * This is the object itself, not a likeness: no contemporary portrait of
+ * Enheduanna exists, and a modern imagining presented as one would be a
+ * fabrication. The label is fixed for that reason — it describes a depiction
+ * on a disk, and claims nothing more.
+ *
+ * Licence verified against the Commons file page's own metadata on the date
+ * below. CC0 imposes no conditions at all, so the credit here is courtesy
+ * rather than obligation.
+ */
+export const AUTHOR_IMAGE = {
+  /** Served from `public/`, so the URL is clean on both hostnames. */
+  src: "/enheduanna-disk.jpg",
+  /** The required label, used as both alt text and visible caption. */
+  label: "Depiction of Enheduanna on an ancient disk.",
+  object:
+    "Disk of Enheduanna. Alabaster, c. 2350-2300 BCE, from Ur. Penn Museum, object B16665.",
+  creator: "Mefman00",
+  licence: "CC0 1.0 Universal (Public Domain Dedication)",
+  licenceUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+  attributionRequired: false,
+  credit: "Photograph by Mefman00 via Wikimedia Commons (CC0)",
+  sourcePage: "https://commons.wikimedia.org/wiki/File:Disk_of_Enheduanna.JPG",
+  sourceFile:
+    "https://upload.wikimedia.org/wikipedia/commons/a/ad/Disk_of_Enheduanna.JPG",
+  /** What was changed from the source, which CC0 permits without note. */
+  modifications:
+    "Cropped square to the disk and resized to 480px; the source is 6000x4000.",
+  verifiedAt: "2026-09-27",
+} as const;
+
 /** The one-line clarification shown under every comparison headline. */
 export const BENCHMARK_CLARIFICATION =
   "Compared with Oxford's English translation of a poem attributed to Enheduanna, the earliest author known by name.";
