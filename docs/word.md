@@ -282,16 +282,23 @@ correct the rules.
 If it mismatches, work out whether extraction or tokenisation moved — do not
 quietly edit the constant — then bump `COUNTING_RULE_VERSION`.
 
-> **Still not verified.** `etcsl.orinst.ox.ac.uk` is blocked by the egress
-> allowlist of the environment this was built in, so the number has never been
-> counted from the live page here. Two real runs, on a network that could reach
-> Oxford, each failed in extraction rather than counting — first because the
-> rules looked for hard-coded phrases that aren't on the page, then because the
-> line numbers turned out to be unpunctuated. Both runs' diagnostics are what
-> the rules above are now built from, and the fixture tests reproduce the
-> page's real shape. But **the 1,521 figure itself has still never been
-> checked against the live text** — run the command once before treating it as
-> confirmed.
+> **Verified against the live page on 2026-09-27.** The run counted **1,521
+> words**, matching the configured benchmark exactly. The extracted window was
+> confirmed at both ends: it opens with *"Lady of all the divine powers,
+> resplendent light, righteous woman clothed in radiance…"* (line 1) and closes
+> with *"…to my lady enveloped in beauty, to Inana!"* (line 154).
+>
+> Getting there took three runs, and what the first two found is why the rules
+> look the way they do. The environment Word was built in cannot reach
+> `etcsl.orinst.ox.ac.uk`, so the first version of these rules was written
+> against an assumed page and looked for hard-coded phrases that aren't on it.
+> The second run got past fetching and showed the real structure: line numbers
+> with no punctuation, a revision-history entry that also opens with digits,
+> and — the one that would have mattered most — words separated by markup
+> rather than whitespace, which would have quietly undercounted while looking
+> perfectly plausible.
+>
+> Re-run the command after any change to the tokeniser or these rules.
 
 ### Author image — missing asset
 
@@ -579,19 +586,18 @@ or let the dashboard's Workers Builds pipeline run it on push.
 ### Not verified from here
 
 Three things could not be checked in the environment this was built in. None of
-them are code changes; all three need a human with the right access.
+them are code changes; all three need a human with the right access. The second
+has since been done — it is kept here with its result rather than deleted.
 
 1. **The domain association and HTTPS.** Nothing here can confirm either.
    **Word is not live until `word.outship.dev` is attached in Cloudflare and
    HTTPS serves from it** — check both in the dashboard, then load
    `https://word.outship.dev/` and confirm it returns the counter (not
    outship's homepage, and not a certificate warning).
-2. **The 1,521 benchmark.** `etcsl.orinst.ox.ac.uk` is blocked by this
-   sandbox's egress allowlist, so `npm run verify:benchmark` has never been
-   run against the live page from here. Run it once from a network that can
-   reach Oxford. If extraction fails, the command prints the page's text
-   blocks and saves the HTML to `scripts/.cache/` — both are what's needed to
-   correct the rules.
+2. ~~**The 1,521 benchmark.**~~ **Done** — verified against the live page on
+   2026-09-27, counting 1,521 words with the window confirmed at both ends.
+   Re-run `npm run verify:benchmark` after any change to the tokeniser or the
+   extraction rules; it needs a network that can reach Oxford.
 3. **The X link preview.** The metadata and the card were verified directly —
    correct tags in the first HTML response, a real 1200x630 PNG from the
    Workers runtime on both hostnames. That is not the same as X having fetched

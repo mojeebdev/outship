@@ -30,7 +30,10 @@ export const BENCHMARK = {
   sourceShort: "Oxford ETCSL",
   translationUrl: "https://etcsl.orinst.ox.ac.uk/section4/tr4072.htm",
   countingRuleVersion: COUNTING_RULE_VERSION,
-  /** When the number above was last checked against the live translation. */
+  /**
+   * When the number above was last counted from the live translation by
+   * `npm run verify:benchmark`. It matched exactly on this date.
+   */
   verifiedAt: "2026-09-27",
   /**
    * What the count covers, mirrored in `scripts/verify-benchmark.mjs`.
