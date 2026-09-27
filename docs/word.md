@@ -585,23 +585,34 @@ or let the dashboard's Workers Builds pipeline run it on push.
 
 ### Not verified from here
 
-Three things could not be checked in the environment this was built in. None of
-them are code changes; all three need a human with the right access. The second
-has since been done — it is kept here with its result rather than deleted.
+Three things could not be checked in the environment this was built in — its
+network policy blocks Oxford, Wikimedia, `*.workers.dev` and outship's own
+domains. None were code changes; all three needed a human with the right
+access. Two are now done, kept here with their results rather than deleted.
 
-1. **The domain association and HTTPS.** Nothing here can confirm either.
-   **Word is not live until `word.outship.dev` is attached in Cloudflare and
-   HTTPS serves from it** — check both in the dashboard, then load
-   `https://word.outship.dev/` and confirm it returns the counter (not
-   outship's homepage, and not a certificate warning).
+1. ~~**The domain association and HTTPS.**~~ **Done** — `word.outship.dev` is
+   attached to the Worker and serves over HTTPS. Verified against production:
+
+   | Request | Result |
+   | --- | --- |
+   | `https://word.outship.dev/` | `200`, no `location:` header — nothing redirects the subdomain to the apex |
+   | `https://word.outship.dev/word` | `308` to `/` — one canonical URL per page |
+   | `https://word.outship.dev/nope` | `404` — Word's own, not outship's |
+   | `https://outship.dev/` | `200` — the existing site is unaffected |
+   | `href="/word"` in the served HTML | absent — the internal prefix stays internal |
 2. ~~**The 1,521 benchmark.**~~ **Done** — verified against the live page on
    2026-09-27, counting 1,521 words with the window confirmed at both ends.
    Re-run `npm run verify:benchmark` after any change to the tokeniser or the
    extraction rules; it needs a network that can reach Oxford.
-3. **The X link preview.** The metadata and the card were verified directly —
-   correct tags in the first HTML response, a real 1200x630 PNG from the
-   Workers runtime on both hostnames. That is not the same as X having fetched
-   and cached the preview. Once the domain is live, paste a result URL into
-   X's Card Validator (or post it once) and confirm the large image renders;
-   X caches aggressively, so a stale preview after a change is expected and
-   needs a re-scrape, not a code fix.
+3. **The X link preview.** Still open. The metadata and the card were verified
+   directly — correct tags in the first HTML response, a real 1200x630 PNG
+   from the Workers runtime on both hostnames. That is not the same as X
+   having fetched and cached the preview. Paste a result URL into X's Card
+   Validator (or post it once) and confirm the large image renders; X caches
+   aggressively, so a stale preview after a change is expected and needs a
+   re-scrape, not a code fix.
+
+   Also still unexercised: a scan of a real website on the live site. Every
+   network path in the test suite is stubbed, and the local runtime could not
+   reach the internet, so the first genuine run of DNS-over-HTTPS validation
+   against a real host happens in production.
