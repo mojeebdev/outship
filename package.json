@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:word": "node --experimental-strip-types --import ./scripts/register-ts.mjs --test \"src/lib/word/__tests__/*.test.ts\"",
-    "verify:benchmark": "node --experimental-strip-types --import ./scripts/register-ts.mjs scripts/verify-benchmark.mjs",
+    "test:word": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs --test \"src/lib/word/__tests__/*.test.ts\"",
+    "verify:benchmark": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs scripts/verify-benchmark.mjs",
     "preview": "npm run cf-typegen && opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "npm run cf-typegen && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"

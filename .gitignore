@@ -50,3 +50,6 @@ prisma/*.db-journal
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cached copy of the ETCSL page (npm run verify:benchmark)
+scripts/.cache/
