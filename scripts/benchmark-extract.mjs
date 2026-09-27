@@ -45,10 +45,60 @@ const DROPPED_ELEMENTS = new Set([
 const BLOCK_ELEMENTS = new Set(["p", "li", "td", "div", "blockquote"]);
 
 /**
- * A line-number prefix: "1." / "1-4." / "145-154." followed by whitespace.
- * Both hyphen and en dash are accepted, since typography varies.
+ * Inline (phrasing) elements that do not introduce a word boundary.
+ *
+ * Every *other* element boundary does, which matters more than it looks: the
+ * live page separates some words with markup rather than whitespace, and
+ * without this "the foreign lands bow low" arrives as "bowlow" and counts as
+ * one word instead of two. This is the same rule the app's own extractor
+ * uses, so both sides of the comparison treat markup the same way.
  */
-const LINE_PREFIX = /^\s*(\d+)(?:\s*[-–]\s*(\d+))?\.\s/;
+const INLINE_ELEMENTS = new Set([
+  "a",
+  "abbr",
+  "b",
+  "bdi",
+  "bdo",
+  "cite",
+  "code",
+  "data",
+  "del",
+  "dfn",
+  "em",
+  "font",
+  "i",
+  "ins",
+  "kbd",
+  "mark",
+  "nobr",
+  "q",
+  "rp",
+  "rt",
+  "ruby",
+  "s",
+  "samp",
+  "small",
+  "span",
+  "strong",
+  "sub",
+  "sup",
+  "time",
+  "u",
+  "var",
+  "wbr",
+]);
+
+/**
+ * A line-number prefix.
+ *
+ * On the live ETCSL page the number runs straight into the text with no
+ * separator at all -- "1-12Lady of all the divine powers" -- so the trailing
+ * dot and the whitespace are both optional. That makes this deliberately
+ * permissive: it also matches text that merely starts with a number, such as
+ * a dated revision-history entry. `selectTranslationLines` filters those out
+ * by requiring the lines it keeps to form a contiguous chain.
+ */
+const LINE_PREFIX = /^\s*(\d+)(?:\s*[-–]\s*(\d+))?\.?\s*/;
 
 const WHITESPACE = new RegExp(
   "[\\s\\u00a0\\u1680\\u2000-\\u200a\\u202f\\u205f\\u3000\\ufeff]+",
@@ -109,8 +159,8 @@ export function readBlocks(html) {
           stack.push({ tag, pieces: [], hasBlockChild: false });
           return;
         }
-        // `<br>` and friends still separate words.
-        if (tag === "br") stack[stack.length - 1]?.pieces.push(" ");
+        // Anything that is not phrasing content separates words.
+        if (!INLINE_ELEMENTS.has(tag)) stack[stack.length - 1]?.pieces.push(" ");
       },
       onclosetag(name) {
         const tag = name.toLowerCase();
@@ -129,7 +179,9 @@ export function readBlocks(html) {
             closeBlock();
             if (innermost === tag) break;
           }
+          return;
         }
+        if (!INLINE_ELEMENTS.has(tag)) stack[stack.length - 1]?.pieces.push(" ");
       },
       ontext(text) {
         if (skipDepth > 0) return;
@@ -154,9 +206,7 @@ export function readBlocks(html) {
  * the whole poem was found and not, say, the first screenful.
  */
 export function selectTranslationLines(blocks) {
-  const lines = [];
-  let firstLine = Infinity;
-  let lastLine = -Infinity;
+  const candidates = [];
 
   for (const block of blocks) {
     const match = LINE_PREFIX.exec(block);
@@ -164,17 +214,36 @@ export function selectTranslationLines(blocks) {
 
     const start = Number(match[1]);
     const end = match[2] === undefined ? start : Number(match[2]);
-    firstLine = Math.min(firstLine, start);
-    lastLine = Math.max(lastLine, end);
+    if (!Number.isInteger(start) || !Number.isInteger(end) || end < start) continue;
 
-    lines.push(block.slice(match[0].length));
+    candidates.push({ start, end, text: block.slice(match[0].length) });
   }
 
-  return {
-    lines,
-    firstLine: Number.isFinite(firstLine) ? firstLine : null,
-    lastLine: Number.isFinite(lastLine) ? lastLine : null,
-  };
+  // A poem's lines are contiguous by definition, so keep the chain that opens
+  // at line 1 and advances by exactly one line per block. Anything else that
+  // happens to begin with a number -- "27.i.1999 : JAB : adapting translation"
+  // in the revision history, for instance -- cannot join the chain and drops
+  // out, with no need for a rule about what revision histories look like.
+  const lines = [];
+  const rejected = [];
+  let firstLine = null;
+  let lastLine = null;
+
+  for (const candidate of candidates) {
+    const continuesChain =
+      lines.length === 0 ? candidate.start === 1 : candidate.start === lastLine + 1;
+
+    if (!continuesChain) {
+      rejected.push(candidate);
+      continue;
+    }
+
+    if (lines.length === 0) firstLine = candidate.start;
+    lines.push(candidate.text);
+    lastLine = candidate.end;
+  }
+
+  return { lines, firstLine, lastLine, rejected };
 }
 
 /** Remove Oxford's parenthetical editorial notes, including nested ones. */

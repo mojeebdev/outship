@@ -234,19 +234,35 @@ removed.
 ### How the translation is found
 
 The translation is selected **structurally**, not by matching Oxford's prose.
-Every line of an ETCSL translation opens with its line number or line range —
-`1-4.`, `154.` — so `scripts/benchmark-extract.mjs` splits the page into its
-innermost text blocks and keeps the ones that start that way. Everything else
-is page furniture: navigation, the title, the footer, the revision history.
+Every line of an ETCSL translation opens with its line range, and on the live
+page the number runs straight into the text with no dot and no space —
+`1-12Lady of all the divine powers` — so `scripts/benchmark-extract.mjs`
+splits the page into its innermost text blocks and keeps the ones that start
+that way. Everything else is page furniture: the catalogue navigation, the
+title, the `Top | composite text | bibliography` footer, the revision history.
 
-That rule doesn't depend on how Oxford words a heading or where the body
-starts, and it recognises a line number whether it is plain text, wrapped in
-`<sup>`, or preceded by an anchor. It then strips the number itself, removes
-parenthetical editorial notes, and normalises whitespace.
+Three details this has to get right, each learned from a real run:
 
-It also checks its own work: extraction **fails** unless the blocks it found
-cover lines 1 through 154. A paginated page, a truncated copy or a restructured
-one produces an error and a dump of what was actually on the page — never a
+- **The number may not be punctuated.** The trailing dot and the whitespace are
+  both optional, so `1-12Lady`, `1-4. Lady` and `5 - 154 Woman` all parse.
+- **Matching a leading number is not enough.** The revision history opens with
+  `27.i.1999-01.ii.1999 : JAB : adapting translation`, which also starts with
+  digits. Rather than a rule about what revision histories look like, the kept
+  blocks must form a **contiguous chain** from line 1, each starting exactly
+  one line after the last ended. A dated entry can't join the chain and drops
+  out.
+- **Some words are separated by markup, not whitespace.** The page yields
+  `the foreign lands bow low` only if element boundaries count as word breaks;
+  otherwise it arrives as `bowlow` and counts once instead of twice. Every
+  non-phrasing element boundary contributes a space — the same rule the app's
+  own extractor uses, so both sides of the comparison treat markup alike.
+
+It then strips the line number, removes parenthetical editorial notes, and
+normalises whitespace.
+
+It also checks its own work: extraction **fails** unless the chain runs from
+line 1 to line 154. A paginated page, a truncated copy or a restructured one
+produces an error and a dump of what was actually on the page — never a
 plausible-looking wrong number.
 
 ### Re-verifying the number
@@ -268,13 +284,14 @@ quietly edit the constant — then bump `COUNTING_RULE_VERSION`.
 
 > **Still not verified.** `etcsl.orinst.ox.ac.uk` is blocked by the egress
 > allowlist of the environment this was built in, so the number has never been
-> checked against the live page from here. The first real run, on a network
-> that could reach Oxford, failed in extraction rather than counting: the
-> original rules looked for hard-coded phrases that turned out not to be on the
-> page. Those guessed markers are what the structural rule above replaced. The
-> rules are covered by fixture tests (see Tests), but **the 1,521 figure itself
-> is still carried as supplied configuration** — run the command once against
-> the live page before treating it as confirmed.
+> counted from the live page here. Two real runs, on a network that could reach
+> Oxford, each failed in extraction rather than counting — first because the
+> rules looked for hard-coded phrases that aren't on the page, then because the
+> line numbers turned out to be unpunctuated. Both runs' diagnostics are what
+> the rules above are now built from, and the fixture tests reproduce the
+> page's real shape. But **the 1,521 figure itself has still never been
+> checked against the live text** — run the command once before treating it as
+> confirmed.
 
 ### Author image — missing asset
 
@@ -479,14 +496,15 @@ Covers:
 - Benchmark comparison copy below, equal to and above 1,521, singular and plural
   wording, thousands separators, and the absence of authorship or record claims.
 - The X composer text for homepage and non-homepage scans.
-- The ETCSL extraction rules, against a **synthetic** fixture shaped like an
-  ETCSL page: line numbers as plain text, as `<sup>` and after an anchor;
-  navigation, title, revision history and footer that must not be counted;
-  nested wrappers that must not double-count; text that merely begins with a
-  number; and the two ways extraction is required to fail loudly (no numbered
-  lines at all, and a range that doesn't reach line 154). This proves the rules
-  behave; it is not the same as reproducing the live 1,521, which is
-  `npm run verify:benchmark`.
+- The ETCSL extraction rules, against a fixture shaped like the live page as
+  observed from a real run: unpunctuated line numbers (`1-12Lady`) as well as
+  the dotted and spaced forms; words separated by markup rather than
+  whitespace; phrasing elements that must *not* break a word; the catalogue
+  header, footer nav and dated revision history that must not be counted;
+  nested wrappers that must not double-count; and the three ways extraction is
+  required to fail loudly (no numbered lines, a chain that doesn't reach 154,
+  and a gap in the chain). This proves the rules behave; it is not the same as
+  reproducing the live 1,521, which is `npm run verify:benchmark`.
 - Result ids: format, validity checking, collision resistance over 5,000
   samples, and that public URLs always use the production origin.
 
