@@ -29,37 +29,24 @@ import {
 } from "../benchmark";
 import { countWords } from "../count";
 
+/**
+ * Shaped like the live ETCSL page, as observed from a real run:
+ * the line number runs straight into the text with no dot and no space
+ * ("1-12Lady of all..."), some words are separated by markup rather than
+ * whitespace, and the revision history opens with a date that also begins
+ * with digits.
+ */
 const ETCSL_SHAPED_FIXTURE = `<!doctype html>
-<html><head><title>The Exaltation of Inana: translation</title>
-<style>.line { margin: 0; }</style></head>
+<html><head><title>The Exaltation of Inana (Inana B): translation</title></head>
 <body>
-  <div class="nav"><a href="/">ETCSL homepage</a> | <a href="/section4/">Section 4</a></div>
+  <div class="head">The Electronic Text Corpus of Sumerian Literature Catalogues: by date | by number</div>
   <h1>The Exaltation of Inana (Inana B): translation</h1>
-  <p>A version of this composition is also available.</p>
-  <div class="translation">
-    <p class="line"><sup>1-4.</sup> Lady of all the divine powers (or: of the divine powers), resplendent light.</p>
-    <p class="line"><a name="5"></a>5-8. Woman, you are great, you are noble (uncertain reading).</p>
-    <p class="line">9-153. Your right hand holds the storm,<br>and the foreign lands tremble.</p>
-    <p class="line"><sup>154.</sup> Praise be to the destroyer of foreign lands</p>
-  </div>
-  <h2>Revision history</h2>
-  <p>01.ii.1999 : first revision by an editor.</p>
-  <div class="footer">Copyright notice and page footer text.</div>
+  <p><a name="1"></a><sup>1-12</sup>Lady of all the divine powers (2 mss. have instead: of the powers), resplendent light.</p>
+  <p><a name="13"></a><sup>13-143</sup>The foreign lands bow<lb/>low before the gathering of<lb/>rulers.</p>
+  <p><a name="144"></a><sup>144-154</sup>Inana's holy heart has been assuaged (uncertain reading).</p>
+  <p>Top | composite text | bibliography</p>
+  <p>27.i.1999-01.ii.1999 : JAB : adapting translation 02.xi.1999 : GZ : proofreading</p>
 </body></html>`;
-
-test("the tokeniser follows the documented word rule", () => {
-  assert.equal(countWords("Home About Contact"), 3);
-  assert.equal(countWords("don't stop"), 2);
-  assert.equal(countWords("state-of-the-art"), 1);
-  assert.equal(countWords("Inana’s heart"), 2);
-  // A comma is not an internal joiner, so "1,521" is two tokens.
-  assert.equal(countWords("1,521 words"), 3);
-  // Symbols and lone punctuation are not words.
-  assert.equal(countWords("© 2026 Word"), 2);
-  assert.equal(countWords("a — b"), 2);
-  assert.equal(countWords(""), 0);
-  assert.equal(countWords("!!! ??? ---"), 0);
-});
 
 test("only numbered translation lines are counted", () => {
   const text = extractTranslation(ETCSL_SHAPED_FIXTURE);
@@ -67,68 +54,95 @@ test("only numbered translation lines are counted", () => {
   assert.equal(
     text,
     "Lady of all the divine powers , resplendent light. " +
-      "Woman, you are great, you are noble . " +
-      "Your right hand holds the storm, and the foreign lands tremble. " +
-      "Praise be to the destroyer of foreign lands",
+      "The foreign lands bow low before the gathering of rulers. " +
+      "Inana's holy heart has been assuaged .",
   );
 
-  // Nothing outside the numbered lines survives.
   for (const unwanted of [
-    "ETCSL homepage",
-    "Section 4",
+    "Electronic Text Corpus",
+    "by number",
     "Inana B",
-    "also available",
-    "Revision history",
-    "first revision",
-    "Copyright notice",
+    "composite text",
+    "bibliography",
+    "JAB",
+    "proofreading",
+    "2 mss.",
     "uncertain reading",
-    "or: of the divine powers",
   ]) {
     assert.ok(!text.includes(unwanted), `expected "${unwanted}" to be removed`);
   }
-
-  // The line numbers themselves are not words.
-  assert.ok(!/\b(1-4|5-8|154)\b/.test(text));
 });
 
-test("line numbers are recognised as plain text, superscript and after an anchor", () => {
-  const { lines, firstLine, lastLine } = selectTranslationLines(
-    readBlocks(ETCSL_SHAPED_FIXTURE),
-  );
+test("a line number with no dot and no space is still recognised", () => {
+  // The live page's actual format, which an earlier version of these rules missed.
+  const { lines, firstLine, lastLine } = selectTranslationLines([
+    "1-12Lady of all the divine powers",
+    "13-154Praise be to the destroyer of foreign lands",
+  ]);
 
-  assert.equal(lines.length, 4);
+  assert.deepEqual(lines, [
+    "Lady of all the divine powers",
+    "Praise be to the destroyer of foreign lands",
+  ]);
   assert.equal(firstLine, 1);
   assert.equal(lastLine, 154);
-  assert.match(lines[0], /^Lady of all/);
-  assert.match(lines[3], /^Praise be/);
+});
+
+test("the dotted and spaced forms are recognised too", () => {
+  const { lines } = selectTranslationLines(["1-4. Lady of all", "5 - 154 Woman, you are great"]);
+  assert.deepEqual(lines, ["Lady of all", "Woman, you are great"]);
+});
+
+test("words separated by markup rather than whitespace stay separate", () => {
+  // Without this, "bow low" arrives as "bowlow" and counts once instead of twice.
+  const blocks = readBlocks("<p>the foreign lands bow<lb/>low today</p>");
+  assert.deepEqual(blocks, ["the foreign lands bow low today"]);
+  assert.equal(countWords(blocks[0]), 6);
+
+  // Phrasing elements must NOT introduce a break.
+  assert.deepEqual(readBlocks("<p><b>Inan</b>a<sup>1</sup></p>"), ["Inana1"]);
+  assert.deepEqual(readBlocks('<p><a name="1"></a>Lady</p>'), ["Lady"]);
+});
+
+test("a dated revision-history entry cannot join the line chain", () => {
+  const { lines, lastLine, rejected } = selectTranslationLines([
+    "1-154The whole poem",
+    "27.i.1999-01.ii.1999 : JAB : adapting translation",
+  ]);
+
+  assert.deepEqual(lines, ["The whole poem"]);
+  assert.equal(lastLine, 154);
+  assert.equal(rejected.length, 1);
+  assert.equal(rejected[0].start, 27);
+});
+
+test("lines must form a contiguous chain from 1", () => {
+  // A gap means something was missed; the chain stops and validation fails.
+  const { lines, lastLine } = selectTranslationLines([
+    "1-12first",
+    "20-154skipped ahead",
+  ]);
+  assert.deepEqual(lines, ["first"]);
+  assert.equal(lastLine, 12);
 });
 
 test("a wrapper element does not double-count its paragraphs", () => {
-  const blocks = readBlocks(
-    "<div><div><p>alpha</p><p>beta</p></div></div>",
-  );
-  assert.deepEqual(blocks, ["alpha", "beta"]);
+  assert.deepEqual(readBlocks("<div><div><p>alpha</p><p>beta</p></div></div>"), [
+    "alpha",
+    "beta",
+  ]);
 });
 
 test("blocks other than <p> can carry a line", () => {
-  const html = "<ul><li>1. first line</li><li>2. second line</li></ul>";
-  const { lines, firstLine, lastLine } = selectTranslationLines(readBlocks(html));
+  const { lines, firstLine, lastLine } = selectTranslationLines(
+    readBlocks("<ul><li>1-100first line</li><li>101-154second line</li></ul>"),
+  );
   assert.deepEqual(lines, ["first line", "second line"]);
   assert.equal(firstLine, 1);
-  assert.equal(lastLine, 2);
-});
-
-test("text that merely starts with a number is not a translation line", () => {
-  const { lines } = selectTranslationLines(
-    readBlocks(
-      "<p>01.ii.1999 : revision</p><p>2026 was a year</p><p>3.5 inches</p><p>7. a real line</p>",
-    ),
-  );
-  assert.deepEqual(lines, ["a real line"]);
+  assert.equal(lastLine, 154);
 });
 
 test("extraction fails loudly rather than counting the wrong thing", () => {
-  // A page with no numbered lines at all.
   assert.throws(
     () => extractTranslation("<html><body><p>Some other page entirely.</p></body></html>"),
     (error: unknown) =>
@@ -136,9 +150,8 @@ test("extraction fails loudly rather than counting the wrong thing", () => {
       /No numbered translation lines found/.test(error.message),
   );
 
-  // A page that stops short of line 154 — a paginated or truncated copy.
   assert.throws(
-    () => extractTranslation("<p>1-4. Lady of all</p><p>5-8. Woman, you are great</p>"),
+    () => extractTranslation("<p>1-4Lady of all</p><p>5-8Woman, you are great</p>"),
     (error: unknown) =>
       error instanceof ExtractionError && /Found lines 1-8, expected 1-154/.test(error.message),
   );

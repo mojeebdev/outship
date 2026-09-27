@@ -67,13 +67,23 @@ function describePage(blocks) {
     console.error(`  … and ${blocks.length - preview.length} more blocks`);
   }
 
-  const { firstLine, lastLine, lines } = selectTranslationLines(blocks);
+  const { firstLine, lastLine, lines, rejected } = selectTranslationLines(blocks);
   console.error(
-    `\nNumbered lines detected: ${lines.length}` +
+    `\nNumbered lines accepted: ${lines.length}` +
       (lines.length > 0 ? ` (covering ${firstLine}-${lastLine})` : ""),
   );
+  if (rejected.length > 0) {
+    // Blocks that opened with a number but couldn't join the chain. Usually
+    // that's page furniture doing its job; a run of them means the chain broke.
+    const shown = rejected
+      .slice(0, 8)
+      .map((candidate) => `${candidate.start}-${candidate.end}`)
+      .join(", ");
+    console.error(`Numbered blocks rejected as out of sequence: ${rejected.length} (${shown})`);
+  }
   console.error(
-    `Expected a line-numbered block per line, covering ${EXPECTED_FIRST_LINE}-${EXPECTED_LAST_LINE}.`,
+    `Expected the line-numbered blocks to run contiguously from ` +
+      `${EXPECTED_FIRST_LINE} to ${EXPECTED_LAST_LINE}.`,
   );
 }
 
