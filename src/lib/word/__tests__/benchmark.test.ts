@@ -223,21 +223,37 @@ test("comparison copy never claims authorship or a record", () => {
   }
 });
 
-test("share text matches the documented template", () => {
+test("share text carries the sharer's number and the challenge", () => {
   assert.equal(
-    shareText(2000, true),
-    "My homepage has 2,000 words. That's 479 more than Enheduanna's poem. How wordy is yours?",
+    shareText(534, true),
+    "how wordyyyyyyyyyy is your website???\n\n" +
+      "my homepage has 534 words. can yours beat a 4,300-year-old poem? 1,521 words.",
   );
   assert.equal(
     shareText(2000, false),
-    "My page has 2,000 words. That's 479 more than Enheduanna's poem. How wordy is yours?",
+    "how wordyyyyyyyyyy is your website???\n\n" +
+      "my page has 2,000 words. can yours beat a 4,300-year-old poem? 1,521 words.",
   );
-  assert.equal(
-    shareText(1520, true),
-    "My homepage has 1,520 words. That's 1 fewer than Enheduanna's poem. How wordy is yours?",
-  );
-  assert.equal(
-    shareText(1521, true),
-    "My homepage has 1,521 words — an exact match with Enheduanna's poem. How wordy is yours?",
-  );
+});
+
+test("share text says homepage only for a homepage", () => {
+  assert.match(shareText(100, true), /my homepage has/);
+  assert.match(shareText(100, false), /my page has/);
+});
+
+test("share text uses thousands separators on both numbers", () => {
+  const text = shareText(12345, true);
+  assert.match(text, /my homepage has 12,345 words/);
+  assert.match(text, /1,521 words\./);
+  assert.ok(!text.includes("12345"));
+  assert.ok(!text.includes("1521"));
+});
+
+test("share text makes no claim the poem is a first or a novel", () => {
+  for (const words of [1, 534, 1521, 90_000]) {
+    const text = shareText(words, true).toLowerCase();
+    for (const forbidden of ["novel", "first novel", "first text", "first writing", "oldest book"]) {
+      assert.ok(!text.includes(forbidden), `share text must not say "${forbidden}"`);
+    }
+  }
 });

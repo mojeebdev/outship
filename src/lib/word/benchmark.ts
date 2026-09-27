@@ -148,22 +148,27 @@ export function compareToBenchmark(words: number): Comparison {
 /**
  * The text an X composer opens with. The person still chooses to post it.
  *
- * "homepage" only when a homepage was scanned — otherwise "page", because we
- * counted one page, not a site.
+ * Carries the sharer's own number, then hands the reader a challenge. It
+ * deliberately does not repeat the comparison ("987 fewer than…") — the share
+ * card sits directly beneath and already shows the domain, the count and the
+ * comparison, so saying it twice wastes the line that could invite a reply.
+ *
+ * "4,300-year-old" is deliberately round: the poem is dated c. 2300 BC, and a
+ * figure derived from the current year would drift by one every January for no
+ * benefit. The word count comes from BENCHMARK so the two cannot disagree.
+ *
+ * "homepage" only when a homepage was scanned — otherwise "page", because one
+ * page was counted, not a site.
  */
 export function shareText(words: number, isHomepage: boolean): string {
-  const subject = isHomepage ? "My homepage" : "My page";
-  const comparison = compareToBenchmark(words);
+  const subject = isHomepage ? "my homepage" : "my page";
 
-  if (comparison.direction === "equal") {
-    return `${subject} has ${formatCount(words)} words — ${
-      comparison.shareFragment
-    }. How wordy is yours?`;
-  }
-
-  return `${subject} has ${formatCount(words)} words. That's ${
-    comparison.shareFragment
-  }. How wordy is yours?`;
+  return [
+    "how wordyyyyyyyyyy is your website???",
+    "",
+    `${subject} has ${formatCount(words)} words. can yours beat a 4,300-year-old poem? ` +
+      `${formatCount(BENCHMARK.words)} words.`,
+  ].join("\n");
 }
 
 /**
