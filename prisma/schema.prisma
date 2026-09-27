@@ -62,3 +62,48 @@ model Subscriber {
   email     String   @unique
   createdAt DateTime @default(now())
 }
+
+// ── Word (word.outship.dev) ──────────────────────────────────────────────────
+
+/// One opt-in entry per normalised hostname for Word's homepage leaderboard.
+/// Rows only ever exist because someone asked to be listed, and every count is
+/// computed server-side — client-supplied numbers are never stored.
+model WordSite {
+  hostname      String   @id
+  url           String
+  wordCount     Int
+  charCount     Int
+  scanCount     Int      @default(1)
+  listedAt      DateTime @default(now())
+  lastScannedAt DateTime @default(now())
+
+  @@index([wordCount])
+}
+
+/// Fixed-window rate limit counters for Word's public endpoints.
+model WordRateLimit {
+  key         String @id
+  windowStart Int
+  count       Int    @default(0)
+}
+
+/// A saved, shareable scan result. Created for every successful scan; the id is
+/// opaque and unguessable, and becomes public only when someone shares or
+/// downloads it. Stores the server-calculated numbers as a stable snapshot, so
+/// an old share link keeps saying what it said when it was made.
+model WordResult {
+  id                   String   @id
+  url                  String
+  hostname             String
+  isHomepage           Boolean
+  words                Int
+  characters           Int
+  scanMs               Int
+  benchmarkWords       Int
+  benchmarkVersion     String
+  comparisonDirection  String
+  comparisonDifference Int
+  createdAt            DateTime @default(now())
+
+  @@index([createdAt])
+}

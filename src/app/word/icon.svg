@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Word">
+  <rect width="32" height="32" rx="7" fill="#0284c7"/>
+  <path d="M6 10l3.2 12h2.6L14 14.2 16.2 22h2.6L22 10h-2.8l-2 8.3-2.2-8.3h-2.4l-2.2 8.3-2-8.3H6z" fill="#fff"/>
+  <circle cx="25" cy="21.5" r="1.8" fill="#fff"/>
+</svg>
