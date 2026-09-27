@@ -454,8 +454,14 @@ deterministic code and fixed templates.
 A compact "Homepage leaderboard" on the Word page, backed by the existing D1
 database (table `WordSite`, migration `migrations/0003_add_word.sql`).
 
-- **Opt-in only.** A row exists only because someone ticked the box and pressed
-  "Add to leaderboard" after a scan. Nothing is listed automatically.
+- **Opt-in only.** A row exists only because someone pressed
+  "Add {domain} to the leaderboard" after a scan. Nothing is listed
+  automatically, and that is deliberate: the person scanning is often not the
+  site's owner, so automatic listing would publish someone else's domain and
+  word count without their knowledge, and would let anyone fill the board with
+  arbitrary domains. The button names the domain and states the consequence,
+  which is what makes the consent specific — a separate checkbox only asked the
+  same question twice, so it was removed.
 - **Homepages only.** The opt-in endpoint refuses anything but a bare homepage,
   and the label says so.
 - **Server-computed counts only.** `POST /api/word/leaderboard` takes a URL and

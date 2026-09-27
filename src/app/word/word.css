@@ -412,13 +412,6 @@
   color: var(--word-ink-2);
 }
 
-.word-opt-in label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
 .word-opt-in-done {
   color: var(--word-success);
 }

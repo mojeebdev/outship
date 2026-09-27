@@ -85,7 +85,6 @@ export function WordCounter() {
   /** Short visible confirmation for actions like copy and opt-in. */
   const [feedback, setFeedback] = useState<string | null>(null);
   const [optIn, setOptIn] = useState<OptInState>("hidden");
-  const [optInChecked, setOptInChecked] = useState(false);
   const inFlight = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -110,7 +109,6 @@ export function WordCounter() {
       const scan = message.result;
       setResult(scan);
       setOptIn(isHomepageRequest(scan.requestedUrl) ? "offered" : "hidden");
-      setOptInChecked(false);
       setAnnouncement(
         `Counted ${formatNumber(scan.words)} words and ${formatNumber(
           scan.characters,
@@ -391,23 +389,24 @@ export function WordCounter() {
                 </span>
               ) : (
                 <>
-                  <label htmlFor="word-opt-in">
-                    <input
-                      id="word-opt-in"
-                      type="checkbox"
-                      checked={optInChecked}
-                      onChange={(event) => setOptInChecked(event.target.checked)}
-                    />
-                    List {hostnameOf(result.url)} publicly on the homepage leaderboard
-                  </label>
+                  {/* The button is the opt-in. Naming the domain in the label
+                      is what makes the consent specific, so a separate
+                      checkbox only asks the same question twice. */}
                   <button
+                    id="word-opt-in"
                     type="button"
                     className="word-button-quiet"
                     onClick={handleOptIn}
-                    disabled={!optInChecked || optIn === "saving"}
+                    disabled={optIn === "saving"}
+                    aria-describedby="word-opt-in-note"
                   >
-                    {optIn === "saving" ? "Adding…" : "Add to leaderboard"}
+                    {optIn === "saving"
+                      ? "Adding…"
+                      : `Add ${hostnameOf(result.url)} to the leaderboard`}
                   </button>
+                  <span id="word-opt-in-note">
+                    Lists the domain and its homepage word count publicly.
+                  </span>
                 </>
               )}
             </div>
