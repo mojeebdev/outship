@@ -231,26 +231,50 @@ Parenthetical stripping is specific to Oxford's editorial notes. **Users' pages
 are counted as they are** — ordinary parentheses and their contents are not
 removed.
 
+### How the translation is found
+
+The translation is selected **structurally**, not by matching Oxford's prose.
+Every line of an ETCSL translation opens with its line number or line range —
+`1-4.`, `154.` — so `scripts/benchmark-extract.mjs` splits the page into its
+innermost text blocks and keeps the ones that start that way. Everything else
+is page furniture: navigation, the title, the footer, the revision history.
+
+That rule doesn't depend on how Oxford words a heading or where the body
+starts, and it recognises a line number whether it is plain text, wrapped in
+`<sup>`, or preceded by an anchor. It then strips the number itself, removes
+parenthetical editorial notes, and normalises whitespace.
+
+It also checks its own work: extraction **fails** unless the blocks it found
+cover lines 1 through 154. A paginated page, a truncated copy or a restructured
+one produces an error and a dump of what was actually on the page — never a
+plausible-looking wrong number.
+
 ### Re-verifying the number
 
 ```bash
-npm run verify:benchmark
+npm run verify:benchmark                              # fetch Oxford live
+npm run verify:benchmark -- --html path/to/saved.htm  # use a saved copy
 ```
 
-Fetches the live ETCSL page, applies the extraction rules in
-`scripts/benchmark-extract.mjs` and the app's own tokeniser, prints the first
-and last 200 characters of the extracted window so the boundaries can be eyeballed,
-and exits non-zero on a mismatch. If it mismatches, work out whether extraction
-or tokenisation moved — do not quietly edit the constant — then bump
-`COUNTING_RULE_VERSION`.
+It prints the first and last 200 characters of the extracted window so the
+boundaries can be eyeballed, saves the fetched page to `scripts/.cache/`
+(gitignored) for offline work, and exits `0` on a match, `1` on a mismatch,
+`2` when it could not check at all. On failure it prints the page's text
+blocks and how many numbered lines it recognised, which is what you need to
+correct the rules.
 
-> **Not verified in this environment.** The sandbox this was built in has an
-> egress allowlist that blocks `etcsl.orinst.ox.ac.uk`, so
-> `npm run verify:benchmark` could not be run here: it exits with
-> `Could not fetch the translation: HTTP 403`. The 1,521 figure is carried as
-> supplied configuration. Run the command once from a network that can reach
-> Oxford before treating the number as confirmed. The extraction rules
-> themselves are covered by a synthetic-fixture test (see Tests).
+If it mismatches, work out whether extraction or tokenisation moved — do not
+quietly edit the constant — then bump `COUNTING_RULE_VERSION`.
+
+> **Still not verified.** `etcsl.orinst.ox.ac.uk` is blocked by the egress
+> allowlist of the environment this was built in, so the number has never been
+> checked against the live page from here. The first real run, on a network
+> that could reach Oxford, failed in extraction rather than counting: the
+> original rules looked for hard-coded phrases that turned out not to be on the
+> page. Those guessed markers are what the structural rule above replaced. The
+> rules are covered by fixture tests (see Tests), but **the 1,521 figure itself
+> is still carried as supplied configuration** — run the command once against
+> the live page before treating it as confirmed.
 
 ### Author image — missing asset
 
@@ -456,9 +480,13 @@ Covers:
   wording, thousands separators, and the absence of authorship or record claims.
 - The X composer text for homepage and non-homepage scans.
 - The ETCSL extraction rules, against a **synthetic** fixture shaped like an
-  ETCSL page (navigation, superscript line numbers, parenthetical notes,
-  revision history). This proves the rules behave; it is not the same as
-  reproducing the live 1,521, which is `npm run verify:benchmark`.
+  ETCSL page: line numbers as plain text, as `<sup>` and after an anchor;
+  navigation, title, revision history and footer that must not be counted;
+  nested wrappers that must not double-count; text that merely begins with a
+  number; and the two ways extraction is required to fail loudly (no numbered
+  lines at all, and a range that doesn't reach line 154). This proves the rules
+  behave; it is not the same as reproducing the live 1,521, which is
+  `npm run verify:benchmark`.
 - Result ids: format, validity checking, collision resistance over 5,000
   samples, and that public URLs always use the production origin.
 
@@ -541,8 +569,11 @@ them are code changes; all three need a human with the right access.
    `https://word.outship.dev/` and confirm it returns the counter (not
    outship's homepage, and not a certificate warning).
 2. **The 1,521 benchmark.** `etcsl.orinst.ox.ac.uk` is blocked by this
-   sandbox's egress allowlist, so `npm run verify:benchmark` could not run.
-   Run it once from a network that can reach Oxford.
+   sandbox's egress allowlist, so `npm run verify:benchmark` has never been
+   run against the live page from here. Run it once from a network that can
+   reach Oxford. If extraction fails, the command prints the page's text
+   blocks and saves the HTML to `scripts/.cache/` — both are what's needed to
+   correct the rules.
 3. **The X link preview.** The metadata and the card were verified directly —
    correct tags in the first HTML response, a real 1200x630 PNG from the
    Workers runtime on both hostnames. That is not the same as X having fetched

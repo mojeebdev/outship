@@ -2,8 +2,9 @@
  * Re-derive Word's historical benchmark from the live ETCSL translation.
  *
  *   npm run verify:benchmark
+ *   npm run verify:benchmark -- --html path/to/saved.htm   (work offline)
  *
- * Fetches Oxford's page, applies the documented extraction rules
+ * Fetches Oxford's page, applies the extraction rules
  * (scripts/benchmark-extract.mjs) and the app's own tokeniser
  * (src/lib/word/count.ts), and compares the result with the number configured
  * in src/lib/word/benchmark.ts.
@@ -11,58 +12,132 @@
  * This runs on demand, never during a user scan. If the number differs, work
  * out whether the extraction or the tokenisation moved before touching the
  * constant, then bump COUNTING_RULE_VERSION.
+ *
+ * On failure it prints what it actually found on the page, so the rules can be
+ * corrected without a second round trip, and saves the raw HTML next to the
+ * script for offline work.
  */
+
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { BENCHMARK } from "../src/lib/word/benchmark.ts";
 import { countWords } from "../src/lib/word/count.ts";
-import { extractTranslation } from "./benchmark-extract.mjs";
+import {
+  EXPECTED_FIRST_LINE,
+  EXPECTED_LAST_LINE,
+  ExtractionError,
+  extractTranslation,
+  readBlocks,
+  selectTranslationLines,
+} from "./benchmark-extract.mjs";
 
-const url = process.argv[2] ?? BENCHMARK.translationUrl;
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const cachePath = path.join(scriptDir, ".cache", "etcsl-tr4072.html");
 
-console.log(`Source:   ${url}`);
+const args = process.argv.slice(2);
+const htmlFlag = args.indexOf("--html");
+const localHtmlPath = htmlFlag === -1 ? null : args[htmlFlag + 1];
+const url = args.find((arg) => arg.startsWith("http")) ?? BENCHMARK.translationUrl;
+
+/** Exit codes: 0 match, 1 mismatch, 2 could not check. */
+function fail(code, ...lines) {
+  for (const line of lines) console.error(line);
+  // Set the code rather than calling process.exit(): an abrupt exit while the
+  // module loader's worker thread is live aborts the process on Windows.
+  process.exitCode = code;
+}
+
+console.log(`Source:   ${localHtmlPath ?? url}`);
 console.log(`Scope:    ${BENCHMARK.scope}`);
 console.log(`Expected: ${BENCHMARK.words.toLocaleString("en-US")} words`);
 console.log(`Rules:    ${BENCHMARK.countingRuleVersion}\n`);
 
-let html;
-try {
-  const response = await fetch(url, {
-    headers: { accept: "text/html", "user-agent": "WordBenchmarkCheck/1.0" },
+/** Print enough of the page to correct the extraction rules from. */
+function describePage(blocks) {
+  console.error(`\nWhat the page actually looks like (${blocks.length} text blocks):\n`);
+
+  const preview = blocks.slice(0, 25);
+  preview.forEach((block, index) => {
+    const text = block.length > 160 ? `${block.slice(0, 160)}…` : block;
+    console.error(`  [${String(index).padStart(2)}] ${text}`);
   });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  html = await response.text();
-} catch (error) {
-  console.error(`Could not fetch the translation: ${error.message}`);
-  console.error("Run this from a network that can reach etcsl.orinst.ox.ac.uk.");
-  process.exit(2);
+  if (blocks.length > preview.length) {
+    console.error(`  … and ${blocks.length - preview.length} more blocks`);
+  }
+
+  const { firstLine, lastLine, lines } = selectTranslationLines(blocks);
+  console.error(
+    `\nNumbered lines detected: ${lines.length}` +
+      (lines.length > 0 ? ` (covering ${firstLine}-${lastLine})` : ""),
+  );
+  console.error(
+    `Expected a line-numbered block per line, covering ${EXPECTED_FIRST_LINE}-${EXPECTED_LAST_LINE}.`,
+  );
 }
 
-let text;
-try {
-  text = extractTranslation(html);
-} catch (error) {
-  console.error(`Extraction failed: ${error.message}`);
-  console.error("Oxford's markup may have changed — check the markers in scripts/benchmark-extract.mjs.");
-  process.exit(2);
+let html;
+if (localHtmlPath) {
+  try {
+    html = await readFile(localHtmlPath, "utf8");
+  } catch (error) {
+    fail(2, `Could not read ${localHtmlPath}: ${error.message}`);
+  }
+} else {
+  try {
+    const response = await fetch(url, {
+      headers: { accept: "text/html", "user-agent": "WordBenchmarkCheck/1.0" },
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    html = await response.text();
+  } catch (error) {
+    fail(
+      2,
+      `Could not fetch the translation: ${error.message}`,
+      "Run this from a network that can reach etcsl.orinst.ox.ac.uk, or pass",
+      "a saved copy with: npm run verify:benchmark -- --html path/to/saved.htm",
+    );
+  }
 }
 
-const actual = countWords(text);
+if (html) {
+  // Keep a copy so the rules can be worked on without hitting Oxford again.
+  try {
+    await mkdir(path.dirname(cachePath), { recursive: true });
+    await writeFile(cachePath, html, "utf8");
+    console.log(`Saved a copy of the page to ${path.relative(process.cwd(), cachePath)}\n`);
+  } catch {
+    // Not being able to cache is never a reason to fail the check.
+  }
 
-// Print the edges of the extracted window so a human can confirm it starts and
-// ends where it should.
-console.log(`First 200 chars: ${text.slice(0, 200)}`);
-console.log(`Last 200 chars:  ${text.slice(-200)}\n`);
-console.log(`Counted:  ${actual.toLocaleString("en-US")} words`);
+  let text;
+  try {
+    text = extractTranslation(html);
+  } catch (error) {
+    fail(2, `Extraction failed: ${error.message}`);
+    describePage(error instanceof ExtractionError ? error.blocks : readBlocks(html));
+  }
 
-if (actual === BENCHMARK.words) {
-  console.log("\nMatches the configured benchmark.");
-  process.exit(0);
+  if (text) {
+    const actual = countWords(text);
+
+    // Print the edges of the extracted window so a human can confirm it starts
+    // and ends where it should.
+    console.log(`First 200 chars: ${text.slice(0, 200)}`);
+    console.log(`Last 200 chars:  ${text.slice(-200)}\n`);
+    console.log(`Counted:  ${actual.toLocaleString("en-US")} words`);
+
+    if (actual === BENCHMARK.words) {
+      console.log("\nMatches the configured benchmark.");
+    } else {
+      fail(
+        1,
+        `\nMISMATCH: counted ${actual.toLocaleString("en-US")}, configured ` +
+          `${BENCHMARK.words.toLocaleString("en-US")} (difference ` +
+          `${Math.abs(actual - BENCHMARK.words).toLocaleString("en-US")}).`,
+        "Investigate extraction and tokenisation before changing the constant.",
+      );
+    }
+  }
 }
-
-console.error(
-  `\nMISMATCH: counted ${actual.toLocaleString("en-US")}, configured ${BENCHMARK.words.toLocaleString(
-    "en-US",
-  )} (difference ${Math.abs(actual - BENCHMARK.words).toLocaleString("en-US")}).`,
-);
-console.error("Investigate extraction and tokenisation before changing the constant.");
-process.exit(1);

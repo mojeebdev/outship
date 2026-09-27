@@ -15,9 +15,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ExtractionError,
   extractTranslation,
+  readBlocks,
+  selectTranslationLines,
   stripEditorialNotes,
-  stripLineNumbers,
 } from "../../../../scripts/benchmark-extract.mjs";
 import {
   BENCHMARK,
@@ -28,24 +30,28 @@ import {
 import { countWords } from "../count";
 
 const ETCSL_SHAPED_FIXTURE = `<!doctype html>
-<html><head><title>The Exaltation of Inana: translation</title></head>
+<html><head><title>The Exaltation of Inana: translation</title>
+<style>.line { margin: 0; }</style></head>
 <body>
-  <nav><a href="/">ETCSL homepage</a> | <a href="/section4/">Section 4</a></nav>
+  <div class="nav"><a href="/">ETCSL homepage</a> | <a href="/section4/">Section 4</a></div>
   <h1>The Exaltation of Inana (Inana B): translation</h1>
-  <p>A version of this composition follows.</p>
-  <p><sup>1-4.</sup> Lady of all the divine powers (or: of the divine powers), resplendent light.</p>
-  <p><sup>5-8.</sup> Woman, you are great, you are noble (uncertain reading).</p>
-  <p>9-12. Your right hand holds the storm, praise be to the destroyer of foreign lands</p>
+  <p>A version of this composition is also available.</p>
+  <div class="translation">
+    <p class="line"><sup>1-4.</sup> Lady of all the divine powers (or: of the divine powers), resplendent light.</p>
+    <p class="line"><a name="5"></a>5-8. Woman, you are great, you are noble (uncertain reading).</p>
+    <p class="line">9-153. Your right hand holds the storm,<br>and the foreign lands tremble.</p>
+    <p class="line"><sup>154.</sup> Praise be to the destroyer of foreign lands</p>
+  </div>
   <h2>Revision history</h2>
   <p>01.ii.1999 : first revision by an editor.</p>
-  <footer>Copyright notice and page footer text.</footer>
+  <div class="footer">Copyright notice and page footer text.</div>
 </body></html>`;
 
 test("the tokeniser follows the documented word rule", () => {
   assert.equal(countWords("Home About Contact"), 3);
   assert.equal(countWords("don't stop"), 2);
   assert.equal(countWords("state-of-the-art"), 1);
-  assert.equal(countWords("Inana’s heart"), 1 + 1);
+  assert.equal(countWords("Inana’s heart"), 2);
   // A comma is not an internal joiner, so "1,521" is two tokens.
   assert.equal(countWords("1,521 words"), 3);
   // Symbols and lone punctuation are not words.
@@ -55,41 +61,23 @@ test("the tokeniser follows the documented word rule", () => {
   assert.equal(countWords("!!! ??? ---"), 0);
 });
 
-test("line-number prefixes are removed", () => {
-  // Whitespace left behind is normalised later in the pipeline.
-  const stripped = (input: string) => stripLineNumbers(input).replace(/\s+/g, " ").trim();
-
-  assert.equal(stripped("1-4. Lady of all"), "Lady of all");
-  assert.equal(stripped(" 1-4. Lady of all"), "Lady of all");
-  assert.equal(stripped("12. Woman, you are great"), "Woman, you are great");
-  assert.equal(stripped("145-154. Praise be"), "Praise be");
-  // A number that is not a line-number prefix is left alone.
-  assert.equal(stripped("revised in 1999."), "revised in 1999.");
-  assert.equal(stripped("she had 12 names"), "she had 12 names");
-});
-
-test("parenthetical editorial notes are removed, including nested ones", () => {
-  assert.equal(stripEditorialNotes("powers (or: of the powers) shine").trim().replace(/\s+/g, " "),
-    "powers shine");
-  assert.equal(
-    stripEditorialNotes("great (uncertain (very) reading) indeed").trim().replace(/\s+/g, " "),
-    "great indeed",
-  );
-});
-
-test("extraction drops navigation, title, superscripts, notes and revision history", () => {
+test("only numbered translation lines are counted", () => {
   const text = extractTranslation(ETCSL_SHAPED_FIXTURE);
 
   assert.equal(
     text,
-    "A version of this composition follows. Lady of all the divine powers , resplendent light. Woman, you are great, you are noble . Your right hand holds the storm, praise be to the destroyer of foreign lands",
+    "Lady of all the divine powers , resplendent light. " +
+      "Woman, you are great, you are noble . " +
+      "Your right hand holds the storm, and the foreign lands tremble. " +
+      "Praise be to the destroyer of foreign lands",
   );
 
-  // Nothing from outside the translation body survives.
+  // Nothing outside the numbered lines survives.
   for (const unwanted of [
     "ETCSL homepage",
     "Section 4",
     "Inana B",
+    "also available",
     "Revision history",
     "first revision",
     "Copyright notice",
@@ -98,13 +86,78 @@ test("extraction drops navigation, title, superscripts, notes and revision histo
   ]) {
     assert.ok(!text.includes(unwanted), `expected "${unwanted}" to be removed`);
   }
+
+  // The line numbers themselves are not words.
+  assert.ok(!/\b(1-4|5-8|154)\b/.test(text));
 });
 
-test("extraction fails loudly when the page shape is wrong", () => {
+test("line numbers are recognised as plain text, superscript and after an anchor", () => {
+  const { lines, firstLine, lastLine } = selectTranslationLines(
+    readBlocks(ETCSL_SHAPED_FIXTURE),
+  );
+
+  assert.equal(lines.length, 4);
+  assert.equal(firstLine, 1);
+  assert.equal(lastLine, 154);
+  assert.match(lines[0], /^Lady of all/);
+  assert.match(lines[3], /^Praise be/);
+});
+
+test("a wrapper element does not double-count its paragraphs", () => {
+  const blocks = readBlocks(
+    "<div><div><p>alpha</p><p>beta</p></div></div>",
+  );
+  assert.deepEqual(blocks, ["alpha", "beta"]);
+});
+
+test("blocks other than <p> can carry a line", () => {
+  const html = "<ul><li>1. first line</li><li>2. second line</li></ul>";
+  const { lines, firstLine, lastLine } = selectTranslationLines(readBlocks(html));
+  assert.deepEqual(lines, ["first line", "second line"]);
+  assert.equal(firstLine, 1);
+  assert.equal(lastLine, 2);
+});
+
+test("text that merely starts with a number is not a translation line", () => {
+  const { lines } = selectTranslationLines(
+    readBlocks(
+      "<p>01.ii.1999 : revision</p><p>2026 was a year</p><p>3.5 inches</p><p>7. a real line</p>",
+    ),
+  );
+  assert.deepEqual(lines, ["a real line"]);
+});
+
+test("extraction fails loudly rather than counting the wrong thing", () => {
+  // A page with no numbered lines at all.
   assert.throws(
     () => extractTranslation("<html><body><p>Some other page entirely.</p></body></html>"),
-    /Could not find the start of the translation/,
+    (error: unknown) =>
+      error instanceof ExtractionError &&
+      /No numbered translation lines found/.test(error.message),
   );
+
+  // A page that stops short of line 154 — a paginated or truncated copy.
+  assert.throws(
+    () => extractTranslation("<p>1-4. Lady of all</p><p>5-8. Woman, you are great</p>"),
+    (error: unknown) =>
+      error instanceof ExtractionError && /Found lines 1-8, expected 1-154/.test(error.message),
+  );
+});
+
+test("a failed extraction carries the blocks it saw, for diagnosis", () => {
+  try {
+    extractTranslation("<html><body><p>alpha</p><p>beta</p></body></html>");
+    assert.fail("expected extraction to fail");
+  } catch (error) {
+    assert.ok(error instanceof ExtractionError);
+    assert.deepEqual(error.blocks, ["alpha", "beta"]);
+  }
+});
+
+test("parenthetical editorial notes are removed, including nested ones", () => {
+  const clean = (input: string) => stripEditorialNotes(input).replace(/\s+/g, " ").trim();
+  assert.equal(clean("powers (or: of the powers) shine"), "powers shine");
+  assert.equal(clean("great (uncertain (very) reading) indeed"), "great indeed");
 });
 
 test("the benchmark configuration is complete and self-consistent", () => {

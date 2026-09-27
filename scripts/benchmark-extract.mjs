@@ -5,11 +5,18 @@
  * rules behave. Kept out of `src/` on purpose: the app never fetches Oxford,
  * it reads the verified number from src/lib/word/benchmark.ts.
  *
+ * The translation is selected *structurally*, not by matching prose. Every
+ * line of an ETCSL translation is a block that opens with its line number or
+ * line range -- "1-4." or "154." -- so a block that starts that way is
+ * translation and a block that doesn't is page furniture: navigation, the
+ * title, the footer, the revision history. That rule doesn't care how Oxford
+ * words its headings or where the body begins, and it fails loudly rather than
+ * quietly counting the wrong thing.
+ *
  * What is counted: the main English translation, lines 1-154.
- * What is removed, in this order:
- *   1. Everything outside the translation body — page navigation, the title
- *      block, the footer and the revision history.
- *   2. Superscript line numbers.
+ * What is removed:
+ *   1. Every block that is not a numbered translation line.
+ *   2. The line numbers themselves, whether plain text or superscript.
  *   3. Parenthetical editorial notes: alternative manuscript readings and
  *      uncertainty markers.
  * Then HTML entities are decoded and whitespace is normalised.
@@ -31,48 +38,63 @@ const DROPPED_ELEMENTS = new Set([
   "noscript",
   "template",
   "svg",
-  "sup", // superscript line numbers
   "nav",
 ]);
 
-const INLINE_ELEMENTS = new Set([
-  "a",
-  "b",
-  "i",
-  "em",
-  "strong",
-  "span",
-  "sub",
-  "u",
-  "small",
-  "cite",
-  "q",
-]);
+/** Elements that can hold one line of translation. */
+const BLOCK_ELEMENTS = new Set(["p", "li", "td", "div", "blockquote"]);
 
 /**
- * Text that marks the start and end of the translation body on the ETCSL page.
- * These are checked rather than assumed: `extractTranslation` throws if it
- * can't find them, instead of silently counting the wrong thing.
+ * A line-number prefix: "1." / "1-4." / "145-154." followed by whitespace.
+ * Both hyphen and en dash are accepted, since typography varies.
  */
-export const BODY_START_MARKERS = [
-  "A version of this composition",
-  "Lady of all the divine powers",
-];
-export const BODY_END_MARKERS = [
-  "Revision history",
-  "praise be to the destroyer of foreign lands",
-];
+const LINE_PREFIX = /^\s*(\d+)(?:\s*[-–]\s*(\d+))?\.\s/;
 
-/** Pull all readable text out of an HTML document, dropping the sets above. */
-export function htmlToText(html) {
-  const pieces = [];
+const WHITESPACE = new RegExp(
+  "[\\s\\u00a0\\u1680\\u2000-\\u200a\\u202f\\u205f\\u3000\\ufeff]+",
+  "gu",
+);
+
+function normalise(text) {
+  return text.replace(WHITESPACE, " ").trim();
+}
+
+/**
+ * Split a document into its innermost block elements.
+ *
+ * Only innermost blocks are returned, so a wrapper `<div>` around the
+ * paragraphs never double-counts its children's text. Line numbers are kept in
+ * the text at this stage -- they are what identifies a translation line.
+ */
+export function readBlocks(html) {
+  const blocks = [];
+
+  /** Open block elements, innermost last. */
+  const stack = [];
   let skipDepth = 0;
   const skipStack = [];
+
+  const closeBlock = () => {
+    const block = stack.pop();
+    if (!block) return;
+
+    const text = normalise(block.pieces.join(""));
+    // A block that contained another block has already contributed its text
+    // through that child; only the innermost one is emitted.
+    if (text && !block.hasBlockChild) blocks.push(text);
+
+    const parent = stack[stack.length - 1];
+    if (parent) {
+      parent.hasBlockChild = true;
+      parent.pieces.push(" ", text, " ");
+    }
+  };
 
   const parser = new Parser(
     {
       onopentag(name) {
         const tag = name.toLowerCase();
+
         if (skipDepth > 0) {
           skipStack.push(tag);
           skipDepth += 1;
@@ -83,10 +105,16 @@ export function htmlToText(html) {
           skipDepth = 1;
           return;
         }
-        if (!INLINE_ELEMENTS.has(tag)) pieces.push(" ");
+        if (BLOCK_ELEMENTS.has(tag)) {
+          stack.push({ tag, pieces: [], hasBlockChild: false });
+          return;
+        }
+        // `<br>` and friends still separate words.
+        if (tag === "br") stack[stack.length - 1]?.pieces.push(" ");
       },
       onclosetag(name) {
         const tag = name.toLowerCase();
+
         if (skipDepth > 0) {
           if (skipStack[skipStack.length - 1] === tag) {
             skipStack.pop();
@@ -94,10 +122,18 @@ export function htmlToText(html) {
           }
           return;
         }
-        if (!INLINE_ELEMENTS.has(tag)) pieces.push(" ");
+        if (BLOCK_ELEMENTS.has(tag) && stack.some((block) => block.tag === tag)) {
+          // Unwind to the matching block, closing anything left open inside it.
+          while (stack.length > 0) {
+            const innermost = stack[stack.length - 1].tag;
+            closeBlock();
+            if (innermost === tag) break;
+          }
+        }
       },
       ontext(text) {
-        if (skipDepth === 0) pieces.push(text);
+        if (skipDepth > 0) return;
+        stack[stack.length - 1]?.pieces.push(text);
       },
     },
     { decodeEntities: true, recognizeSelfClosing: true },
@@ -106,48 +142,39 @@ export function htmlToText(html) {
   parser.write(html);
   parser.end();
 
-  return pieces.join("");
+  while (stack.length > 0) closeBlock();
+
+  return blocks;
 }
 
-/** Narrow the page text down to the translation body. */
-export function sliceTranslationBody(text) {
-  let start = -1;
-  for (const marker of BODY_START_MARKERS) {
-    const index = text.indexOf(marker);
-    if (index !== -1) {
-      start = index;
-      break;
-    }
-  }
-  if (start === -1) {
-    throw new Error(
-      `Could not find the start of the translation. Tried: ${BODY_START_MARKERS.join(", ")}`,
-    );
+/**
+ * Keep only numbered translation lines, and strip the numbers.
+ *
+ * Returns the lines plus the range they cover, so the caller can check that
+ * the whole poem was found and not, say, the first screenful.
+ */
+export function selectTranslationLines(blocks) {
+  const lines = [];
+  let firstLine = Infinity;
+  let lastLine = -Infinity;
+
+  for (const block of blocks) {
+    const match = LINE_PREFIX.exec(block);
+    if (!match) continue;
+
+    const start = Number(match[1]);
+    const end = match[2] === undefined ? start : Number(match[2]);
+    firstLine = Math.min(firstLine, start);
+    lastLine = Math.max(lastLine, end);
+
+    lines.push(block.slice(match[0].length));
   }
 
-  let end = -1;
-  for (const marker of BODY_END_MARKERS) {
-    const index = text.indexOf(marker, start);
-    if (index !== -1) {
-      // The first marker is a heading that follows the body; the second is the
-      // body's own last line, so keep it.
-      end = marker === "Revision history" ? index : index + marker.length;
-      break;
-    }
-  }
-  if (end === -1) {
-    throw new Error(
-      `Could not find the end of the translation. Tried: ${BODY_END_MARKERS.join(", ")}`,
-    );
-  }
-
-  return text.slice(start, end);
-}
-
-/** Remove line-number prefixes that are plain text rather than superscripts. */
-export function stripLineNumbers(text) {
-  // "12." / "1-4." / "145-154." at a segment boundary.
-  return text.replace(/(^|\s)\d+(?:-\d+)?\.(?=\s)/g, "$1");
+  return {
+    lines,
+    firstLine: Number.isFinite(firstLine) ? firstLine : null,
+    lastLine: Number.isFinite(lastLine) ? lastLine : null,
+  };
 }
 
 /** Remove Oxford's parenthetical editorial notes, including nested ones. */
@@ -161,13 +188,44 @@ export function stripEditorialNotes(text) {
   return current;
 }
 
-const WHITESPACE = new RegExp(
-  "[\\s\\u00a0\\u1680\\u2000-\\u200a\\u202f\\u205f\\u3000\\ufeff]+",
-  "gu",
-);
+export const EXPECTED_FIRST_LINE = 1;
+export const EXPECTED_LAST_LINE = 154;
 
-/** Full pipeline: raw ETCSL HTML in, countable translation text out. */
+/**
+ * Full pipeline: raw ETCSL HTML in, countable translation text out.
+ *
+ * Throws with a description of what it did find if the page doesn't look like
+ * a translation covering lines 1-154 -- a wrong number is worse than no number.
+ */
 export function extractTranslation(html) {
-  const body = sliceTranslationBody(htmlToText(html));
-  return stripEditorialNotes(stripLineNumbers(body)).replace(WHITESPACE, " ").trim();
+  const blocks = readBlocks(html);
+  const { lines, firstLine, lastLine } = selectTranslationLines(blocks);
+
+  if (lines.length === 0) {
+    throw new ExtractionError(
+      "No numbered translation lines found. Every line of an ETCSL translation " +
+        'should begin with its line number, like "1-4.".',
+      blocks,
+    );
+  }
+
+  if (firstLine !== EXPECTED_FIRST_LINE || lastLine !== EXPECTED_LAST_LINE) {
+    throw new ExtractionError(
+      `Found lines ${firstLine}-${lastLine}, expected ` +
+        `${EXPECTED_FIRST_LINE}-${EXPECTED_LAST_LINE}. The page may be paginated, ` +
+        "or the poem's length may have been revised.",
+      blocks,
+    );
+  }
+
+  return normalise(stripEditorialNotes(lines.join(" ")));
+}
+
+/** Carries the blocks it saw, so failures can be diagnosed without a re-run. */
+export class ExtractionError extends Error {
+  constructor(message, blocks) {
+    super(message);
+    this.name = "ExtractionError";
+    this.blocks = blocks;
+  }
 }
