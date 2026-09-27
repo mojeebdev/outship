@@ -21,7 +21,14 @@ const strip = [
   { Icon: IconSeal, size: 44 },
 ];
 
-const columns: Array<{ heading: string; links: Array<{ label: string; href: string }> }> = [
+type FooterLink = {
+  label: string;
+  href: string;
+  /** A different hostname, so it needs a plain anchor rather than next/link. */
+  external?: boolean;
+};
+
+const columns: Array<{ heading: string; links: FooterLink[] }> = [
   {
     heading: "info",
     links: [
@@ -38,6 +45,7 @@ const columns: Array<{ heading: string; links: Array<{ label: string; href: stri
       { label: "index", href: "/builders" },
       { label: "streaks", href: "/streaks" },
       { label: "profile", href: "/profile" },
+      { label: "word counter", href: "https://word.outship.dev", external: true },
     ],
   },
 ];
@@ -80,15 +88,25 @@ export function Footer() {
             <span className="text-xs uppercase tracking-wide text-white/40">
               {heading}
             </span>
-            {links.map(({ label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                className="text-sm text-white/80 hover:text-base-blue"
-              >
-                {label}
-              </Link>
-            ))}
+            {links.map(({ label, href, external }) =>
+              external ? (
+                <a
+                  key={label}
+                  href={href}
+                  className="text-sm text-white/80 hover:text-base-blue"
+                >
+                  {label}
+                </a>
+              ) : (
+                <Link
+                  key={label}
+                  href={href}
+                  className="text-sm text-white/80 hover:text-base-blue"
+                >
+                  {label}
+                </Link>
+              ),
+            )}
           </div>
         ))}
 
