@@ -13,21 +13,21 @@ const featuredShips: Array<{
     Icon: IconShip,
     title: "outship v0.1 is live",
     description: "the ship log opens for the first cohort.",
-    date: "oct 2026",
+    date: "nov 2026",
   },
   {
     tag: "streak",
     Icon: IconStreak,
     title: "30-day club opens",
-    description: "first builders to hit a streak get badged.",
+    description: "hit a 30-day streak and the board badges you.",
     date: "nov 2026",
   },
   {
     tag: "onchain",
     Icon: IconSeal,
     title: "ship attestations land on base",
-    description: "verify any ship onchain, free, forever.",
-    date: "oct 2026",
+    description: "attest a public ship for a fraction of a cent. anyone can check it, forever.",
+    date: "nov 2026",
   },
 ];
 
