@@ -113,13 +113,14 @@ first, then repeat on Base mainnet.
    Save the key with `npx wrangler secret put OUTSHIP_ATTESTER_PRIVATE_KEY`
    (paste it at the prompt), then clear your terminal. It never goes in a
    file, a chat or a commit, and it needs no ETH. Keep the address.
-2. **Open Remix** (remix.ethereum.org) and create two files with the exact
-   contents of `contracts/remix/OutshipShipResolver.flat.sol` and
-   `contracts/remix/compiler_config.json`.
+2. **Open Remix** (remix.ethereum.org) and create a file with the exact
+   contents of `contracts/remix/OutshipShipResolver.flat.sol`.
 3. **Compile.** Solidity compiler tab: compiler `0.8.27`, open *Advanced
-   Configurations*, choose *Use configuration file* and pick
-   `compiler_config.json` (optimizer 10000 runs, viaIR, evm `paris`), then
-   compile the flat file.
+   Configurations* and tick *Enable optimization* (200 runs); leave
+   everything else at its default. No via-IR or config file is needed
+   (`compiler_config.json` holds the same settings, if you prefer one). Then
+   compile the flat file. Note the settings: verification has to use the
+   same ones.
 4. **Deploy.** Deploy & run tab: environment *Injected Provider* with your
    wallet on Base Sepolia (it needs a little ETH; the deploy is about 2.4M
    gas). Pick `OutshipShipResolver` from the contract list (the flat file

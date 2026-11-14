@@ -1,9 +1,7 @@
 {
   "language": "Solidity",
   "settings": {
-    "optimizer": { "enabled": true, "runs": 10000 },
-    "viaIR": true,
-    "evmVersion": "paris",
+    "optimizer": { "enabled": true, "runs": 200 },
     "outputSelection": {
       "*": {
         "": ["ast"],
