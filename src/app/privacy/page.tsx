@@ -114,8 +114,9 @@ export default function PrivacyPage() {
         <Section title="cookies">
           <p>
             only what sign-in needs: a signed session cookie that lasts 30
-            days, and a short-lived cookie that protects the github sign-in
-            step for 10 minutes. no analytics, advertising or tracking
+            days, a cookie with no data in it that tells the menu you&apos;re
+            signed in, and a short-lived cookie that protects the github
+            sign-in step for 10 minutes. no analytics, advertising or tracking
             cookies.
           </p>
         </Section>

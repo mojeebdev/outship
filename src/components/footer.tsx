@@ -9,6 +9,7 @@ import {
   LogoMark,
 } from "@/components/icons";
 import { EmailCaptureForm } from "@/components/email-capture-form";
+import { AccountNavLink } from "@/components/account-nav-link";
 
 const strip = [
   { Icon: IconNode, size: 16 },
@@ -35,6 +36,7 @@ const columns: Array<{ heading: string; links: FooterLink[] }> = [
       { label: "about", href: "/about" },
       { label: "manifesto", href: "/manifesto" },
       { label: "changelog", href: "/changelog" },
+      { label: "faq", href: "/faq" },
       { label: "contact", href: "/contact" },
     ],
   },
@@ -44,7 +46,6 @@ const columns: Array<{ heading: string; links: FooterLink[] }> = [
       { label: "leaderboard", href: "/leaderboard" },
       { label: "index", href: "/builders" },
       { label: "streaks", href: "/streaks" },
-      { label: "profile", href: "/profile" },
       { label: "word counter", href: "https://word.outship.dev", external: true },
     ],
   },
@@ -107,6 +108,9 @@ export function Footer() {
                 </Link>
               ),
             )}
+            {heading === "product" && (
+              <AccountNavLink className="text-sm text-white/80 hover:text-base-blue" />
+            )}
           </div>
         ))}
 
@@ -138,16 +142,34 @@ export function Footer() {
       </div>
 
       <div className="mx-auto flex max-w-6xl flex-col gap-4 border-b border-white/10 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 text-sm text-white/60">
-          <span className="flex h-6 w-6 items-center justify-center rounded bg-white/10 text-xs font-medium text-white">
-            BL
-          </span>
+        <a
+          href="https://blindspotlab.xyz"
+          target="_blank"
+          rel="noreferrer"
+          className="flex w-fit items-center gap-2.5 text-sm text-white/60 transition hover:text-white"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- a tiny static SVG; next/image adds nothing here */}
+          <img
+            src="/brand/blindspotlab-mark.svg"
+            alt=""
+            width={24}
+            height={24}
+            className="h-6 w-6 rounded-[3px] ring-1 ring-white/15"
+          />
           a blindspotlab product
-        </div>
-        <div className="flex items-center gap-2 text-sm text-white/60">
-          <span className="h-3 w-3 rounded-full bg-base-blue" />
+        </a>
+        <a
+          href="https://base.org"
+          target="_blank"
+          rel="noreferrer"
+          className="flex w-fit items-center gap-2.5 text-sm text-white/60 transition hover:text-white"
+        >
+          {/* The Base square, Base's logo. */}
+          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+            <rect width="24" height="24" rx="2.5" fill="#0000FF" />
+          </svg>
           powered by base
-        </div>
+        </a>
       </div>
 
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">

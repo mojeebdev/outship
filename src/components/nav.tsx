@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/icons";
 import { NavMenu, type NavLink } from "@/components/nav-menu";
+import { AccountNavLink } from "@/components/account-nav-link";
 
 const LINKS: NavLink[] = [
   { href: "/leaderboard", label: "leaderboard" },
   { href: "/builders", label: "index" },
   { href: "/streaks", label: "streaks" },
-  { href: "/profile", label: "profile" },
 ];
 
 export function Nav() {
@@ -29,6 +29,7 @@ export function Nav() {
                 {label}
               </Link>
             ))}
+            <AccountNavLink className="hover:text-base-blue" />
           </nav>
 
           <NavMenu links={LINKS} />

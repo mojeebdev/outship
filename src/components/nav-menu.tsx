@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { IconArrowRight } from "@/components/icons";
+import { PROFILE_LINK, SIGN_IN_LINK } from "@/components/account-nav-link";
+import { useSignedIn } from "@/components/use-signed-in";
 
 export type NavLink = { href: string; label: string };
 
@@ -13,6 +15,7 @@ export function NavMenu({ links }: { links: NavLink[] }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const rootRef = useRef<HTMLDivElement>(null);
+  const signedIn = useSignedIn();
 
   useEffect(() => {
     if (!open) return;
@@ -79,6 +82,32 @@ export function NavMenu({ links }: { links: NavLink[] }) {
               </li>
             );
           })}
+          {signedIn === true && (
+            <li className="border-b border-border last:border-b-0">
+              <Link
+                href={PROFILE_LINK.href}
+                aria-current={pathname === PROFILE_LINK.href ? "page" : undefined}
+                onClick={() => setOpen(false)}
+                className={`flex items-center justify-between py-3.5 text-base transition hover:text-base-blue ${
+                  pathname === PROFILE_LINK.href ? "font-medium text-base-blue" : ""
+                }`}
+              >
+                {PROFILE_LINK.label}
+                <IconArrowRight className="h-4 w-4 text-text-muted-2" aria-hidden="true" />
+              </Link>
+            </li>
+          )}
+          {signedIn === false && (
+            <li className="border-b border-border last:border-b-0">
+              <a
+                href={SIGN_IN_LINK.href}
+                className="flex items-center justify-between py-3.5 text-base transition hover:text-base-blue"
+              >
+                {SIGN_IN_LINK.label}
+                <IconArrowRight className="h-4 w-4 text-text-muted-2" aria-hidden="true" />
+              </a>
+            </li>
+          )}
         </ul>
       </nav>
     </div>
