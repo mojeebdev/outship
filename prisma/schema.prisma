@@ -38,6 +38,9 @@ model Ship {
   shipType    ShipType
   identifier  String
   commitSha   String
+  // Ships from private repos count toward streak and score, but their repo
+  // and identifier are never shown publicly and they can't be attested.
+  isPrivate   Boolean      @default(false)
   shippedAt   DateTime
   createdAt   DateTime     @default(now())
   attestation Attestation?

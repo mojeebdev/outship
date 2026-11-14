@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
-import { IconGrid, IconSeal, IconShip, IconStreak } from "@/components/icons";
+import { IconGrid, IconLock, IconSeal, IconShip, IconStreak } from "@/components/icons";
 import { AttestationBadge } from "@/components/attestation-badge";
 
 export const dynamic = "force-dynamic";
@@ -101,13 +101,24 @@ export default async function BuilderProfilePage({
                     <IconShip className="h-4 w-4 text-void" />
                   </span>
                   <div className="flex flex-1 flex-col">
+                    {/* Private ships count, but the repo and tag/PR never
+                        appear on a public page. */}
                     <span className="text-sm font-medium">
                       {ship.shipType === "RELEASE" ? "release" : "merge"} ·{" "}
-                      {ship.repo}
+                      {ship.isPrivate ? (
+                        <span className="inline-flex items-center gap-1 text-text-muted-1">
+                          <IconLock className="h-3.5 w-3.5" aria-hidden="true" />
+                          private repo
+                        </span>
+                      ) : (
+                        ship.repo
+                      )}
                     </span>
-                    <span className="text-xs text-text-muted-2">
-                      {ship.identifier}
-                    </span>
+                    {!ship.isPrivate && (
+                      <span className="text-xs text-text-muted-2">
+                        {ship.identifier}
+                      </span>
+                    )}
                   </div>
                   <span className="text-xs text-text-muted-2">
                     {ship.shippedAt.toLocaleDateString("en-US", {

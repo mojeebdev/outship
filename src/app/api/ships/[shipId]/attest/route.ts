@@ -40,6 +40,11 @@ export async function POST(
     return Response.json({ error: "ship not found" }, { status: 404 });
   }
 
+  // An attestation would put the repo name onchain, permanently and publicly.
+  if (ship.isPrivate) {
+    return Response.json({ error: "ships from private repos can't be attested" }, { status: 400 });
+  }
+
   if (ship.attestation) {
     return Response.json({ error: "ship already attested" }, { status: 409 });
   }

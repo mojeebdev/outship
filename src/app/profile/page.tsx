@@ -9,6 +9,7 @@ import {
   IconArrowUpRight,
   IconGithub,
   IconGrid,
+  IconLock,
   IconLogout,
   IconNode,
   IconSeal,
@@ -162,9 +163,17 @@ export default async function ProfilePage() {
                     <IconShip className="h-4 w-4 text-void" />
                   </span>
                   <div className="flex flex-1 flex-col">
-                    <span className="text-sm font-medium">
-                      {ship.shipType === "RELEASE" ? "release" : "merge"} ·{" "}
-                      {ship.repo}
+                    <span className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
+                      <span>
+                        {ship.shipType === "RELEASE" ? "release" : "merge"} ·{" "}
+                        {ship.repo}
+                      </span>
+                      {ship.isPrivate && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-cream px-2 py-0.5 text-xs font-normal text-text-muted-1">
+                          <IconLock className="h-3 w-3" aria-hidden="true" />
+                          private · hidden on your public profile
+                        </span>
+                      )}
                     </span>
                     <span className="text-xs text-text-muted-2">
                       {ship.identifier}
@@ -182,6 +191,13 @@ export default async function ProfilePage() {
                       chain={ship.attestation.chain}
                       easUid={ship.attestation.easUid}
                     />
+                  ) : ship.isPrivate ? (
+                    <span
+                      className="shrink-0 text-xs text-text-muted-2"
+                      title="An attestation would put this repo's name onchain, permanently."
+                    >
+                      not attestable
+                    </span>
                   ) : (
                     <AttestShipButton
                       ship={{

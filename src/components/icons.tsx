@@ -173,6 +173,23 @@ export function IconRefresh(props: IconProps) {
   );
 }
 
+/** i-lock — private, not shown publicly. */
+export function IconLock(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="square"
+      {...props}
+    >
+      <rect x="4" y="9" width="12" height="8" />
+      <path d="M7 9V6a3 3 0 0 1 6 0v3" />
+    </svg>
+  );
+}
+
 /** GitHub brand mark — third-party icon, left as-is. */
 export function IconGithub(props: IconProps) {
   return (

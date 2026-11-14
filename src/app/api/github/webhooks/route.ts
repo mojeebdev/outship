@@ -10,6 +10,7 @@ type Ship = {
   shipType: "RELEASE" | "MERGE";
   identifier: string;
   commitSha: string;
+  isPrivate: boolean;
   shippedAt: Date;
   githubId: number;
   githubLogin: string;
@@ -20,10 +21,11 @@ function shipFromPayload(
   payload: Record<string, unknown>,
 ): Ship | null {
   const repository = payload.repository as
-    | { owner: { login: string }; name: string; default_branch: string }
+    | { owner: { login: string }; name: string; default_branch: string; private?: boolean }
     | undefined;
   if (!repository) return null;
   const repo = `${repository.owner.login}/${repository.name}`;
+  const isPrivate = repository.private === true;
 
   if (event === "release") {
     const release = payload.release as
@@ -45,6 +47,7 @@ function shipFromPayload(
       identifier: release.tag_name,
       // best effort: release payloads don't always carry a real commit SHA
       commitSha: release.target_commitish,
+      isPrivate,
       shippedAt: new Date(release.published_at ?? release.created_at),
       githubId: release.author.id,
       githubLogin: release.author.login,
@@ -76,6 +79,7 @@ function shipFromPayload(
       shipType: "MERGE",
       identifier: String(pr.number),
       commitSha: pr.merge_commit_sha,
+      isPrivate,
       shippedAt: new Date(pr.merged_at),
       githubId: pr.user.id,
       githubLogin: pr.user.login,
@@ -126,6 +130,7 @@ export async function POST(request: Request) {
         shipType: ship.shipType,
         identifier: ship.identifier,
         commitSha: ship.commitSha,
+        isPrivate: ship.isPrivate,
         shippedAt: ship.shippedAt,
       },
     });
