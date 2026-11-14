@@ -1,7 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb } from "@/lib/db";
 import { verifyGithubSignature } from "@/lib/github-webhook";
-import { applyShipToStreak, computeScore } from "@/lib/score";
+import { applyShipToStreak, computeScore, shipPoints } from "@/lib/score";
 
 export const dynamic = "force-dynamic";
 
@@ -164,25 +164,21 @@ function shipFromPayload(
   return null;
 }
 
-async function shipCounts(db: Db, builderId: string) {
-  const counts = await db.ship.groupBy({
-    by: ["shipType"],
+async function builderPoints(db: Db, builderId: string) {
+  const ships = await db.ship.findMany({
     where: { builderId },
-    _count: true,
+    select: { shipType: true, shippedAt: true },
   });
-  type ShipCount = { shipType: ShipType; _count: number };
-  const count = (type: ShipType) =>
-    (counts as ShipCount[]).find((c) => c.shipType === type)?._count ?? 0;
-  return { releases: count("RELEASE"), merges: count("MERGE"), pushes: count("PUSH") };
+  return shipPoints(ships);
 }
 
 async function rescore(db: Db, builderId: string) {
   const builder = await db.builder.findUnique({ where: { id: builderId } });
   if (!builder) return;
-  const counts = await shipCounts(db, builderId);
+  const points = await builderPoints(db, builderId);
   await db.builder.update({
     where: { id: builderId },
-    data: { score: computeScore({ ...counts, currentStreak: builder.currentStreak }) },
+    data: { score: computeScore({ points, currentStreak: builder.currentStreak }) },
   });
 }
 
@@ -284,7 +280,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const counts = await shipCounts(db, builder.id);
+  const points = await builderPoints(db, builder.id);
   const streak = applyShipToStreak(
     {
       currentStreak: builder.currentStreak,
@@ -300,7 +296,7 @@ export async function POST(request: Request) {
       currentStreak: streak.currentStreak,
       longestStreak: streak.longestStreak,
       lastShipDate: streak.lastShipDate,
-      score: computeScore({ ...counts, currentStreak: streak.currentStreak }),
+      score: computeScore({ points, currentStreak: streak.currentStreak }),
     },
   });
 

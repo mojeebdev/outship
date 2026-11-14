@@ -1,28 +1,37 @@
 // Ranking formula: releases weigh most (a stronger "shipped something real"
-// signal), then merged PRs, then pushes, which only ever count once a day.
-// Streak is capped so it can't dominate output.
-const RELEASE_WEIGHT = 5;
-const MERGE_WEIGHT = 2;
-const PUSH_WEIGHT = 1;
+// signal), then merged PRs, then pushes. Streak is capped so it can't
+// dominate output.
+export const SHIP_WEIGHTS = { RELEASE: 5, MERGE: 2, PUSH: 1 } as const;
 export const STREAK_CAP = 30;
 
+// How many ships of each type can score per builder per UTC day. Ships past
+// the cap are still recorded and shown; they just don't add points, so a
+// script publishing empty releases or self-merging PRs can't farm the board.
+// Per builder rather than per repo, so spinning up more repos doesn't help.
+export const DAILY_CAPS = { RELEASE: 2, MERGE: 5, PUSH: 1 } as const;
+
+type ShipType = keyof typeof SHIP_WEIGHTS;
+
+export function shipPoints(ships: { shipType: ShipType; shippedAt: Date }[]): number {
+  const countedToday = new Map<string, number>();
+  let points = 0;
+  for (const ship of ships) {
+    const key = `${toUtcDayNumber(ship.shippedAt)}:${ship.shipType}`;
+    const count = (countedToday.get(key) ?? 0) + 1;
+    countedToday.set(key, count);
+    if (count <= DAILY_CAPS[ship.shipType]) points += SHIP_WEIGHTS[ship.shipType];
+  }
+  return points;
+}
+
 export function computeScore({
-  releases,
-  merges,
-  pushes,
+  points,
   currentStreak,
 }: {
-  releases: number;
-  merges: number;
-  pushes: number;
+  points: number;
   currentStreak: number;
 }): number {
-  return (
-    releases * RELEASE_WEIGHT +
-    merges * MERGE_WEIGHT +
-    pushes * PUSH_WEIGHT +
-    Math.min(currentStreak, STREAK_CAP)
-  );
+  return points + Math.min(currentStreak, STREAK_CAP);
 }
 
 function toUtcDayNumber(date: Date): number {

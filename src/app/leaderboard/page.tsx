@@ -30,8 +30,9 @@ export default async function LeaderboardPage() {
         <div>
           <h1 className="text-3xl font-medium sm:text-4xl">the leaderboard</h1>
           <p className="mt-2 text-text-muted-1">
-            ranked by verified ships, streaks, and diff size — pulled
-            straight from github.
+            ranked by verified ships, pulled straight from github: releases
+            5, merged PRs 2, a push to main 1, plus a point per streak day.
+            daily caps keep it about shipping, not scripting.
           </p>
         </div>
 
