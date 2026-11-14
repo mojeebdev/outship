@@ -3,6 +3,7 @@ import { Hero } from "@/components/hero";
 import { FeaturedShips } from "@/components/featured-ships";
 import { ShipsGrid } from "@/components/ships-grid";
 import { ManifestoTeaser } from "@/components/manifesto-teaser";
+import { FaqTeaser } from "@/components/faq-teaser";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
       <Hero />
       <FeaturedShips />
       <ShipsGrid />
+      <FaqTeaser />
       <ManifestoTeaser />
     </SiteShell>
   );
