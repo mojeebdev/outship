@@ -4,8 +4,10 @@ import { SiteShell } from "@/components/site-shell";
 import { getCurrentBuilder } from "@/lib/auth/current-builder";
 import { getDb } from "@/lib/db";
 import { ConnectGithubButton } from "@/components/connect-github-button";
+import { GITHUB_APP_INSTALL_URL } from "@/lib/github-app";
 import {
   IconArrowUpRight,
+  IconGithub,
   IconGrid,
   IconLogout,
   IconNode,
@@ -66,12 +68,12 @@ export default async function ProfilePage() {
   return (
     <SiteShell>
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-text-muted-1">welcome back</p>
             <h1 className="text-2xl font-medium">{builder.githubLogin}</h1>
           </div>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-4 whitespace-nowrap text-sm">
             <Link
               href={`/@${builder.githubLogin}`}
               className="inline-flex items-center gap-1.5 text-text-muted-1 hover:text-base-blue"
@@ -89,6 +91,42 @@ export default async function ProfilePage() {
             </Link>
           </div>
         </div>
+
+        {builder.installationId ? (
+          <p className="-mt-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-muted-1">
+            <IconGithub className="h-4 w-4" aria-hidden="true" />
+            tracking your repos through the outship GitHub App ·
+            <a
+              href={GITHUB_APP_INSTALL_URL}
+              className="inline-flex items-center gap-1 text-base-blue hover:underline"
+            >
+              manage repos
+              <IconArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+          </p>
+        ) : (
+          <div className="flex flex-col gap-4 rounded-lg border border-base-blue bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-blue-tint">
+                <IconNode className="h-4 w-4 text-base-blue" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="font-medium">one more step: install the GitHub App</p>
+                <p className="mt-1 text-sm text-text-muted-1">
+                  pick the repos outship should watch. published releases and
+                  PRs merged to the default branch become ships.
+                </p>
+              </div>
+            </div>
+            <a
+              href={GITHUB_APP_INSTALL_URL}
+              className="inline-flex shrink-0 items-center justify-center gap-2.5 rounded-md border border-base-blue bg-base-blue px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+            >
+              <IconGithub className="h-4 w-4" aria-hidden="true" />
+              install on github
+            </a>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {stats.map(({ label, value, Icon }) => (
@@ -109,8 +147,9 @@ export default async function ProfilePage() {
           <h2 className="text-lg font-medium">ship feed</h2>
           {recentShips.length === 0 ? (
             <p className="text-sm text-text-muted-1">
-              nothing shipped yet — merge a PR or publish a release and
-              it&apos;ll show up here.
+              {builder.installationId
+                ? "nothing shipped yet — merge a PR or publish a release on a tracked repo and it'll show up here."
+                : "nothing shipped yet — install the GitHub App above, then merge a PR or publish a release."}
             </p>
           ) : (
             <ol className="flex flex-col gap-3">

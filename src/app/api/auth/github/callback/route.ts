@@ -1,6 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb } from "@/lib/db";
 import { createSessionCookieValue, readCookie, sessionCookieHeader } from "@/lib/auth/session";
+import { fetchUserInstallationId } from "@/lib/github-app";
 
 export const dynamic = "force-dynamic";
 
@@ -57,11 +58,14 @@ export async function GET(request: Request) {
   }
   const user = (await userResponse.json()) as { id: number; login: string };
 
+  const installationId = await fetchUserInstallationId(tokenData.access_token, user.id);
+
   const db = await getDb();
   const builder = await db.builder.upsert({
     where: { githubId: user.id },
-    update: { githubLogin: user.login },
-    create: { githubId: user.id, githubLogin: user.login },
+    // undefined (GitHub didn't answer) leaves the stored value as it was.
+    update: { githubLogin: user.login, installationId },
+    create: { githubId: user.id, githubLogin: user.login, installationId: installationId ?? null },
   });
 
   const sessionValue = await createSessionCookieValue(builder.id, env.SESSION_SECRET);
