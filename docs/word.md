@@ -669,7 +669,9 @@ access. Two are now done, kept here with their results rather than deleted.
    aggressively, so a stale preview after a change is expected and needs a
    re-scrape, not a code fix.
 
-   Also still unexercised: a scan of a real website on the live site. Every
-   network path in the test suite is stubbed, and the local runtime could not
-   reach the internet, so the first genuine run of DNS-over-HTTPS validation
-   against a real host happens in production.
+   ~~Also still unexercised: a scan of a real website on the live site.~~
+   **Done** — verified against production on 2026-11-14: `POST
+   https://word.outship.dev/api/word/count` with `{"url":"example.com"}`
+   returned a real count (25 words, 156 characters) and a saved share link,
+   confirming DNS-over-HTTPS resolution and the live fetch path both work
+   against a real host, not just the stubbed test suite.
