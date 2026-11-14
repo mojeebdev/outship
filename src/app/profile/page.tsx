@@ -10,19 +10,16 @@ import { GITHUB_APP_INSTALL_URL } from "@/lib/github-app";
 import {
   IconArrowUpRight,
   IconGithub,
-  IconGrid,
   IconLock,
   IconLogout,
   IconNode,
-  IconSeal,
   IconShip,
-  IconStreak,
 } from "@/components/icons";
 import { AttestShipButton } from "@/components/attest-ship-button";
 import { AttestationBadge } from "@/components/attestation-badge";
-import { BuilderAvatar } from "@/components/builder-bits";
-import { allTimeRank } from "@/lib/builders";
-import { loadHeatmap } from "@/lib/profile-data";
+import { loadHeatmap, loadProfileFacts } from "@/lib/profile-data";
+import { ProfileHeader, ProfileStats } from "@/components/profile-parts";
+import { ReadmeBadgeBox } from "@/components/readme-badge-box";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
 
 export const metadata: Metadata = {
@@ -54,8 +51,8 @@ export default async function ProfilePage() {
   }
 
   const db = await getDb();
-  const [rank, totalShips, recentShips, subscriber, installation, heatmap] = await Promise.all([
-    allTimeRank(db, builder),
+  const [facts, totalShips, recentShips, subscriber, installation, heatmap] = await Promise.all([
+    loadProfileFacts(db, builder, { publicOnly: false }),
     db.ship.count({ where: { builderId: builder.id } }),
     db.ship.findMany({
       where: { builderId: builder.id },
@@ -69,24 +66,11 @@ export default async function ProfilePage() {
   ]);
   const recapOn = subscriber?.status === "CONFIRMED";
 
-  const stats = [
-    { label: "streak", value: builder.currentStreak, Icon: IconStreak },
-    { label: "ships", value: totalShips, Icon: IconShip },
-    { label: "rank", value: rank ? `#${rank}` : "hidden", Icon: IconGrid },
-    { label: "score", value: builder.score, Icon: IconSeal },
-  ];
-
   return (
     <SiteShell>
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <BuilderAvatar githubId={builder.githubId} login={builder.githubLogin} size={48} />
-            <div>
-              <p className="text-sm text-text-muted-1">welcome back</p>
-              <h1 className="text-2xl font-medium">{builder.githubLogin}</h1>
-            </div>
-          </div>
+          <ProfileHeader builder={builder} claimed languages={facts.languages} eyebrow="welcome back" />
           <div className="flex items-center gap-4 whitespace-nowrap text-sm">
             <Link
               href={`/@${builder.githubLogin}`}
@@ -142,20 +126,7 @@ export default async function ProfilePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map(({ label, value, Icon }) => (
-            <div
-              key={label}
-              className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded bg-blue-tint">
-                <Icon className="h-4 w-4 text-base-blue" />
-              </span>
-              <span className="text-2xl font-medium">{value}</span>
-              <span className="text-sm text-text-muted-1">{label}</span>
-            </div>
-          ))}
-        </div>
+        <ProfileStats builder={builder} facts={facts} totalShips={totalShips} unrankedLabel="hidden" />
 
         <div className="flex flex-col gap-4">
           <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />
@@ -225,6 +196,8 @@ export default async function ProfilePage() {
             </ol>
           )}
         </div>
+
+        <ReadmeBadgeBox login={builder.githubLogin} hidden={builder.hidden} />
 
         <SettingForm
           action="/api/profile/visibility"

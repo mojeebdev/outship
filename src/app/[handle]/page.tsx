@@ -3,12 +3,12 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
 import { shipDetail, shipLabel } from "@/lib/ships";
 import { getDb } from "@/lib/db";
-import { IconGrid, IconLock, IconSeal, IconShip, IconStreak } from "@/components/icons";
+import { IconLock, IconShip } from "@/components/icons";
 import { AttestationBadge } from "@/components/attestation-badge";
 import { ConnectGithubButton } from "@/components/connect-github-button";
-import { BuilderAvatar, UnclaimedChip } from "@/components/builder-bits";
-import { allTimeRank, builderForHandle, isClaimed } from "@/lib/builders";
-import { loadHeatmap } from "@/lib/profile-data";
+import { builderForHandle, isClaimed } from "@/lib/builders";
+import { loadHeatmap, loadProfileFacts } from "@/lib/profile-data";
+import { ProfileHeader, ProfileStats } from "@/components/profile-parts";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
 
 export const dynamic = "force-dynamic";
@@ -57,8 +57,8 @@ export default async function BuilderProfilePage({
   // Private ships count, but an unclaimed profile is public GitHub activity
   // only, so it leaves them out entirely, even from the count.
   const shipWhere = { builderId: builder.id, ...(claimed ? {} : { isPrivate: false }) };
-  const [rank, totalShips, recentShips, heatmap] = await Promise.all([
-    allTimeRank(db, builder),
+  const [facts, totalShips, recentShips, heatmap] = await Promise.all([
+    loadProfileFacts(db, builder, { publicOnly: !claimed }),
     db.ship.count({ where: shipWhere }),
     db.ship.findMany({
       where: shipWhere,
@@ -69,25 +69,10 @@ export default async function BuilderProfilePage({
     loadHeatmap(db, builder, { publicOnly: true }),
   ]);
 
-  const stats = [
-    { label: "streak", value: builder.currentStreak, Icon: IconStreak },
-    { label: "ships", value: totalShips, Icon: IconShip },
-    { label: "rank", value: rank ? `#${rank}` : "unranked", Icon: IconGrid },
-    { label: "score", value: builder.score, Icon: IconSeal },
-  ];
-
   return (
     <SiteShell>
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
-        <div className="flex items-center gap-4">
-          <BuilderAvatar githubId={builder.githubId} login={builder.githubLogin} size={56} />
-          <div className="flex min-w-0 flex-col gap-1">
-            <h1 className="flex flex-wrap items-center gap-2 text-2xl font-medium">
-              {builder.githubLogin}
-              {!claimed && <UnclaimedChip />}
-            </h1>
-          </div>
-        </div>
+        <ProfileHeader builder={builder} claimed={claimed} languages={facts.languages} />
 
         {!claimed && (
           <div className="flex flex-col gap-3 rounded-lg border border-base-blue bg-white p-5">
@@ -115,20 +100,7 @@ export default async function BuilderProfilePage({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map(({ label, value, Icon }) => (
-            <div
-              key={label}
-              className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded bg-blue-tint">
-                <Icon className="h-4 w-4 text-base-blue" />
-              </span>
-              <span className="text-2xl font-medium">{value}</span>
-              <span className="text-sm text-text-muted-1">{label}</span>
-            </div>
-          ))}
-        </div>
+        <ProfileStats builder={builder} facts={facts} totalShips={totalShips} unrankedLabel="unclaimed" />
 
         <div className="flex flex-col gap-4">
           <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />

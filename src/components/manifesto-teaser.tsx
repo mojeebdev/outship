@@ -1,31 +1,32 @@
 import Link from "next/link";
+import { getDb } from "@/lib/db";
+import { PUBLIC_BUILDER } from "@/lib/builders";
 
-const checklist = [
-  { label: "shipped today", checked: true },
-  { label: "in progress", checked: false },
-  { label: "blocked", checked: false },
-  { label: "shelved", checked: false },
-];
+/** Builders with at least one ship since 00:00 UTC today. */
+async function buildersShippedToday(): Promise<number> {
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const rows = await (await getDb()).ship.findMany({
+    where: { shippedAt: { gte: today }, builder: PUBLIC_BUILDER },
+    distinct: ["builderId"],
+    select: { builderId: true },
+  });
+  return rows.length;
+}
 
-export function ManifestoTeaser() {
+export async function ManifestoTeaser() {
+  const shippedToday = await buildersShippedToday();
+
   return (
     <section className="px-6 py-20">
       <div className="mx-auto flex max-w-4xl flex-col items-center gap-10 sm:flex-row sm:justify-center">
-        <div className="w-56 -rotate-3 rounded-md border border-border bg-white p-5 shadow-md">
-          <ul className="flex flex-col gap-3 text-sm">
-            {checklist.map(({ label, checked }) => (
-              <li key={label} className="flex items-center gap-2">
-                <span
-                  className={`h-3.5 w-3.5 shrink-0 border border-void ${
-                    checked ? "bg-base-blue" : "bg-transparent"
-                  }`}
-                />
-                <span className={checked ? "" : "text-text-muted-1"}>
-                  {label}
-                </span>
-              </li>
-            ))}
-          </ul>
+        {/* A real number, not a prop: it's read from today's ships. */}
+        <div className="flex w-56 -rotate-3 flex-col gap-1 rounded-md border border-border bg-white p-5 shadow-md">
+          <span className="text-4xl font-medium text-base-blue">{shippedToday}</span>
+          <span className="text-sm">
+            builder{shippedToday === 1 ? "" : "s"} shipped today
+          </span>
+          <span className="text-xs text-text-muted-2">since 00:00 UTC</span>
         </div>
 
         <p className="max-w-sm text-center text-lg sm:text-left">

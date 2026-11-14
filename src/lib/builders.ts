@@ -20,16 +20,6 @@ export function avatarUrl(githubId: number, size = 96): string {
   return `https://avatars.githubusercontent.com/u/${githubId}?s=${size}&v=4`;
 }
 
-/** All-time rank among claimed, visible builders, or null for unclaimed or hidden ones. */
-export async function allTimeRank(
-  db: Db,
-  builder: { score: number; claimedAt: Date | null; hidden: boolean },
-): Promise<number | null> {
-  if (!isClaimed(builder) || builder.hidden) return null;
-  const above = await db.builder.count({ where: { ...RANKED_BUILDER, score: { gt: builder.score } } });
-  return above + 1;
-}
-
 /** Resolve a `/@handle` route segment to a builder, or null. */
 export async function builderForHandle(db: Db, rawHandle: string) {
   // The dynamic segment can arrive percent-encoded (e.g. "%40mojeebdev")

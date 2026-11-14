@@ -16,6 +16,12 @@ export const metadata: Metadata = {
 const entries = [
   {
     date: "nov 2026",
+    title: "richer profiles, a live home page and a README badge",
+    description:
+      "profiles now show your github name, bio, location and links, your top languages, a breakdown of releases, merged PRs and pushes, and your rank this week and all time. the home page shows the latest public ships as they land and how many builders shipped today. and there's a badge for your github README at outship.dev/@you/badge.svg; copy it from your profile.",
+  },
+  {
+    date: "nov 2026",
     title: "leaderboards a newcomer can win",
     description:
       "the leaderboard now opens on this week, from monday 00:00 UTC, with tabs for this month and all time. filter by language, page past the top 50, and see who's rising: the biggest gains on last week. ties go to whoever got there first.",

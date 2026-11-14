@@ -276,11 +276,38 @@ export async function loadRising(db: Db, now = new Date()): Promise<RisingRow[]>
   return risingBuilders(builders, ships, now);
 }
 
-/** A builder's rank on a board, or null if unclaimed, hidden or not on it. */
-export async function rankIn(db: Db, period: Period, githubLogin: string, now = new Date()): Promise<number | null> {
-  const [builders, ships] = await Promise.all([
-    db.builder.findMany({ where: PUBLIC_BUILDER, select: BUILDER_SELECT }),
-    loadShips(db, periodStart(period, now)),
+/**
+ * A builder's place on a board, exactly as the leaderboard would number it,
+ * or null if they're unclaimed, hidden or not on it.
+ *
+ * All time reads only what it must: builders with a higher stored score are
+ * counted, and only builders tied on score have their ships replayed for the
+ * tie-break. A window reads that window's ships, which are few.
+ */
+export async function rankIn(
+  db: Db,
+  period: Period,
+  builder: { id: string; githubLogin: string; score: number; claimedAt: Date | null; hidden: boolean },
+  now = new Date(),
+): Promise<number | null> {
+  if (builder.claimedAt === null || builder.hidden) return null;
+
+  if (period !== "all") {
+    const [builders, ships] = await Promise.all([
+      db.builder.findMany({ where: PUBLIC_BUILDER, select: BUILDER_SELECT }),
+      loadShips(db, periodStart(period, now)),
+    ]);
+    return rankBuilders(builders, ships, { includeStreak: false }).find((row) => row.githubLogin === builder.githubLogin)?.rank ?? null;
+  }
+
+  const ranked = { ...PUBLIC_BUILDER, claimedAt: { not: null } };
+  const [above, tied] = await Promise.all([
+    db.builder.count({ where: { ...ranked, score: { gt: builder.score } } }),
+    db.builder.findMany({ where: { ...ranked, score: builder.score }, select: BUILDER_SELECT }),
   ]);
-  return rankBuilders(builders, ships, { includeStreak: period === "all" }).find((row) => row.githubLogin === githubLogin)?.rank ?? null;
+  if (tied.length <= 1) return above + 1;
+  const tiedShips = await db.ship.findMany({ where: { builderId: { in: tied.map((row) => row.id) } }, select: SHIP_SELECT });
+  const order = rankBuilders(tied, tiedShips, { includeStreak: true });
+  const position = order.findIndex((row) => row.githubLogin === builder.githubLogin);
+  return above + (position === -1 ? tied.length : position + 1);
 }

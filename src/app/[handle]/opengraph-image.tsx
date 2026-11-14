@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getDb } from "@/lib/db";
-import { allTimeRank, builderForHandle } from "@/lib/builders";
+import { builderForHandle } from "@/lib/builders";
+import { rankIn } from "@/lib/leaderboard";
 import { OG_BASE_BLUE, OG_SIZE, OG_VOID, OG_WHITE, OgNeutral, OgWordmark } from "@/lib/og";
 
 export const alt = "outship builder profile";
@@ -34,8 +35,9 @@ export default async function Image({
   if (!builder || builder.hidden) return new ImageResponse(<OgNeutral />, size);
 
   const [rank, ships] = await Promise.all([
-    allTimeRank(db, builder),
-    db.ship.count({ where: { builderId: builder.id } }),
+    rankIn(db, "all", builder),
+    // Unclaimed profiles are public activity only, as on the page itself.
+    db.ship.count({ where: { builderId: builder.id, ...(builder.claimedAt ? {} : { isPrivate: false }) } }),
   ]);
 
   return new ImageResponse(
