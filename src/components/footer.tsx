@@ -75,7 +75,7 @@ export function Footer() {
           </p>
         </div>
 
-        <div className="flex w-full max-w-sm flex-col gap-3 sm:items-end">
+        <div id="recap" className="flex w-full max-w-sm scroll-mt-24 flex-col gap-3 sm:items-end">
           <span className="text-sm text-white/60 sm:text-right">
             get the weekly ship recap
           </span>
@@ -141,7 +141,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 border-b border-white/10 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 border-b border-white/10 px-6 py-6 md:flex-row md:items-center md:justify-between">
         <a
           href="https://blindspotlab.xyz"
           target="_blank"
@@ -159,6 +159,15 @@ export function Footer() {
           a blindspotlab product
         </a>
         <a
+          href="https://x.com/MojeebMotion"
+          target="_blank"
+          rel="noreferrer"
+          className="flex w-fit items-center gap-2.5 text-sm text-white/60 transition hover:text-white"
+        >
+          <IconX className="h-4 w-4" aria-hidden="true" />
+          built by mojeeb (@MojeebMotion)
+        </a>
+        <a
           href="https://base.org"
           target="_blank"
           rel="noreferrer"
@@ -173,7 +182,17 @@ export function Footer() {
       </div>
 
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
-        <span>© 2026 BlindspotLab Limited</span>
+        <span>
+          © 2026{" "}
+          <a
+            href="https://blindspotlab.xyz"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-white/70"
+          >
+            BlindspotLab Limited
+          </a>
+        </span>
         <div className="flex items-center gap-4">
           <Link href="/terms" className="hover:text-white/70">
             terms

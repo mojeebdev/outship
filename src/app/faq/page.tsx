@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { GITHUB_APP_INSTALL_URL } from "@/lib/github-app";
 import { DAILY_CAPS, SHIP_WEIGHTS, STREAK_CAP } from "@/lib/score";
+import { SITE_ID, SITE_URL, jsonLd } from "@/lib/structured-data";
 
 export const metadata: Metadata = {
   title: "faq — outship",
@@ -254,6 +255,10 @@ const groups: { heading: string; faqs: Faq[] }[] = [
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
+  "@id": `${SITE_URL}/faq#faq`,
+  url: `${SITE_URL}/faq`,
+  isPartOf: { "@id": SITE_ID.website },
+  publisher: { "@id": SITE_ID.organization },
   mainEntity: groups.flatMap(({ faqs }) =>
     faqs.map(({ question, text }) => ({
       "@type": "Question",
@@ -269,7 +274,7 @@ export default function FaqPage() {
       <script
         type="application/ld+json"
         // Built from the constants above, never from user input.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
       />
       <div className="mx-auto flex max-w-2xl flex-col gap-12 px-6 py-20">
         <div className="flex flex-col gap-3">
@@ -284,7 +289,11 @@ export default function FaqPage() {
         </div>
 
         {groups.map(({ heading, faqs }) => (
-          <section key={heading} className="flex flex-col gap-3">
+          <section
+            key={heading}
+            id={heading.replace(/\s+/g, "-")}
+            className="flex scroll-mt-24 flex-col gap-3"
+          >
             <h2 className="text-xs uppercase tracking-wide text-text-muted-2">{heading}</h2>
             <div className="flex flex-col divide-y divide-border rounded-lg border border-border bg-white">
               {faqs.map(({ question, text, answer }) => (
