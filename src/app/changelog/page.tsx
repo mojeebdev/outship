@@ -9,6 +9,12 @@ export const metadata: Metadata = {
 const entries = [
   {
     date: "nov 2026",
+    title: "the weekly ship recap, and a welcome email",
+    description:
+      "every monday the recap brings the week's most shipped builders, fresh releases and longest streaks to your inbox. signups confirm by email first, builders can switch it on from their profile, and every issue has a one-click unsubscribe. new builders also get a short welcome with how points work.",
+  },
+  {
+    date: "nov 2026",
     title: "pushes count, with fair caps and streaks that end",
     description:
       "a push to a repo's default branch now counts as a ship, once a day. each day at most 2 releases, 5 merged PRs and 1 push score, so scripting doesn't pay. streaks now end at 00:05 UTC after a missed day. ships from private repos count toward your score but stay hidden on public pages and can't be attested.",

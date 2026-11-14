@@ -21,6 +21,10 @@ model Builder {
   githubId       Int       @unique
   githubLogin    String    @unique
   installationId Int?
+  // Primary verified email from GitHub (needs the App's "Email addresses"
+  // permission). Used for the welcome and account email only.
+  email          String?
+  welcomedAt     DateTime?
   walletAddress  String?
   currentStreak  Int       @default(0)
   longestStreak  Int       @default(0)
@@ -63,10 +67,29 @@ model Attestation {
   attestedAt    DateTime @default(now())
 }
 
+enum SubscriberStatus {
+  PENDING
+  CONFIRMED
+  UNSUBSCRIBED
+}
+
+/// The weekly ship recap list. Double opt-in: nobody is emailed a recap until
+/// they confirm. The token is a per-subscriber secret used in confirm and
+/// unsubscribe links, so neither needs a login.
 model Subscriber {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
+  id                String           @id @default(cuid())
+  email             String           @unique
+  status            SubscriberStatus @default(PENDING)
+  token             String           @unique
+  confirmedAt       DateTime?
+  unsubscribedAt    DateTime?
+  lastConfirmSentAt DateTime?
+  // ISO week ("2026-W47") of the last recap sent, so a weekly run that stops
+  // partway can resume without sending anyone a duplicate.
+  recapSentFor      String?
+  createdAt         DateTime         @default(now())
+
+  @@index([status])
 }
 
 // ── Word (word.outship.dev) ──────────────────────────────────────────────────

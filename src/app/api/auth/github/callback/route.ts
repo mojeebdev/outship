@@ -1,14 +1,16 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb } from "@/lib/db";
 import { createSessionCookieValue, readCookie, sessionCookieHeader } from "@/lib/auth/session";
-import { fetchUserInstallationId } from "@/lib/github-app";
+import { fetchPrimaryEmail, fetchUserInstallationId } from "@/lib/github-app";
+import { FROM_WELCOME, sendEmail } from "@/lib/email/send";
+import { builderWelcomeEmail } from "@/lib/email/templates";
 
 export const dynamic = "force-dynamic";
 
 const OAUTH_STATE_COOKIE = "outship_oauth_state";
 
 export async function GET(request: Request) {
-  const { env } = await getCloudflareContext({ async: true });
+  const { env, ctx } = await getCloudflareContext({ async: true });
   if (!env.GITHUB_APP_CLIENT_ID || !env.GITHUB_APP_CLIENT_SECRET || !env.SESSION_SECRET) {
     return new Response(
       "GitHub App isn't configured yet — set GITHUB_APP_CLIENT_ID, GITHUB_APP_CLIENT_SECRET, and SESSION_SECRET.",
@@ -56,17 +58,44 @@ export async function GET(request: Request) {
   if (!userResponse.ok) {
     return new Response("Couldn't read your GitHub profile — try again.", { status: 400 });
   }
-  const user = (await userResponse.json()) as { id: number; login: string };
+  const user = (await userResponse.json()) as { id: number; login: string; email?: string | null };
 
-  const installationId = await fetchUserInstallationId(tokenData.access_token, user.id);
+  const [installationId, email] = await Promise.all([
+    fetchUserInstallationId(tokenData.access_token, user.id),
+    fetchPrimaryEmail(tokenData.access_token, user.email),
+  ]);
 
   const db = await getDb();
   const builder = await db.builder.upsert({
     where: { githubId: user.id },
     // undefined (GitHub didn't answer) leaves the stored value as it was.
-    update: { githubLogin: user.login, installationId },
-    create: { githubId: user.id, githubLogin: user.login, installationId: installationId ?? null },
+    update: { githubLogin: user.login, installationId, ...(email ? { email } : {}) },
+    create: {
+      githubId: user.id,
+      githubLogin: user.login,
+      installationId: installationId ?? null,
+      email,
+    },
   });
+
+  // First sign-in with a known email: welcome them, once. Claiming welcomedAt
+  // before sending means two simultaneous sign-ins can't both send it, and
+  // waitUntil keeps email off the redirect's critical path.
+  if (builder.email && !builder.welcomedAt) {
+    const { count } = await db.builder.updateMany({
+      where: { id: builder.id, welcomedAt: null },
+      data: { welcomedAt: new Date() },
+    });
+    if (count === 1) {
+      ctx.waitUntil(
+        sendEmail(env.EMAIL, {
+          to: builder.email,
+          from: FROM_WELCOME,
+          email: builderWelcomeEmail({ login: builder.githubLogin, appInstalled: Boolean(builder.installationId) }),
+        }),
+      );
+    }
+  }
 
   const sessionValue = await createSessionCookieValue(builder.id, env.SESSION_SECRET);
 
