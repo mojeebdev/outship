@@ -13,9 +13,9 @@ libs = ["lib"]
 # paris is the newest EVM target both compilers know.
 evm_version = "paris"
 optimizer = true
-optimizer_runs = 10_000
-# onAttest decodes ten schema fields at once; the IR pipeline keeps that off the stack limit.
-via_ir = true
+optimizer_runs = 200
+# No via_ir: the resolver is written to fit the legacy pipeline's stack, so it compiles with
+# Remix's defaults too. Whatever settings you deploy with, verify with the same ones.
 
 remappings = [
   # eas-contracts is pinned to tag v1.3.0: the release whose EAS logic Base's

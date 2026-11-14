@@ -91,24 +91,26 @@ contract OutshipShipResolver is SchemaResolver, EIP712, Ownable2Step {
     /// @notice The digest outship signs for a given attestation. Public so the server's viem
     ///         signTypedData output can be checked against the contract in tests and scripts.
     function shipDigest(address recipient, address attester, Ship memory ship) public view returns (bytes32) {
-        return _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    SHIP_TYPEHASH,
-                    recipient,
-                    attester,
-                    keccak256(bytes(ship.repo)),
-                    ship.shipType,
-                    keccak256(bytes(ship.identifier)),
-                    keccak256(bytes(ship.commitSha)),
-                    ship.timestamp,
-                    ship.scoreSnapshot,
-                    keccak256(bytes(ship.githubLogin)),
-                    keccak256(bytes(ship.shipId)),
-                    ship.deadline
-                )
-            )
+        // Every member is one static 32-byte word, so two abi.encode calls concatenated are
+        // byte-for-byte one abi.encode of all twelve. Split only to stay under the legacy
+        // compiler's stack limit, so the contract builds with Remix's default settings.
+        bytes memory head = abi.encode(
+            SHIP_TYPEHASH,
+            recipient,
+            attester,
+            keccak256(bytes(ship.repo)),
+            ship.shipType,
+            keccak256(bytes(ship.identifier))
         );
+        bytes memory tail = abi.encode(
+            keccak256(bytes(ship.commitSha)),
+            ship.timestamp,
+            ship.scoreSnapshot,
+            keccak256(bytes(ship.githubLogin)),
+            keccak256(bytes(ship.shipId)),
+            ship.deadline
+        );
+        return _hashTypedDataV4(keccak256(bytes.concat(head, tail)));
     }
 
     /// @notice The EIP-712 domain separator (name "outship", version "1", this chain, this contract).
@@ -148,17 +150,11 @@ contract OutshipShipResolver is SchemaResolver, EIP712, Ownable2Step {
     }
 
     function _decode(bytes calldata data) private pure returns (Ship memory ship) {
-        (
-            ship.repo,
-            ship.shipType,
-            ship.identifier,
-            ship.commitSha,
-            ship.timestamp,
-            ship.scoreSnapshot,
-            ship.githubLogin,
-            ship.shipId,
-            ship.deadline,
-            ship.outshipSig
-        ) = abi.decode(data, (string, uint8, string, string, uint64, uint16, string, string, uint64, bytes));
+        // The schema data is abi.encode(repo, shipType, ...): the encoding of the Ship tuple
+        // without the leading offset word a dynamic struct carries. Prefixing that word lets
+        // abi.decode fill the struct straight into memory, instead of returning ten values on
+        // the stack (which the legacy compiler can't hold).
+        ship = abi.decode(bytes.concat(abi.encode(uint256(32)), data), (Ship));
     }
+
 }
