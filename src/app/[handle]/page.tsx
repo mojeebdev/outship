@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
+import { shipDetail, shipLabel } from "@/lib/ships";
 import { getDb } from "@/lib/db";
 import { IconGrid, IconLock, IconSeal, IconShip, IconStreak } from "@/components/icons";
 import { AttestationBadge } from "@/components/attestation-badge";
@@ -87,8 +88,8 @@ export default async function BuilderProfilePage({
           <h2 className="text-lg font-medium">ship feed</h2>
           {recentShips.length === 0 ? (
             <p className="text-sm text-text-muted-1">
-              nothing shipped yet — merge a PR or publish a release and
-              it&apos;ll show up here.
+              nothing shipped yet — pushes, merged PRs and releases show up
+              here.
             </p>
           ) : (
             <ol className="flex flex-col gap-3">
@@ -104,7 +105,7 @@ export default async function BuilderProfilePage({
                     {/* Private ships count, but the repo and tag/PR never
                         appear on a public page. */}
                     <span className="text-sm font-medium">
-                      {ship.shipType === "RELEASE" ? "release" : "merge"} ·{" "}
+                      {shipLabel(ship)} ·{" "}
                       {ship.isPrivate ? (
                         <span className="inline-flex items-center gap-1 text-text-muted-1">
                           <IconLock className="h-3.5 w-3.5" aria-hidden="true" />
@@ -116,7 +117,7 @@ export default async function BuilderProfilePage({
                     </span>
                     {!ship.isPrivate && (
                       <span className="text-xs text-text-muted-2">
-                        {ship.identifier}
+                        {shipDetail(ship)}
                       </span>
                     )}
                   </div>

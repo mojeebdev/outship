@@ -12,6 +12,7 @@ import {
   EAS_CONTRACT_ADDRESS,
   SHIP_ATTESTATION_SCHEMA,
   SHIP_ATTESTATION_SCHEMA_UID,
+  SHIP_TYPE_CODE,
   isAttestationConfigured,
 } from "@/lib/web3/eas";
 import { AttestationBadge } from "@/components/attestation-badge";
@@ -61,7 +62,7 @@ const EAS_ABI = [
 export type ShipInput = {
   id: string;
   repo: string;
-  shipType: "RELEASE" | "MERGE";
+  shipType: keyof typeof SHIP_TYPE_CODE;
   identifier: string;
   commitSha: string;
   shippedAtIso: string;
@@ -90,7 +91,7 @@ function AttestFlow({ ship, score }: { ship: ShipInput; score: number }) {
       const encoder = new SchemaEncoder(SHIP_ATTESTATION_SCHEMA);
       const data = encoder.encodeData([
         { name: "repo", value: ship.repo, type: "string" },
-        { name: "shipType", value: ship.shipType === "RELEASE" ? 0 : 1, type: "uint8" },
+        { name: "shipType", value: SHIP_TYPE_CODE[ship.shipType], type: "uint8" },
         { name: "identifier", value: ship.identifier, type: "string" },
         { name: "commitSha", value: ship.commitSha, type: "string" },
         {

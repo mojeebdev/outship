@@ -11,6 +11,9 @@ datasource db {
 enum ShipType {
   RELEASE
   MERGE
+  // A push to a repo's default branch. Counted at most once per builder per
+  // UTC day, so it rewards showing up without being farmable.
+  PUSH
 }
 
 model Builder {

@@ -23,6 +23,10 @@ export const SHIP_ATTESTATION_SCHEMA_UID =
   process.env.NEXT_PUBLIC_EAS_SCHEMA_UID ||
   (process.env.NEXT_PUBLIC_CHAIN === "base-sepolia" ? "" : BASE_MAINNET_SCHEMA_UID);
 
+// The schema's uint8 shipType. Append-only: existing attestations keep
+// whatever number they were written with.
+export const SHIP_TYPE_CODE = { RELEASE: 0, MERGE: 1, PUSH: 2 } as const;
+
 export function isAttestationConfigured(): boolean {
   return SHIP_ATTESTATION_SCHEMA_UID.length > 0;
 }

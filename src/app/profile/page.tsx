@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
+import { attestationIdentifier, shipDetail, shipLabel } from "@/lib/ships";
 import { getCurrentBuilder } from "@/lib/auth/current-builder";
 import { getDb } from "@/lib/db";
 import { ConnectGithubButton } from "@/components/connect-github-button";
@@ -114,8 +115,8 @@ export default async function ProfilePage() {
               <div>
                 <p className="font-medium">one more step: install the GitHub App</p>
                 <p className="mt-1 text-sm text-text-muted-1">
-                  pick the repos outship should watch. published releases and
-                  PRs merged to the default branch become ships.
+                  pick the repos outship should watch. pushes and merged PRs on
+                  the default branch, and published releases, become ships.
                 </p>
               </div>
             </div>
@@ -149,8 +150,8 @@ export default async function ProfilePage() {
           {recentShips.length === 0 ? (
             <p className="text-sm text-text-muted-1">
               {builder.installationId
-                ? "nothing shipped yet — merge a PR or publish a release on a tracked repo and it'll show up here."
-                : "nothing shipped yet — install the GitHub App above, then merge a PR or publish a release."}
+                ? "nothing shipped yet — push to the default branch, merge a PR or publish a release on a tracked repo and it'll show up here."
+                : "nothing shipped yet — install the GitHub App above, then push, merge or release."}
             </p>
           ) : (
             <ol className="flex flex-col gap-3">
@@ -165,7 +166,7 @@ export default async function ProfilePage() {
                   <div className="flex flex-1 flex-col">
                     <span className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
                       <span>
-                        {ship.shipType === "RELEASE" ? "release" : "merge"} ·{" "}
+                        {shipLabel(ship)} ·{" "}
                         {ship.repo}
                       </span>
                       {ship.isPrivate && (
@@ -176,7 +177,7 @@ export default async function ProfilePage() {
                       )}
                     </span>
                     <span className="text-xs text-text-muted-2">
-                      {ship.identifier}
+                      {shipDetail(ship)}
                     </span>
                   </div>
                   <span className="text-xs text-text-muted-2">
@@ -204,7 +205,7 @@ export default async function ProfilePage() {
                         id: ship.id,
                         repo: ship.repo,
                         shipType: ship.shipType,
-                        identifier: ship.identifier,
+                        identifier: attestationIdentifier(ship),
                         commitSha: ship.commitSha,
                         shippedAtIso: ship.shippedAt.toISOString(),
                       }}

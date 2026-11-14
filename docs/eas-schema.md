@@ -14,7 +14,7 @@ string repo,uint8 shipType,string identifier,string commitSha,uint64 timestamp,u
 
 - `recipient` is EAS's built-in top-level field (the builder's connected
   wallet) — it's not part of the schema string above.
-- `shipType`: `0` = release, `1` = merge.
+- `shipType`: `0` = release, `1` = merged PR, `2` = push to the default branch.
 
 ## Steps
 

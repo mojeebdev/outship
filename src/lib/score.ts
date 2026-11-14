@@ -1,21 +1,26 @@
-// v1 ranking formula: releases weigh more than merges (a stronger "shipped
-// something real" signal), streak is capped so it can't dominate output.
+// Ranking formula: releases weigh most (a stronger "shipped something real"
+// signal), then merged PRs, then pushes, which only ever count once a day.
+// Streak is capped so it can't dominate output.
 const RELEASE_WEIGHT = 5;
 const MERGE_WEIGHT = 2;
+const PUSH_WEIGHT = 1;
 const STREAK_CAP = 30;
 
 export function computeScore({
   releases,
   merges,
+  pushes,
   currentStreak,
 }: {
   releases: number;
   merges: number;
+  pushes: number;
   currentStreak: number;
 }): number {
   return (
     releases * RELEASE_WEIGHT +
     merges * MERGE_WEIGHT +
+    pushes * PUSH_WEIGHT +
     Math.min(currentStreak, STREAK_CAP)
   );
 }

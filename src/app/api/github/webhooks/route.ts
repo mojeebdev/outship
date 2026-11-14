@@ -5,24 +5,50 @@ import { applyShipToStreak, computeScore } from "@/lib/score";
 
 export const dynamic = "force-dynamic";
 
+type ShipType = "RELEASE" | "MERGE" | "PUSH";
+
+type GithubUser = { id: number; login: string; type?: string };
+
+type Repository = {
+  owner: { login: string };
+  name: string;
+  default_branch: string;
+  private?: boolean;
+  pushed_at?: number | string;
+};
+
+// Who a ship is credited to. A push made by a bot (an AI agent's GitHub App,
+// say) is credited to the commit's author instead, but only if that author
+// already has an outship account, so a bot can never create builders.
+type Credit =
+  | { kind: "user"; githubId: number; githubLogin: string }
+  | { kind: "existing-builder"; githubLogin: string };
+
 type Ship = {
   repo: string;
-  shipType: "RELEASE" | "MERGE";
+  shipType: ShipType;
   identifier: string;
   commitSha: string;
   isPrivate: boolean;
   shippedAt: Date;
-  githubId: number;
-  githubLogin: string;
+  credit: Credit;
 };
+
+type Db = Awaited<ReturnType<typeof getDb>>;
+
+const isBot = (user: GithubUser) => user.type === "Bot";
+
+const creditUser = (user: GithubUser): Credit => ({
+  kind: "user",
+  githubId: user.id,
+  githubLogin: user.login,
+});
 
 function shipFromPayload(
   event: string,
   payload: Record<string, unknown>,
 ): Ship | null {
-  const repository = payload.repository as
-    | { owner: { login: string }; name: string; default_branch: string; private?: boolean }
-    | undefined;
+  const repository = payload.repository as Repository | undefined;
   if (!repository) return null;
   const repo = `${repository.owner.login}/${repository.name}`;
   const isPrivate = repository.private === true;
@@ -35,10 +61,10 @@ function shipFromPayload(
           target_commitish: string;
           published_at: string | null;
           created_at: string;
-          author: { id: number; login: string };
+          author: GithubUser;
         }
       | undefined;
-    if (payload.action !== "published" || !release || release.draft) {
+    if (payload.action !== "published" || !release || release.draft || isBot(release.author)) {
       return null;
     }
     return {
@@ -49,8 +75,7 @@ function shipFromPayload(
       commitSha: release.target_commitish,
       isPrivate,
       shippedAt: new Date(release.published_at ?? release.created_at),
-      githubId: release.author.id,
-      githubLogin: release.author.login,
+      credit: creditUser(release.author),
     };
   }
 
@@ -62,7 +87,7 @@ function shipFromPayload(
           merged_at: string | null;
           merge_commit_sha: string | null;
           base: { ref: string };
-          user: { id: number; login: string };
+          user: GithubUser;
         }
       | undefined;
     if (
@@ -70,7 +95,8 @@ function shipFromPayload(
       !pr?.merged ||
       !pr.merged_at ||
       !pr.merge_commit_sha ||
-      pr.base.ref !== repository.default_branch
+      pr.base.ref !== repository.default_branch ||
+      isBot(pr.user)
     ) {
       return null;
     }
@@ -81,13 +107,86 @@ function shipFromPayload(
       commitSha: pr.merge_commit_sha,
       isPrivate,
       shippedAt: new Date(pr.merged_at),
-      githubId: pr.user.id,
-      githubLogin: pr.user.login,
+      credit: creditUser(pr.user),
+    };
+  }
+
+  if (event === "push") {
+    const push = payload as {
+      ref?: string;
+      deleted?: boolean;
+      forced?: boolean;
+      commits?: { distinct: boolean }[];
+      head_commit?: { id: string; author?: { username?: string } } | null;
+      sender?: GithubUser;
+    };
+    // Only new work landing on the default branch: not other branches, not
+    // branch deletions, not history rewrites, not re-pushes of known commits.
+    if (
+      push.ref !== `refs/heads/${repository.default_branch}` ||
+      push.deleted ||
+      push.forced ||
+      !push.head_commit ||
+      !push.sender ||
+      !(push.commits ?? []).some((commit) => commit.distinct)
+    ) {
+      return null;
+    }
+
+    let credit: Credit;
+    if (!isBot(push.sender)) {
+      credit = creditUser(push.sender);
+    } else if (push.head_commit.author?.username) {
+      credit = { kind: "existing-builder", githubLogin: push.head_commit.author.username };
+    } else {
+      return null;
+    }
+
+    // pushed_at is GitHub's clock; commit timestamps are whatever the
+    // author's machine said, and can be backdated.
+    const pushedAt =
+      typeof repository.pushed_at === "number"
+        ? new Date(repository.pushed_at * 1000)
+        : new Date();
+
+    return {
+      repo,
+      shipType: "PUSH",
+      // The UTC day; the builder is appended once they're resolved.
+      identifier: pushedAt.toISOString().slice(0, 10),
+      commitSha: push.head_commit.id,
+      isPrivate,
+      shippedAt: pushedAt,
+      credit,
     };
   }
 
   return null;
 }
+
+async function shipCounts(db: Db, builderId: string) {
+  const counts = await db.ship.groupBy({
+    by: ["shipType"],
+    where: { builderId },
+    _count: true,
+  });
+  type ShipCount = { shipType: ShipType; _count: number };
+  const count = (type: ShipType) =>
+    (counts as ShipCount[]).find((c) => c.shipType === type)?._count ?? 0;
+  return { releases: count("RELEASE"), merges: count("MERGE"), pushes: count("PUSH") };
+}
+
+async function rescore(db: Db, builderId: string) {
+  const builder = await db.builder.findUnique({ where: { id: builderId } });
+  if (!builder) return;
+  const counts = await shipCounts(db, builderId);
+  await db.builder.update({
+    where: { id: builderId },
+    data: { score: computeScore({ ...counts, currentStreak: builder.currentStreak }) },
+  });
+}
+
+const skipped = () => Response.json({ ok: true, skipped: true });
 
 export async function POST(request: Request) {
   const { env } = await getCloudflareContext({ async: true });
@@ -110,17 +209,41 @@ export async function POST(request: Request) {
   const payload = JSON.parse(rawBody) as Record<string, unknown>;
 
   const ship = shipFromPayload(event, payload);
-  if (!ship) {
-    return Response.json({ ok: true, skipped: true });
-  }
+  if (!ship) return skipped();
 
   const db = await getDb();
 
-  const builder = await db.builder.upsert({
-    where: { githubId: ship.githubId },
-    update: { githubLogin: ship.githubLogin },
-    create: { githubId: ship.githubId, githubLogin: ship.githubLogin },
-  });
+  const builder =
+    ship.credit.kind === "user"
+      ? await db.builder.upsert({
+          where: { githubId: ship.credit.githubId },
+          update: { githubLogin: ship.credit.githubLogin },
+          create: { githubId: ship.credit.githubId, githubLogin: ship.credit.githubLogin },
+        })
+      : await db.builder.findUnique({ where: { githubLogin: ship.credit.githubLogin } });
+  if (!builder) return skipped();
+
+  // A push's identifier is the day it counted for *and* who it counted for:
+  // the unique key is [repo, shipType, identifier], so a bare date would let
+  // only the first person pushing to a shared repo each day get credit.
+  if (ship.shipType === "PUSH") ship.identifier = `${ship.identifier}:${builder.id}`;
+
+  if (ship.shipType === "PUSH") {
+    // Landing a merged PR also pushes to the default branch; the PR already
+    // counts, and its merge_commit_sha is this push's head commit.
+    const asMerge = await db.ship.findFirst({
+      where: { shipType: "MERGE", commitSha: ship.commitSha },
+      select: { id: true },
+    });
+    if (asMerge) return skipped();
+
+    // However many pushes, across however many repos: one a day per builder.
+    const alreadyToday = await db.ship.findFirst({
+      where: { builderId: builder.id, shipType: "PUSH", identifier: ship.identifier },
+      select: { id: true },
+    });
+    if (alreadyToday) return skipped();
+  }
 
   try {
     await db.ship.create({
@@ -135,8 +258,8 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    // unique constraint on [repo, shipType, identifier] — GitHub redelivered
-    // a webhook we've already recorded, nothing new to do
+    // unique constraint on [repo, shipType, identifier] — a redelivered
+    // webhook, or a second push to the same repo today
     if (
       error instanceof Error &&
       "code" in error &&
@@ -147,17 +270,21 @@ export async function POST(request: Request) {
     throw error;
   }
 
-  const counts = await db.ship.groupBy({
-    by: ["shipType"],
-    where: { builderId: builder.id },
-    _count: true,
-  });
-  type ShipCount = { shipType: "RELEASE" | "MERGE"; _count: number };
-  const releases =
-    (counts as ShipCount[]).find((c) => c.shipType === "RELEASE")?._count ?? 0;
-  const merges =
-    (counts as ShipCount[]).find((c) => c.shipType === "MERGE")?._count ?? 0;
+  if (ship.shipType === "MERGE") {
+    // The push that landed this PR may have arrived first and been counted as
+    // a push. The merge supersedes it (unless it was already attested).
+    const superseded = await db.ship.findMany({
+      where: { shipType: "PUSH", commitSha: ship.commitSha, attestation: { is: null } },
+      select: { id: true, builderId: true },
+    });
+    if (superseded.length > 0) {
+      await db.ship.deleteMany({ where: { id: { in: superseded.map((s) => s.id) } } });
+      const others = new Set(superseded.map((s) => s.builderId).filter((id) => id !== builder.id));
+      for (const otherId of others) await rescore(db, otherId);
+    }
+  }
 
+  const counts = await shipCounts(db, builder.id);
   const streak = applyShipToStreak(
     {
       currentStreak: builder.currentStreak,
@@ -173,7 +300,7 @@ export async function POST(request: Request) {
       currentStreak: streak.currentStreak,
       longestStreak: streak.longestStreak,
       lastShipDate: streak.lastShipDate,
-      score: computeScore({ releases, merges, currentStreak: streak.currentStreak }),
+      score: computeScore({ ...counts, currentStreak: streak.currentStreak }),
     },
   });
 
