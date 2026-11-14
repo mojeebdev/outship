@@ -4,7 +4,7 @@
 const RELEASE_WEIGHT = 5;
 const MERGE_WEIGHT = 2;
 const PUSH_WEIGHT = 1;
-const STREAK_CAP = 30;
+export const STREAK_CAP = 30;
 
 export function computeScore({
   releases,

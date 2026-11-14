@@ -1,7 +1,9 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "outship",
-	"main": ".open-next/worker.js",
+	// worker.js wraps OpenNext's generated .open-next/worker.js to add the
+	// daily cron below; every request is still served by OpenNext.
+	"main": "worker.js",
 	"compatibility_date": "2026-01-01",
 	"compatibility_flags": [
 		"nodejs_compat"
@@ -40,6 +42,11 @@
 			"id": "1f79279d71ee40bbb6c39f829a7c2a46"
 		}
 	],
+	"triggers": {
+		// 00:05 UTC daily: end streaks for builders who missed yesterday
+		// (src/lib/expire-streaks.ts).
+		"crons": ["5 0 * * *"]
+	},
 	"observability": {
 		"enabled": true
 	}
