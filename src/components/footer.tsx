@@ -10,6 +10,7 @@ import {
 } from "@/components/icons";
 import { EmailCaptureForm } from "@/components/email-capture-form";
 import { AccountNavLink } from "@/components/account-nav-link";
+import { isTokenLive } from "@/lib/token";
 
 const strip = [
   { Icon: IconNode, size: 16 },
@@ -38,6 +39,8 @@ const columns: Array<{ heading: string; links: FooterLink[] }> = [
       { label: "changelog", href: "/changelog" },
       { label: "faq", href: "/faq" },
       { label: "contact", href: "/contact" },
+      // Only once the token exists: NEXT_PUBLIC_TOKEN_ADDRESS is set at build.
+      ...(isTokenLive() ? [{ label: "token", href: "/token" }] : []),
     ],
   },
   {

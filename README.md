@@ -232,6 +232,14 @@ npx wrangler d1 migrations apply DB --local
 npm run preview                       # builds and runs on the real Workers runtime
 ```
 
+Build-time variables (set under Workers Builds -> Variables, not as runtime
+secrets): `NEXT_PUBLIC_CHAIN` (`base-sepolia` for the testnet),
+`NEXT_PUBLIC_EAS_SCHEMA_UID` / `NEXT_PUBLIC_OUTSHIP_RESOLVER` (see
+[docs/eas-schema.md](docs/eas-schema.md)) and `NEXT_PUBLIC_TOKEN_ADDRESS`
+(leave empty: while it is, nothing about the token renders and `/token` is a
+404). Runtime secrets: the GitHub App's values, `SESSION_SECRET`,
+`OUTSHIP_ATTESTER_PRIVATE_KEY` and, optionally, `BASE_RPC_URL`.
+
 `npm run dev` works for UI work, but `next dev` runs on Node, where the Prisma
 D1 client can't load, so pages that read the database error there. Use
 `npm run preview` for anything that touches data.
