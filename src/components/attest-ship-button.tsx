@@ -90,8 +90,9 @@ function AttestFlow({ shipId }: { shipId: string }) {
       setPhase({ kind: "busy", label: `switch to ${activeChain.name}…` });
       try {
         await switchChain(wagmiConfig, { chainId: activeChain.id });
-      } catch (error) {
-        if (isUserRejection(error)) throw error;
+      } catch {
+        // Declined, or the wallet can't add the chain (wagmi reports both as
+        // a rejection): either way the wallet is still on the wrong network.
         throw Object.assign(new Error("wrong network"), { wrongNetwork: true });
       }
     }
