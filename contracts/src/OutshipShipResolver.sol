@@ -38,6 +38,12 @@ contract OutshipShipResolver is SchemaResolver, EIP712, Ownable2Step {
     /// @notice EIP-712 digests that already produced an attestation. One signature, one receipt.
     mapping(bytes32 digest => bool used) public usedDigests;
 
+    /// @notice The attestation each ship already has, keyed by keccak256(bytes(shipId)). One ship,
+    ///         one receipt: a fresh signature for an attested ship is refused, so a builder can't
+    ///         collect a second receipt by attesting, skipping outship's save and authorizing again.
+    ///         Public, so outship can find (and record) a receipt whose save never happened.
+    mapping(bytes32 shipKey => bytes32 uid) public attestationForShip;
+
     event OutshipSignerRotated(address indexed previousSigner, address indexed newSigner);
 
     error ZeroAddress();
@@ -46,6 +52,7 @@ contract OutshipShipResolver is SchemaResolver, EIP712, Ownable2Step {
     error RecipientNotAttester();
     error DigestAlreadyUsed();
     error ExpiringAttestation();
+    error ShipAlreadyAttested(bytes32 uid);
 
     /// @dev Everything in the signed data, kept in memory so onAttest stays readable.
     struct Ship {
@@ -126,6 +133,11 @@ contract OutshipShipResolver is SchemaResolver, EIP712, Ownable2Step {
 
         if (usedDigests[digest]) revert DigestAlreadyUsed();
         usedDigests[digest] = true;
+
+        bytes32 shipKey = keccak256(bytes(ship.shipId));
+        bytes32 existing = attestationForShip[shipKey];
+        if (existing != bytes32(0)) revert ShipAlreadyAttested(existing);
+        attestationForShip[shipKey] = attestation.uid;
 
         return true;
     }

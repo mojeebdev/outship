@@ -82,3 +82,10 @@ test("each identifying field must match the ship", () => {
 test("garbage data is refused", () => {
   assert.match(attestationMismatch(onchain({ data: "0x1234" }), EXPECTED, SCHEMA)!, /decode/);
 });
+
+test("the block for a past time is estimated from Base's two-second blocks", async () => {
+  const { estimateBlockAt } = await import("../verify");
+  assert.equal(estimateBlockAt(BigInt(1000), BigInt(10_000), BigInt(9_000)), BigInt(500));
+  assert.equal(estimateBlockAt(BigInt(1000), BigInt(10_000), BigInt(20_000)), BigInt(1000));
+  assert.equal(estimateBlockAt(BigInt(10), BigInt(10_000), BigInt(0)), BigInt(0));
+});

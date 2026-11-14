@@ -99,10 +99,13 @@ function AttestFlow({ shipId }: { shipId: string }) {
     return account.address;
   }
 
-  async function authorize(recipient: Address): Promise<Authorization> {
+  /** outship's signature, or the receipt this ship already has onchain. */
+  async function authorize(recipient: Address): Promise<Authorization | { recoveredUid: string }> {
     setPhase({ kind: "busy", label: "signing with outship…" });
     const { ok, json } = await postJson(`/api/ships/${shipId}/attest/authorize`, { recipient });
     if (!ok) throw new Error(typeof json.error === "string" ? json.error : "couldn't authorize this attestation");
+    const recovered = json.attestation as { easUid?: string } | undefined;
+    if (recovered?.easUid) return { recoveredUid: recovered.easUid };
     return json as unknown as Authorization;
   }
 
@@ -133,6 +136,9 @@ function AttestFlow({ shipId }: { shipId: string }) {
       });
     } catch (error) {
       if (revertName(error) === "SignatureExpired") throw new ExpiredError();
+      if (revertName(error) === "ShipAlreadyAttested") {
+        throw new Error("this ship already has a receipt onchain. refresh the page to see it.");
+      }
       throw error;
     }
 
@@ -166,6 +172,11 @@ function AttestFlow({ shipId }: { shipId: string }) {
     try {
       const account = await ensureWallet();
       const auth = await authorize(account);
+      if ("recoveredUid" in auth) {
+        // Attested earlier but never saved: outship just recorded it.
+        setPhase({ kind: "done", uid: auth.recoveredUid });
+        return;
+      }
       const hash = await submit(auth, account);
       setPhase({ kind: "busy", label: "waiting for base…" });
       const receipt = await waitForTransactionReceipt(wagmiConfig, { hash, chainId: activeChain.id });

@@ -18,7 +18,8 @@
     "deploy": "npm run cf-typegen && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "rescore": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs scripts/rescore-all.mjs",
-    "verify:legacy-attestations": "node scripts/verify-legacy-attestations.mjs"
+    "verify:legacy-attestations": "node scripts/verify-legacy-attestations.mjs",
+    "flatten:contracts": "cd contracts && forge flatten src/OutshipShipResolver.sol -o remix/OutshipShipResolver.flat.sol"
   },
   "dependencies": {
     "@prisma/adapter-d1": "^6.19.3",

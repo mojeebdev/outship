@@ -12,7 +12,9 @@ import {
 } from "@/lib/attest/ship-fields";
 import { encodeShipAttestationData, shipTypedData } from "@/lib/attest/typed-data";
 import { resolveReleaseShipCommit } from "@/lib/release-commit";
+import { findExistingShipAttestation } from "@/lib/attest/verify";
 import {
+  CURRENT_SCHEMA_VERSION,
   EAS_CONTRACT_ADDRESS,
   OUTSHIP_RESOLVER_ADDRESS,
   SHIP_ATTESTATION_SCHEMA_UID,
@@ -115,6 +117,32 @@ export async function POST(
         return Response.json({ error: "a different wallet was just linked to your profile", code: "wallet_mismatch" }, { status: 409 });
       }
     }
+  }
+
+  // One ship, one receipt: the resolver refuses a second. If this ship already
+  // has one onchain whose save never reached outship, record it now instead.
+  const existing = await findExistingShipAttestation(
+    ship.id,
+    { ...shipAttestationFields(ship, builder, BigInt(0)), wallet: recipient },
+    env.BASE_RPC_URL,
+  );
+  if (existing) {
+    if (!existing.ok || !existing.txHash) {
+      return Response.json({ error: existing.ok ? "couldn't record the existing receipt" : existing.error }, { status: 409 });
+    }
+    const attestation = await db.attestation
+      .create({
+        data: {
+          shipId: ship.id,
+          easUid: existing.uid,
+          txHash: existing.txHash.toLowerCase(),
+          chain: attestationChain.name,
+          scoreSnapshot: existing.scoreSnapshot,
+          schemaVersion: CURRENT_SCHEMA_VERSION,
+        },
+      })
+      .catch(() => db.attestation.findUnique({ where: { shipId: ship.id } }));
+    return Response.json({ attestation, recovered: true });
   }
 
   const deadline = BigInt(Math.floor(Date.now() / 1000) + AUTHORIZATION_TTL_SECONDS);

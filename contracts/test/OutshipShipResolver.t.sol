@@ -182,6 +182,28 @@ contract OutshipShipResolverTest is Test {
         _attestAs(builder, builder, data);
     }
 
+    function test_RevertWhen_ShipAttestedTwice() public {
+        // Attest, then come back later with a fresh signature for the same ship (a new
+        // deadline makes a new digest): the ship already has its receipt.
+        OutshipShipResolver.Ship memory first = _signedShip();
+        bytes32 uid = _attestAs(builder, builder, _encode(first));
+        assertEq(resolver.attestationForShip(keccak256(bytes(first.shipId))), uid);
+
+        vm.warp(block.timestamp + 1 hours);
+        OutshipShipResolver.Ship memory again = _signedShip();
+        assertTrue(again.deadline != first.deadline);
+        vm.expectRevert(abi.encodeWithSelector(OutshipShipResolver.ShipAlreadyAttested.selector, uid));
+        _attestAs(builder, builder, _encode(again));
+    }
+
+    function test_DifferentShipsEachGetOneReceipt() public {
+        OutshipShipResolver.Ship memory other = _ship();
+        other.shipId = "cmship0000000000000000009";
+        other.outshipSig = _sign(signerKey, builder, builder, other);
+        _attestAs(builder, builder, _encode(_signedShip()));
+        _attestAs(builder, builder, _encode(other));
+    }
+
     function test_RevertWhen_RecipientIsNotTheAttester() public {
         // The builder's signed payload, submitted by someone else on the builder's behalf.
         bytes memory data = _encode(_signedShip());

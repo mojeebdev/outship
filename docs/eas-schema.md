@@ -19,8 +19,9 @@ string repo,uint8 shipType,string identifier,string commitSha,uint64 timestamp,u
   `recipient` and `attester`). The schema's resolver,
   [`OutshipShipResolver`](../contracts/src/OutshipShipResolver.sol), refuses any
   attestation whose signature doesn't recover to outship's signer, whose
-  `deadline` has passed, whose attester isn't its recipient, or whose digest
-  was already used. So a v2 attestation can only exist for a ship that's in
+  `deadline` has passed, whose attester isn't its recipient, whose digest
+  was already used, or whose ship already has an attestation (one ship, one
+  receipt: `attestationForShip(keccak256(shipId))` holds its UID). So a v2 attestation can only exist for a ship that's in
   outship's database, with the details outship has for it.
 - Registered **non-revocable**, and the resolver's `onRevoke` returns false:
   receipts are permanent.
@@ -42,6 +43,12 @@ string repo,uint8 shipType,string identifier,string commitSha,uint64 timestamp,u
    onchain data.
 
 The signer key only signs; it never sends a transaction and needs no funds.
+
+If a builder's attestation lands onchain but the save in step 4 never runs
+(they closed the tab, say), the next "attest onchain" click finds it through
+the resolver's `attestationForShip`, checks it the same way, finds its
+transaction and stores it. A second receipt for the same ship is refused
+onchain.
 
 ### Why a resolver and not delegated attestations
 
@@ -87,6 +94,59 @@ Try everything on Base Sepolia first.
 You can also register by hand at https://base.easscan.org/schema/create (or
 base-sepolia): paste the schema string exactly, put the resolver address in
 "Resolver Contract", and uncheck "Revocable".
+
+### Deploying with Remix instead
+
+`contracts/remix/OutshipShipResolver.flat.sol` is the resolver with its
+dependencies (eas-contracts v1.3.0, OpenZeppelin v4.9.3) inlined, so Remix
+doesn't have to resolve any imports. Regenerate it with
+`npm run flatten:contracts` whenever the contract changes. Do Base Sepolia
+first, then repeat on Base mainnet.
+
+1. **Make the signer key** on your own machine, in the repo root (viem is
+   already installed):
+
+   ```bash
+   node -e "const {generatePrivateKey,privateKeyToAccount}=require('viem/accounts');const k=generatePrivateKey();console.log('address',privateKeyToAccount(k).address);console.log('key    ',k)"
+   ```
+
+   Save the key with `npx wrangler secret put OUTSHIP_ATTESTER_PRIVATE_KEY`
+   (paste it at the prompt), then clear your terminal. It never goes in a
+   file, a chat or a commit, and it needs no ETH. Keep the address.
+2. **Open Remix** (remix.ethereum.org) and create two files with the exact
+   contents of `contracts/remix/OutshipShipResolver.flat.sol` and
+   `contracts/remix/compiler_config.json`.
+3. **Compile.** Solidity compiler tab: compiler `0.8.27`, open *Advanced
+   Configurations*, choose *Use configuration file* and pick
+   `compiler_config.json` (optimizer 10000 runs, viaIR, evm `paris`), then
+   compile the flat file.
+4. **Deploy.** Deploy & run tab: environment *Injected Provider* with your
+   wallet on Base Sepolia (it needs a little ETH; the deploy is about 2.4M
+   gas). Pick `OutshipShipResolver` from the contract list (the flat file
+   contains others). Constructor arguments:
+   - `eas`: `0x4200000000000000000000000000000000000021`
+   - `initialOwner`: the wallet that may rotate the signer (keep it safe;
+     your deploying wallet is fine)
+   - `initialSigner`: the signer address from step 1
+
+   Deploy, confirm, and copy the contract address. In Remix, `owner()` and
+   `outshipSigner()` on the deployed contract should show the two addresses.
+5. **Register schema v2** at https://base-sepolia.easscan.org/schema/create:
+   paste the schema string above exactly, put the resolver address in
+   "Resolver Contract", **uncheck "Revocable"**, submit, and copy the UID.
+6. **Verify the source** (recommended, so anyone can read what the resolver
+   checks): Remix's *Contract Verification* plugin, or BaseScan's "Verify &
+   Publish" with the same compiler settings.
+7. **Wire it up:** paste the resolver address and the UID into the
+   `base-sepolia` entry of `V2_DEPLOYMENTS` in `src/lib/web3/eas.ts`, and run
+   `npm test`: it fails if the UID isn't this schema registered with that
+   resolver, non-revocable.
+8. **Try it** before mainnet: `NEXT_PUBLIC_CHAIN=base-sepolia npm run preview`
+   with `OUTSHIP_ATTESTER_PRIVATE_KEY` in `.dev.vars`, sign in, and attest a
+   public ship from your profile.
+9. Repeat steps 2–7 on Base mainnet (easscan: https://base.easscan.org/schema/create),
+   filling the `base` entry. Use the same signer key, or a new one with its
+   address as `initialSigner`.
 
 ### Rotating the signer
 

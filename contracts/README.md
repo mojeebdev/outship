@@ -8,6 +8,7 @@ A self-contained [Foundry](https://getfoundry.sh) project: its own
 | `src/OutshipShipResolver.sol` | the EAS resolver for ship schema v2 |
 | `test/OutshipShipResolver.t.sol` | tests, run against the real EAS v1.3.0 contracts |
 | `script/Deploy.s.sol` | deploys the resolver and registers schema v2 |
+| `remix/` | the resolver flattened into one file, plus the compiler config, for deploying from Remix (`npm run flatten:contracts` regenerates it) |
 
 ## Setup
 

@@ -74,4 +74,16 @@ export const EAS_ABI = [
   { inputs: [], name: "RecipientNotAttester", type: "error" },
   { inputs: [], name: "DigestAlreadyUsed", type: "error" },
   { inputs: [], name: "ExpiringAttestation", type: "error" },
+  { inputs: [{ name: "uid", type: "bytes32" }], name: "ShipAlreadyAttested", type: "error" },
+] as const;
+
+/** OutshipShipResolver's read of which attestation a ship already has. */
+export const RESOLVER_ABI = [
+  {
+    inputs: [{ name: "shipKey", type: "bytes32" }],
+    name: "attestationForShip",
+    outputs: [{ name: "uid", type: "bytes32" }],
+    stateMutability: "view",
+    type: "function",
+  },
 ] as const;
