@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
-import { attestationIdentifier, shipDetail, shipLabel } from "@/lib/ships";
+import { shipDetail, shipLabel } from "@/lib/ships";
+import { attestationBlocker } from "@/lib/attest/ship-fields";
 import { getCurrentBuilder } from "@/lib/auth/current-builder";
 import { getDb } from "@/lib/db";
 import { ConnectGithubButton } from "@/components/connect-github-button";
@@ -9,16 +10,17 @@ import { GITHUB_APP_INSTALL_URL } from "@/lib/github-app";
 import {
   IconArrowUpRight,
   IconGithub,
-  IconGrid,
   IconLock,
   IconLogout,
   IconNode,
-  IconSeal,
   IconShip,
-  IconStreak,
 } from "@/components/icons";
 import { AttestShipButton } from "@/components/attest-ship-button";
 import { AttestationBadge } from "@/components/attestation-badge";
+import { loadHeatmap, loadProfileFacts } from "@/lib/profile-data";
+import { ProfileHeader, ProfileStats } from "@/components/profile-parts";
+import { ReadmeBadgeBox } from "@/components/readme-badge-box";
+import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
 
 export const metadata: Metadata = {
   title: "profile — outship",
@@ -49,8 +51,8 @@ export default async function ProfilePage() {
   }
 
   const db = await getDb();
-  const [rankAbove, totalShips, recentShips, subscriber] = await Promise.all([
-    db.builder.count({ where: { score: { gt: builder.score } } }),
+  const [facts, totalShips, recentShips, subscriber, installation, heatmap] = await Promise.all([
+    loadProfileFacts(db, builder, { publicOnly: false }),
     db.ship.count({ where: { builderId: builder.id } }),
     db.ship.findMany({
       where: { builderId: builder.id },
@@ -59,24 +61,16 @@ export default async function ProfilePage() {
       include: { attestation: true },
     }),
     builder.email ? db.subscriber.findUnique({ where: { email: builder.email } }) : null,
+    builder.installationId ? db.installation.findUnique({ where: { id: builder.installationId } }) : null,
+    loadHeatmap(db, builder, { publicOnly: false }),
   ]);
   const recapOn = subscriber?.status === "CONFIRMED";
-
-  const stats = [
-    { label: "streak", value: builder.currentStreak, Icon: IconStreak },
-    { label: "ships", value: totalShips, Icon: IconShip },
-    { label: "rank", value: `#${rankAbove + 1}`, Icon: IconGrid },
-    { label: "score", value: builder.score, Icon: IconSeal },
-  ];
 
   return (
     <SiteShell>
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-text-muted-1">welcome back</p>
-            <h1 className="text-2xl font-medium">{builder.githubLogin}</h1>
-          </div>
+          <ProfileHeader builder={builder} claimed languages={facts.languages} eyebrow="welcome back" />
           <div className="flex items-center gap-4 whitespace-nowrap text-sm">
             <Link
               href={`/@${builder.githubLogin}`}
@@ -132,19 +126,11 @@ export default async function ProfilePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map(({ label, value, Icon }) => (
-            <div
-              key={label}
-              className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded bg-blue-tint">
-                <Icon className="h-4 w-4 text-base-blue" />
-              </span>
-              <span className="text-2xl font-medium">{value}</span>
-              <span className="text-sm text-text-muted-1">{label}</span>
-            </div>
-          ))}
+        <ProfileStats builder={builder} facts={facts} totalShips={totalShips} unrankedLabel="hidden" />
+
+        <div className="flex flex-col gap-4">
+          <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />
+          {heatmap.totals && <HistoryTotals {...heatmap.totals} />}
         </div>
 
         <div className="flex flex-col gap-4">
@@ -193,32 +179,55 @@ export default async function ProfilePage() {
                     <AttestationBadge
                       chain={ship.attestation.chain}
                       easUid={ship.attestation.easUid}
+                      schemaVersion={ship.attestation.schemaVersion}
                     />
-                  ) : ship.isPrivate ? (
+                  ) : attestationBlocker(ship) ? (
                     <span
                       className="shrink-0 text-xs text-text-muted-2"
-                      title="An attestation would put this repo's name onchain, permanently."
+                      title={attestationBlocker(ship) ?? undefined}
                     >
                       not attestable
                     </span>
                   ) : (
-                    <AttestShipButton
-                      ship={{
-                        id: ship.id,
-                        repo: ship.repo,
-                        shipType: ship.shipType,
-                        identifier: attestationIdentifier(ship),
-                        commitSha: ship.commitSha,
-                        shippedAtIso: ship.shippedAt.toISOString(),
-                      }}
-                      score={builder.score}
-                    />
+                    <AttestShipButton shipId={ship.id} />
                   )}
                 </li>
               ))}
             </ol>
           )}
         </div>
+
+        <ReadmeBadgeBox login={builder.githubLogin} hidden={builder.hidden} />
+
+        <SettingForm
+          action="/api/profile/visibility"
+          name="hidden"
+          on={builder.hidden}
+          title="hide my profile"
+          description={
+            builder.hidden
+              ? "hidden: your public page returns not found and you're off the leaderboard, index and streaks. your ships still count, and you see everything here."
+              : "your profile is public at /@" + builder.githubLogin + ". hide it to take it off every public page; your ships keep counting privately."
+          }
+          onLabel="hide"
+          offLabel="show again"
+        />
+
+        {installation && (
+          <SettingForm
+            action="/api/profile/claim-invites"
+            name="invites"
+            on={installation.claimInvitesEnabled}
+            title="claim invitations in your repos"
+            description={
+              installation.claimInvitesEnabled
+                ? "on: when someone who isn't on outship gets a PR merged in a public repo you installed the app on, the app leaves one short comment inviting them to claim or hide their profile. once per person, ever."
+                : "off: the app never comments in your repos."
+            }
+            onLabel="turn on"
+            offLabel="turn off"
+          />
+        )}
 
         {builder.email && (
           <form
@@ -249,5 +258,46 @@ export default async function ProfilePage() {
         )}
       </div>
     </SiteShell>
+  );
+}
+
+/** An on/off switch posted as a plain form, like the recap one. */
+function SettingForm({
+  action,
+  name,
+  on,
+  title,
+  description,
+  onLabel,
+  offLabel,
+}: {
+  action: string;
+  name: string;
+  on: boolean;
+  title: string;
+  description: string;
+  /** The button when the setting is off (it turns it on). */
+  onLabel: string;
+  /** The button when the setting is on. */
+  offLabel: string;
+}) {
+  return (
+    <form
+      method="post"
+      action={action}
+      className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div>
+        <p className="font-medium">{title}</p>
+        <p className="mt-1 text-sm text-text-muted-1">{description}</p>
+      </div>
+      <input type="hidden" name={name} value={on ? "off" : "on"} />
+      <button
+        type="submit"
+        className="shrink-0 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition hover:border-void"
+      >
+        {on ? offLabel : onLabel}
+      </button>
+    </form>
   );
 }

@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     ".open-next/**",
     ".wrangler/**",
     "cloudflare-env.d.ts",
+    // The Foundry project: Solidity plus vendored libraries, built and tested by forge.
+    "contracts/**",
   ]),
 ]);
 

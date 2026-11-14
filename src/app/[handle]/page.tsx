@@ -3,21 +3,22 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
 import { shipDetail, shipLabel } from "@/lib/ships";
 import { getDb } from "@/lib/db";
-import { IconGrid, IconLock, IconSeal, IconShip, IconStreak } from "@/components/icons";
+import { IconLock, IconShip } from "@/components/icons";
 import { AttestationBadge } from "@/components/attestation-badge";
+import { ConnectGithubButton } from "@/components/connect-github-button";
+import { builderForHandle, isClaimed } from "@/lib/builders";
+import { loadHeatmap, loadProfileFacts } from "@/lib/profile-data";
+import { ProfileHeader, ProfileStats } from "@/components/profile-parts";
+import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
 
 export const dynamic = "force-dynamic";
 
-async function loadBuilder(rawHandle: string) {
-  // The dynamic segment can arrive percent-encoded (e.g. "%40mojeebdev")
-  // depending on the runtime, rather than pre-decoded like plain Next.js.
-  const handle = decodeURIComponent(rawHandle);
-  if (!handle.startsWith("@")) return null;
-  const githubLogin = handle.slice(1);
-  if (!githubLogin) return null;
+const SUPPORT_EMAIL = "support@mail.outship.dev";
 
-  const db = await getDb();
-  return db.builder.findUnique({ where: { githubLogin } });
+/** A builder who may be shown publicly, or null (unknown or hidden: both 404). */
+async function loadBuilder(rawHandle: string) {
+  const builder = await builderForHandle(await getDb(), rawHandle);
+  return builder && !builder.hidden ? builder : null;
 }
 
 export async function generateMetadata({
@@ -28,7 +29,13 @@ export async function generateMetadata({
   const { handle } = await params;
   const builder = await loadBuilder(handle);
   if (!builder) return { title: "outship" };
-  return { title: `${builder.githubLogin} — outship` };
+  return {
+    title: `${builder.githubLogin} — outship`,
+    // An unclaimed profile is assembled from public GitHub activity by
+    // someone who never signed up; it shouldn't be what a search for their
+    // name turns up.
+    ...(isClaimed(builder) ? {} : { robots: { index: false, follow: false } }),
+  };
 }
 
 /**
@@ -46,42 +53,58 @@ export default async function BuilderProfilePage({
   if (!builder) notFound();
 
   const db = await getDb();
-  const [rankAbove, totalShips, recentShips] = await Promise.all([
-    db.builder.count({ where: { score: { gt: builder.score } } }),
-    db.ship.count({ where: { builderId: builder.id } }),
+  const claimed = isClaimed(builder);
+  // Private ships count, but an unclaimed profile is public GitHub activity
+  // only, so it leaves them out entirely, even from the count.
+  const shipWhere = { builderId: builder.id, ...(claimed ? {} : { isPrivate: false }) };
+  const [facts, totalShips, recentShips, heatmap] = await Promise.all([
+    loadProfileFacts(db, builder, { publicOnly: !claimed }),
+    db.ship.count({ where: shipWhere }),
     db.ship.findMany({
-      where: { builderId: builder.id },
+      where: shipWhere,
       orderBy: { shippedAt: "desc" },
       take: 20,
       include: { attestation: true },
     }),
+    loadHeatmap(db, builder, { publicOnly: true }),
   ]);
-
-  const stats = [
-    { label: "streak", value: builder.currentStreak, Icon: IconStreak },
-    { label: "ships", value: totalShips, Icon: IconShip },
-    { label: "rank", value: `#${rankAbove + 1}`, Icon: IconGrid },
-    { label: "score", value: builder.score, Icon: IconSeal },
-  ];
 
   return (
     <SiteShell>
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
-        <h1 className="text-2xl font-medium">{builder.githubLogin}</h1>
+        <ProfileHeader builder={builder} claimed={claimed} languages={facts.languages} />
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map(({ label, value, Icon }) => (
-            <div
-              key={label}
-              className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded bg-blue-tint">
-                <Icon className="h-4 w-4 text-base-blue" />
-              </span>
-              <span className="text-2xl font-medium">{value}</span>
-              <span className="text-sm text-text-muted-1">{label}</span>
+        {!claimed && (
+          <div className="flex flex-col gap-3 rounded-lg border border-base-blue bg-white p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-medium">is this you? claim your profile</p>
+                <p className="mt-1 text-sm text-text-muted-1">
+                  this page was put together from your public github activity in
+                  repos where the outship app is installed. sign in to keep your
+                  streak, rank on the leaderboard and attest your ships.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <ConnectGithubButton>claim with github</ConnectGithubButton>
+              </div>
             </div>
-          ))}
+            <p className="text-xs text-text-muted-2">
+              rather not be here? sign in and switch on &ldquo;hide my
+              profile&rdquo;, or email{" "}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-base-blue hover:underline">
+                {SUPPORT_EMAIL}
+              </a>{" "}
+              and we&apos;ll remove it.
+            </p>
+          </div>
+        )}
+
+        <ProfileStats builder={builder} facts={facts} totalShips={totalShips} unrankedLabel="unclaimed" />
+
+        <div className="flex flex-col gap-4">
+          <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />
+          {heatmap.totals && <HistoryTotals {...heatmap.totals} />}
         </div>
 
         <div className="flex flex-col gap-4">
@@ -132,6 +155,7 @@ export default async function BuilderProfilePage({
                     <AttestationBadge
                       chain={ship.attestation.chain}
                       easUid={ship.attestation.easUid}
+                      schemaVersion={ship.attestation.schemaVersion}
                     />
                   )}
                 </li>

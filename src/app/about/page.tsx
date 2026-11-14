@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { IconGithub } from "@/components/icons";
+import { MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, REVIEWED_MERGE_POINTS } from "@/lib/score";
 
 export const metadata: Metadata = {
   title: "about — outship",
@@ -48,7 +49,15 @@ export default function AboutPage() {
         </p>
         <p>
           the rules are simple on purpose: shipping counts, scripting
-          doesn&apos;t, and if you stop, your streak shows it.
+          doesn&apos;t, and if you stop, your streak shows it. a release with
+          notes is worth {RELEASE_POINTS} points, a merged pull request{" "}
+          {MERGE_POINTS}, or {REVIEWED_MERGE_POINTS} when someone else merged
+          it, and a push {PUSH_POINTS}, with daily caps; your github history
+          shows on your profile but never counts. the{" "}
+          <Link href="/faq#scoring" className="text-base-blue hover:underline">
+            faq
+          </Link>{" "}
+          has the details.
         </p>
 
         <h2 className="mt-6 text-xl font-medium">the builder behind it</h2>

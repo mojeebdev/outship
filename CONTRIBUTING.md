@@ -45,8 +45,10 @@ writing Next.js code, check the docs bundled in `node_modules/next/dist/docs/`
 2. **All checks pass before review:**
    ```bash
    npm run lint
+   npm run typecheck
+   npm test
    npm run build
-   npm run test:word
+   npm run test:contracts   # if you touched contracts/ (needs Foundry)
    ```
 3. **Scoring lives in one place.** Points, daily caps and streak rules are in
    `src/lib/score.ts`. Don't hard-code a number from it anywhere else, in

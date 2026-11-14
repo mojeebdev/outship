@@ -3,12 +3,16 @@
 // drift from the scoring.
 import Link from "next/link";
 import { GITHUB_APP_INSTALL_URL } from "@/lib/github-app";
-import { DAILY_CAPS, SHIP_WEIGHTS, STREAK_CAP } from "@/lib/score";
-
-const MAX_DAILY_POINTS =
-  SHIP_WEIGHTS.RELEASE * DAILY_CAPS.RELEASE +
-  SHIP_WEIGHTS.MERGE * DAILY_CAPS.MERGE +
-  SHIP_WEIGHTS.PUSH * DAILY_CAPS.PUSH;
+import {
+  BARE_RELEASE_POINTS,
+  DAILY_CAPS,
+  MAX_DAILY_POINTS,
+  MERGE_POINTS,
+  PUSH_POINTS,
+  RELEASE_POINTS,
+  REVIEWED_MERGE_POINTS,
+  STREAK_CAP,
+} from "@/lib/score";
 
 const SUPPORT_EMAIL = "support@mail.outship.dev";
 
@@ -76,11 +80,16 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       {
         question: "what counts as a ship?",
         featured: true,
-        text: `a published release (${SHIP_WEIGHTS.RELEASE} points), a pull request merged into the default branch (${SHIP_WEIGHTS.MERGE} points), and a push to the default branch (${SHIP_WEIGHTS.PUSH} point). work on other branches doesn't count until it lands.`,
+        text: `a published release, a pull request merged into the default branch, and a push to the default branch. work on other branches doesn't count until it lands.`,
+      },
+      {
+        question: "how many points is each ship worth?",
+        featured: true,
+        text: `a release with notes or at least one file attached is ${RELEASE_POINTS} points; a bare tag with neither is ${BARE_RELEASE_POINTS}. a merged pull request is ${MERGE_POINTS}, or ${REVIEWED_MERGE_POINTS} when someone other than its author merged it, or when it came from outside the repo. a push to the default branch is ${PUSH_POINTS}, once a day. the extra point for a second pair of eyes is there because work someone else looked at is harder to fake.`,
       },
       {
         question: "is there a daily limit?",
-        text: `yes. per builder, per UTC day, at most ${DAILY_CAPS.RELEASE} releases, ${DAILY_CAPS.MERGE} merged PRs and ${DAILY_CAPS.PUSH} push score, so at most ${MAX_DAILY_POINTS} points a day from ships. anything past the cap still shows on your profile, it just doesn't add points. splitting work into dozens of PRs or tags doesn't pay.`,
+        text: `yes. per builder, per UTC day, at most ${DAILY_CAPS.RELEASE} releases, ${DAILY_CAPS.MERGE} merged PRs and ${DAILY_CAPS.PUSH} push score, so at most ${MAX_DAILY_POINTS} points a day from ships. when a day has more than that, the ones worth most count. anything past the cap still shows on your profile, it just doesn't add points. splitting work into dozens of PRs or tags doesn't pay.`,
       },
       {
         question: "how do streaks work?",
@@ -97,7 +106,7 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       },
       {
         question: "do commits from bots or AI agents count?",
-        text: "releases and pull requests authored by bots don't score. a push made by a bot, such as an AI agent's github app, is credited to the commit's author, but only if they're already an outship builder.",
+        text: "releases and pull requests authored by bots don't score. a push made by a bot, such as an AI agent's github app, is credited to the commit's author, but only if they're already an outship builder and the bot pushed into repos where they installed the outship app themselves. a commit's author can be set to anyone, so nothing looser would be safe.",
       },
       {
         question: "why didn't my ship show up?",
@@ -128,11 +137,13 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       },
       {
         question: "what does outship store about me?",
-        text: "your github id, username and primary verified email, your app installation, and the ships themselves. github's sign-in token is used once and discarded. the privacy policy has the full list.",
+        text: "your github id, username, primary verified email and public profile fields, your app installation, a year of daily contribution counts from github, and the ships themselves. github's sign-in token is used once and discarded. the privacy policy has the full list.",
         answer: (
           <>
-            your github id, username and primary verified email, your app
-            installation, and the ships themselves. github&apos;s sign-in token
+            your github id, username, primary verified email and public
+            profile fields, your app installation, a year of daily
+            contribution counts from github, and the ships themselves.
+            github&apos;s sign-in token
             is used once and discarded. the{" "}
             <Link href="/privacy" className={link}>
               privacy policy
@@ -140,6 +151,14 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
             has the full list.
           </>
         ),
+      },
+      {
+        question: "why is there a profile for me i never made?",
+        text: "you shipped in a repo where someone installed the outship app, so those ships were credited to you. the profile is marked unclaimed, shows only public github activity, isn't ranked and isn't indexed by search engines. sign in to claim it, or sign in and hide it; you can also email us to remove it. the app may leave one comment on a merged PR to let you know, once, ever.",
+      },
+      {
+        question: "can i hide my profile?",
+        text: "yes. on your profile, switch on “hide my profile”. your public page then returns not found and you're off the leaderboard, index and streaks; your ships keep counting and you still see them on your own dashboard.",
       },
       {
         question: "can i delete my data?",
@@ -163,7 +182,11 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
     faqs: [
       {
         question: "what does “attest onchain” do?",
-        text: "it writes a receipt for one ship to base using the ethereum attestation service: the repo, ship type, tag or PR number, commit, time and your score then. your wallet signs it, so the receipt is yours and anyone can check it without asking outship.",
+        text: "it writes a receipt for one ship to base using the ethereum attestation service: the repo, ship type, tag or PR number, commit, time, your github username and your score then. outship signs those details first, and the schema only accepts attestations outship signed, so a receipt can't be made up for a ship that never happened. your wallet sends it and pays the small fee, so the receipt is yours and anyone can check it without asking outship.",
+      },
+      {
+        question: "what does “legacy · unverified” mean?",
+        text: "it marks an attestation made with outship's first schema, before outship signed them. anyone could write to that schema, so outship can't vouch that a legacy receipt matches a real ship. it stays onchain, but new attestations use the signed schema.",
       },
       {
         question: "do i have to attest?",
@@ -171,7 +194,7 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       },
       {
         question: "is an attestation public?",
-        text: "yes, and permanent. it links your wallet address to that ship for anyone to see, which is why only public ships can be attested.",
+        text: "yes, and permanent. it links your wallet address and github username to that ship for anyone to see, which is why only public ships can be attested. your profile keeps one wallet: the first one you attest with.",
       },
     ],
   },

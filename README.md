@@ -100,8 +100,10 @@ the weekly ship recap.
 
 | Ship | When it counts | Points |
 | --- | --- | --- |
-| **Release** | a release is published | **5** |
+| **Release** | a release is published with notes or at least one asset | **5** |
+| **Bare release** | a release with an empty body and no assets | **2** |
 | **Merged PR** | a pull request is merged into the default branch | **2** |
+| **Reviewed or outside PR** | merged by someone other than its author, or authored by someone outside the repo (not its owner, a member or a collaborator) | **3** |
 | **Push** | a push lands on the default branch | **1** |
 
 ### Daily caps
@@ -112,12 +114,15 @@ Per builder, per UTC day, at most this many of each type score:
 | --- | --- | --- |
 | 2 | 5 | 1 |
 
-That's at most 21 points a day from ships. Anything past the cap is still
+That's at most 26 points a day from ships. When a day has more than the cap,
+the ones worth most count. Anything past the cap is still
 recorded on your profile, it just doesn't add points, so spamming tags or
 splitting work into dozens of PRs doesn't pay.
 
 ### Streaks
 
+- Streaks are worked out from your ships themselves, so a late or repeated
+  webhook can't break or inflate one.
 - Ship on a UTC day and your streak is alive for that day.
 - Ship the next UTC day and it grows by one. More ships on the same day don't
   grow it further.
@@ -144,7 +149,9 @@ actually shipping. When a streak ends, its bonus leaves your score with it.
   same commit, it's scored as the merge.
 - **Bots don't score.** Releases and PRs authored by bots are skipped. A push
   made by a bot is credited to the commit's author only if they're already an
-  outship builder.
+  outship builder *and* it's their own installation of the App the bot pushed
+  into. (A commit's author is whatever its email says, so anything looser
+  could be spoofed.)
 - **Contributors get credit.** If you author a merged PR or a release in a
   repo where someone else installed the app, that ship is yours, even before
   you sign up.
@@ -153,26 +160,31 @@ actually shipping. When a streak ends, its bonus leaves your score with it.
 
 | Page | What's there |
 | --- | --- |
-| [`/leaderboard`](https://outship.dev/leaderboard) | everyone, ranked by score |
+| [`/leaderboard`](https://outship.dev/leaderboard) | this week's board (from Monday 00:00 UTC), with [`/month`](https://outship.dev/leaderboard/month) and [`/all`](https://outship.dev/leaderboard/all) tabs, a language filter and who's rising |
 | [`/streaks`](https://outship.dev/streaks) | live streaks, longest first, with each builder's best |
 | [`/builders`](https://outship.dev/builders) | every builder on outship, A to Z |
-| `/@handle` | a builder's public profile: score, streaks and public ships, with a share card for X |
+| `/@handle` | a builder's public profile: score, streaks, ranks, languages, a contribution heatmap and public ships, with a share card for X |
+| `/@handle/badge.svg` | a README badge with score, streak and rank (cached for an hour) |
 | [`/profile`](https://outship.dev/profile) | your private dashboard: every ship (private ones too), app status, attestations, recap switch |
 | [`/changelog`](https://outship.dev/changelog) | what changed on outship |
 | [`/manifesto`](https://outship.dev/manifesto) | what outship believes about shipping |
 
 ## Onchain attestations
 
-Attesting is optional and done from your profile. Your wallet signs a
-transaction on Base mainnet using outship's EAS schema:
+Attesting is optional and done from your profile. outship signs the ship's
+details from its own records, then your wallet sends the attestation on Base
+and pays the gas, using outship's EAS schema (v2):
 
 ```
-string repo, uint8 shipType, string identifier, string commitSha, uint64 timestamp, uint16 scoreSnapshot
+string repo, uint8 shipType, string identifier, string commitSha, uint64 timestamp, uint16 scoreSnapshot, string githubLogin, string shipId, uint64 deadline, bytes outshipSig
 ```
 
-Schema UID: [`0x2edd7f13…805d2`](https://base.easscan.org/schema/view/0x2edd7f1319a9f0197ca2edc42001c9f84134adce9b760e6481a80a2577d805d2)
-(`shipType`: 0 = release, 1 = merged PR, 2 = push). An attestation is public
-and permanent and links your wallet to that ship. See
+The schema's resolver contract ([`contracts/`](contracts/)) only accepts
+attestations carrying outship's signature, so nobody can attest a ship that
+isn't real. Before storing one, outship reads it back from Base and checks it.
+(`shipType`: 0 = release, 1 = merged PR, 2 = push.) An attestation is public
+and permanent and links your wallet to that ship. Attestations made with the
+first schema, which had no resolver, show as "legacy · unverified". See
 [docs/eas-schema.md](docs/eas-schema.md).
 
 ## The weekly ship recap
@@ -198,7 +210,8 @@ by a named author. Same app, same Worker, its own hostname. See
 - **Data:** Cloudflare D1 through Prisma; SQL migrations in `migrations/`
 - **GitHub:** a GitHub App (sign-in, installation and webhooks), verified by
   webhook signature
-- **Onchain:** EAS on Base, through the builder's own wallet
+- **Onchain:** EAS on Base, through the builder's own wallet, with an
+  outship-signed resolver contract (Foundry, in `contracts/`)
 - **Email:** Cloudflare Email Service
 
 ```
@@ -219,6 +232,14 @@ npx wrangler d1 migrations apply DB --local
 npm run preview                       # builds and runs on the real Workers runtime
 ```
 
+Build-time variables (set under Workers Builds -> Variables, not as runtime
+secrets): `NEXT_PUBLIC_CHAIN` (`base-sepolia` for the testnet),
+`NEXT_PUBLIC_EAS_SCHEMA_UID` / `NEXT_PUBLIC_OUTSHIP_RESOLVER` (see
+[docs/eas-schema.md](docs/eas-schema.md)) and `NEXT_PUBLIC_TOKEN_ADDRESS`
+(leave empty: while it is, nothing about the token renders and `/token` is a
+404). Runtime secrets: the GitHub App's values, `SESSION_SECRET`,
+`OUTSHIP_ATTESTER_PRIVATE_KEY` and, optionally, `BASE_RPC_URL`.
+
 `npm run dev` works for UI work, but `next dev` runs on Node, where the Prisma
 D1 client can't load, so pages that read the database error there. Use
 `npm run preview` for anything that touches data.
@@ -227,8 +248,10 @@ Checks to run before opening a PR:
 
 ```bash
 npm run lint
+npm run typecheck
+npm test
 npm run build
-npm run test:word
+npm run test:contracts   # needs Foundry, and: git submodule update --init --recursive contracts/lib
 ```
 
 ## Contributing

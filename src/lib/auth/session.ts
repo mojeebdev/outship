@@ -1,5 +1,6 @@
 // A signed, self-contained session cookie — no server-side session store.
 // Payload + HMAC signature are both base64url, joined by a dot.
+import { timingSafeEqual } from "@/lib/crypto";
 
 const SESSION_COOKIE_NAME = "outship_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
@@ -58,7 +59,7 @@ export async function verifySessionCookieValue(
   if (!encodedPayload || !signature) return null;
 
   const expectedSignature = await hmac(secret, encodedPayload);
-  if (expectedSignature !== signature) return null;
+  if (!timingSafeEqual(expectedSignature, signature)) return null;
 
   try {
     const payload = JSON.parse(

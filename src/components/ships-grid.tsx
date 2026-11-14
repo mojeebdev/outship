@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { IconArrowUpRight } from "@/components/icons";
-import { SHIP_WEIGHTS, STREAK_CAP } from "@/lib/score";
+import { MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, REVIEWED_MERGE_POINTS, STREAK_CAP } from "@/lib/score";
 
 // S·H·I·P·S: each letter is a door into the part of outship it names. The
 // detail lines are real rules, not marketing: the numbers come from
@@ -38,7 +38,7 @@ const shipsItems = [
     letter: "S",
     label: "Score",
     description: "quality + cadence",
-    detail: `release ${SHIP_WEIGHTS.RELEASE} · PR ${SHIP_WEIGHTS.MERGE} · push ${SHIP_WEIGHTS.PUSH} · streak up to ${STREAK_CAP}`,
+    detail: `release up to ${RELEASE_POINTS} · PR ${MERGE_POINTS}–${REVIEWED_MERGE_POINTS} · push ${PUSH_POINTS} · streak up to ${STREAK_CAP}`,
     href: "/faq#scoring",
   },
 ];

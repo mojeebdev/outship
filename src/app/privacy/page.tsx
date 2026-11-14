@@ -37,11 +37,22 @@ export default function PrivacyPage() {
         <Section title="when you sign in with github">
           <p>
             we store your github user id and username, the id of your
-            outship github app installation, and the primary verified email
-            address on your github account. github gives us a temporary
+            outship github app installation, the primary verified email
+            address on your github account, and the public profile fields
+            you&apos;ve set on github: name, bio, location, website and x
+            username. those profile fields are shown on your public profile,
+            and refreshed each time you sign in. github gives us a temporary
             token during sign-in; we use it to read your profile, that email
-            address and which installations you can see, then discard it. we
-            never store it.
+            address, which installations you can see and your contribution
+            history, then discard it. we never store it.
+          </p>
+          <p>
+            the contribution history is what github&apos;s own contribution
+            graph shows: how many contributions you made on each day of the
+            last year, and totals for commits, pull requests, reviews and
+            private contributions. no repository names. we refresh it at most
+            once a day, when you sign in, and show it on your profile as
+            context. it never affects your score, streak or rank.
           </p>
         </Section>
 
@@ -60,23 +71,49 @@ export default function PrivacyPage() {
             your score, but their repository name and tag are never shown
             publicly; only you see them, on your own dashboard.
           </p>
+        </Section>
+
+        <Section title="unclaimed profiles">
           <p>
-            if you author a merged pull request or a release in a repository
-            where someone else installed the app, that ship and your public
-            github username may appear on outship even if you never signed
-            up. email us and we&apos;ll remove it.
+            if you author a merged pull request, a release or a push in a
+            repository where someone else installed the app, that ship is
+            credited to you, and outship shows it on a profile at your github
+            username even if you&apos;ve never signed up. that profile is
+            clearly marked unclaimed, holds only public github activity (your
+            username, avatar and ships from public repositories), isn&apos;t
+            ranked, and asks search engines not to index it. we don&apos;t
+            have your email address or anything else about you.
+          </p>
+          <p>
+            the first time one of your pull requests is merged in a public
+            repository whose owner allows it, the outship github app may leave
+            one short comment on that pull request saying the profile exists
+            and how to claim or hide it. it happens at most once per person,
+            ever, and repository owners can switch it off. we never use commit
+            email addresses to contact anyone.
+          </p>
+          <p>
+            to take a profile down, sign in with github and switch on
+            &ldquo;hide my profile&rdquo;: the public page then returns not
+            found and you disappear from the leaderboard, index and streaks,
+            while your ships keep counting privately. or email us and
+            we&apos;ll remove it.
           </p>
         </Section>
 
         <Section title="onchain attestations">
           <p>
-            attesting a ship is optional. if you do, your wallet signs a
-            transaction on base, and the attestation (your wallet address,
-            the repository, ship type, identifier, commit, time and score)
+            attesting a ship is optional. if you do, we store the wallet
+            address you attest with on your account (one per profile), sign
+            the ship&apos;s details with outship&apos;s key, and your wallet
+            sends a transaction on base. the attestation (your wallet
+            address, the repository, ship type, identifier, commit, time,
+            score, your github username and outship&apos;s id for the ship)
             becomes public and permanent on the blockchain. that links your
-            wallet to your ships for anyone to see. we store the
-            attestation&apos;s id and transaction hash. nobody, including us,
-            can delete or edit data once it&apos;s onchain.
+            wallet and username to your ships for anyone to see. we store the
+            attestation&apos;s id and transaction hash after reading them back
+            from base. nobody, including us, can delete or edit data once
+            it&apos;s onchain.
           </p>
         </Section>
 
@@ -134,7 +171,9 @@ export default function PrivacyPage() {
         <Section title="your choices">
           <p>
             you can uninstall the github app or narrow its repositories on
-            github, unsubscribe from email, and ask us to delete your account,
+            github, hide your profile from your dashboard, switch off claim
+            invitations in your repositories, unsubscribe from email, and ask
+            us to delete your account,
             ships and email address by writing to{" "}
             <a href="mailto:support@mail.outship.dev" className="text-base-blue hover:underline">
               support@mail.outship.dev

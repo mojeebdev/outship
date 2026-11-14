@@ -1,202 +1,248 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
-import { connect, writeContract, waitForTransactionReceipt } from "wagmi/actions";
+import {
+  connect,
+  getAccount,
+  simulateContract,
+  switchChain,
+  waitForTransactionReceipt,
+  writeContract,
+} from "wagmi/actions";
 import { injected } from "wagmi/connectors";
-import { decodeEventLog, zeroHash, type Hex } from "viem";
-import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
+import {
+  BaseError,
+  ContractFunctionRevertedError,
+  UserRejectedRequestError,
+  type Address,
+  type Hex,
+} from "viem";
 import { Web3Provider } from "@/components/web3-provider";
 import { wagmiConfig, activeChain } from "@/lib/web3/config";
-import {
-  EAS_CONTRACT_ADDRESS,
-  SHIP_ATTESTATION_SCHEMA,
-  SHIP_ATTESTATION_SCHEMA_UID,
-  SHIP_TYPE_CODE,
-  isAttestationConfigured,
-} from "@/lib/web3/eas";
+import { EAS_ABI } from "@/lib/web3/eas-abi";
+import { EAS_CONTRACT_ADDRESS, isAttestationConfigured } from "@/lib/web3/eas";
 import { AttestationBadge } from "@/components/attestation-badge";
 import { IconSeal } from "@/components/icons";
 
-const EAS_ABI = [
-  {
-    inputs: [
-      {
-        components: [
-          { name: "schema", type: "bytes32" },
-          {
-            components: [
-              { name: "recipient", type: "address" },
-              { name: "expirationTime", type: "uint64" },
-              { name: "revocable", type: "bool" },
-              { name: "refUID", type: "bytes32" },
-              { name: "data", type: "bytes" },
-              { name: "value", type: "uint256" },
-            ],
-            name: "data",
-            type: "tuple",
-          },
-        ],
-        name: "request",
-        type: "tuple",
-      },
-    ],
-    name: "attest",
-    outputs: [{ name: "", type: "bytes32" }],
-    stateMutability: "payable",
-    type: "function",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, name: "recipient", type: "address" },
-      { indexed: true, name: "attester", type: "address" },
-      { indexed: false, name: "uid", type: "bytes32" },
-      { indexed: true, name: "schemaUID", type: "bytes32" },
-    ],
-    name: "Attested",
-    type: "event",
-  },
-] as const;
-
-export type ShipInput = {
-  id: string;
-  repo: string;
-  shipType: keyof typeof SHIP_TYPE_CODE;
-  identifier: string;
-  commitSha: string;
-  shippedAtIso: string;
+type Authorization = {
+  chainId: number;
+  deadline: number;
+  request: {
+    schema: Hex;
+    data: {
+      recipient: Address;
+      expirationTime: string;
+      revocable: boolean;
+      refUID: Hex;
+      data: Hex;
+      value: string;
+    };
+  };
 };
 
-type Status = "idle" | "attesting" | "saving" | "done" | "error";
+type Phase =
+  | { kind: "idle" }
+  | { kind: "busy"; label: string }
+  | { kind: "wrong-network" }
+  | { kind: "rejected" }
+  | { kind: "expired" }
+  | { kind: "error"; message: string }
+  | { kind: "done"; uid: string };
 
-function AttestFlow({ ship, score }: { ship: ShipInput; score: number }) {
-  const { address } = useAccount({ config: wagmiConfig });
-  const [status, setStatus] = useState<Status>("idle");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [attestedUid, setAttestedUid] = useState<string | null>(null);
+class ExpiredError extends Error {}
 
-  async function handleClick() {
-    setErrorMessage(null);
-    try {
-      let account = address;
-      if (!account) {
-        const result = await connect(wagmiConfig, { connector: injected() });
-        account = result.accounts[0];
+const revertName = (error: unknown): string | undefined => {
+  if (!(error instanceof BaseError)) return undefined;
+  const reverted = error.walk((e) => e instanceof ContractFunctionRevertedError);
+  return reverted instanceof ContractFunctionRevertedError ? reverted.data?.errorName : undefined;
+};
+
+const isUserRejection = (error: unknown) =>
+  error instanceof BaseError
+    ? Boolean(error.walk((e) => e instanceof UserRejectedRequestError))
+    : (error as { code?: number } | null)?.code === 4001;
+
+async function postJson(url: string, body: unknown) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+  return { status: response.status, ok: response.ok, json };
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function AttestFlow({ shipId }: { shipId: string }) {
+  const [phase, setPhase] = useState<Phase>({ kind: "idle" });
+
+  async function ensureWallet(): Promise<Address> {
+    let account = getAccount(wagmiConfig);
+    if (!account.address) {
+      setPhase({ kind: "busy", label: "connect your wallet…" });
+      await connect(wagmiConfig, { connector: injected() });
+      account = getAccount(wagmiConfig);
+    }
+    if (!account.address) throw new Error("no wallet account available");
+
+    if (account.chainId !== activeChain.id) {
+      setPhase({ kind: "busy", label: `switch to ${activeChain.name}…` });
+      try {
+        await switchChain(wagmiConfig, { chainId: activeChain.id });
+      } catch {
+        // Declined, or the wallet can't add the chain (wagmi reports both as
+        // a rejection): either way the wallet is still on the wrong network.
+        throw Object.assign(new Error("wrong network"), { wrongNetwork: true });
       }
-      if (!account) throw new Error("no wallet account available");
+    }
+    return account.address;
+  }
 
-      setStatus("attesting");
+  /** outship's signature, or the receipt this ship already has onchain. */
+  async function authorize(recipient: Address): Promise<Authorization | { recoveredUid: string }> {
+    setPhase({ kind: "busy", label: "signing with outship…" });
+    const { ok, json } = await postJson(`/api/ships/${shipId}/attest/authorize`, { recipient });
+    if (!ok) throw new Error(typeof json.error === "string" ? json.error : "couldn't authorize this attestation");
+    const recovered = json.attestation as { easUid?: string } | undefined;
+    if (recovered?.easUid) return { recoveredUid: recovered.easUid };
+    return json as unknown as Authorization;
+  }
 
-      const encoder = new SchemaEncoder(SHIP_ATTESTATION_SCHEMA);
-      const data = encoder.encodeData([
-        { name: "repo", value: ship.repo, type: "string" },
-        { name: "shipType", value: SHIP_TYPE_CODE[ship.shipType], type: "uint8" },
-        { name: "identifier", value: ship.identifier, type: "string" },
-        { name: "commitSha", value: ship.commitSha, type: "string" },
-        {
-          name: "timestamp",
-          value: BigInt(Math.floor(new Date(ship.shippedAtIso).getTime() / 1000)),
-          type: "uint64",
+  async function submit(auth: Authorization, account: Address): Promise<Hex> {
+    // Leave a margin for the wallet prompt and block inclusion.
+    if (auth.deadline - 30 < Date.now() / 1000) throw new ExpiredError();
+    const args = [
+      {
+        schema: auth.request.schema,
+        data: {
+          ...auth.request.data,
+          expirationTime: BigInt(auth.request.data.expirationTime),
+          value: BigInt(auth.request.data.value),
         },
-        { name: "scoreSnapshot", value: score, type: "uint16" },
-      ]) as Hex;
+      },
+    ] as const;
 
-      const hash = await writeContract(wagmiConfig, {
+    // Simulate first, so a resolver refusal (an expired signature, say) shows
+    // up here with its reason instead of as a failed transaction.
+    try {
+      await simulateContract(wagmiConfig, {
         address: EAS_CONTRACT_ADDRESS,
         abi: EAS_ABI,
         functionName: "attest",
-        args: [
-          {
-            schema: SHIP_ATTESTATION_SCHEMA_UID as Hex,
-            data: {
-              recipient: account,
-              expirationTime: BigInt(0),
-              revocable: true,
-              refUID: zeroHash,
-              data,
-              value: BigInt(0),
-            },
-          },
-        ],
+        args,
+        account,
         chainId: activeChain.id,
       });
-
-      const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
-
-      let easUid: string | null = null;
-      for (const log of receipt.logs) {
-        try {
-          const decoded = decodeEventLog({
-            abi: EAS_ABI,
-            data: log.data,
-            topics: log.topics,
-          });
-          if (decoded.eventName === "Attested") {
-            easUid = decoded.args.uid;
-            break;
-          }
-        } catch {
-          // not the Attested log, skip
-        }
-      }
-      if (!easUid) throw new Error("couldn't read the attestation UID from the transaction");
-
-      setStatus("saving");
-
-      const response = await fetch(`/api/ships/${ship.id}/attest`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ easUid, txHash: hash, chain: activeChain.name }),
-      });
-      if (!response.ok) throw new Error(await response.text());
-
-      setAttestedUid(easUid);
-      setStatus("done");
     } catch (error) {
-      setStatus("error");
-      setErrorMessage(error instanceof Error ? error.message : "attestation failed");
+      if (revertName(error) === "SignatureExpired") throw new ExpiredError();
+      if (revertName(error) === "ShipAlreadyAttested") {
+        throw new Error("this ship already has a receipt onchain. refresh the page to see it.");
+      }
+      throw error;
+    }
+
+    setPhase({ kind: "busy", label: "confirm in wallet…" });
+    // The builder's wallet sends it and pays the gas; the receipt is theirs.
+    return writeContract(wagmiConfig, {
+      address: EAS_CONTRACT_ADDRESS,
+      abi: EAS_ABI,
+      functionName: "attest",
+      args,
+      account,
+      chainId: activeChain.id,
+    });
+  }
+
+  async function save(txHash: Hex): Promise<string> {
+    setPhase({ kind: "busy", label: "verifying onchain…" });
+    // The server reads the tx back from Base; its RPC can lag the wallet's by
+    // a few seconds, so a "not found yet" is retried rather than reported.
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const { status, ok, json } = await postJson(`/api/ships/${shipId}/attest`, { txHash });
+      const attestation = json.attestation as { easUid?: string } | undefined;
+      if (ok && attestation?.easUid) return attestation.easUid;
+      if (status !== 202) throw new Error(typeof json.error === "string" ? json.error : "couldn't save the attestation");
+      await sleep(1500 + attempt * 500);
+    }
+    throw new Error("saved onchain, but outship couldn't confirm it yet — refresh in a minute");
+  }
+
+  async function run() {
+    try {
+      const account = await ensureWallet();
+      const auth = await authorize(account);
+      if ("recoveredUid" in auth) {
+        // Attested earlier but never saved: outship just recorded it.
+        setPhase({ kind: "done", uid: auth.recoveredUid });
+        return;
+      }
+      const hash = await submit(auth, account);
+      setPhase({ kind: "busy", label: "waiting for base…" });
+      const receipt = await waitForTransactionReceipt(wagmiConfig, { hash, chainId: activeChain.id });
+      if (receipt.status !== "success") throw new Error("the transaction failed onchain");
+      setPhase({ kind: "done", uid: await save(hash) });
+    } catch (error) {
+      if (error instanceof ExpiredError) setPhase({ kind: "expired" });
+      else if (isUserRejection(error)) setPhase({ kind: "rejected" });
+      else if ((error as { wrongNetwork?: boolean }).wrongNetwork) setPhase({ kind: "wrong-network" });
+      else {
+        const message =
+          error instanceof BaseError ? error.shortMessage : error instanceof Error ? error.message : "attestation failed";
+        setPhase({ kind: "error", message });
+      }
     }
   }
 
-  if (status === "done" && attestedUid) {
-    return <AttestationBadge chain={activeChain.name} easUid={attestedUid} />;
-  }
+  if (phase.kind === "done") return <AttestationBadge chain={activeChain.name} easUid={phase.uid} schemaVersion={2} />;
+
+  const busy = phase.kind === "busy";
+  const label = busy
+    ? phase.label
+    : phase.kind === "expired"
+      ? "re-authorize"
+      : phase.kind === "idle"
+        ? "attest onchain"
+        : "try again";
+  const note =
+    phase.kind === "wrong-network"
+      ? `switch your wallet to ${activeChain.name}, then try again.`
+      : phase.kind === "rejected"
+        ? "you rejected it in your wallet. nothing was sent."
+        : phase.kind === "expired"
+          ? "outship's signature expired before it was sent. it's good for 15 minutes; get a fresh one."
+          : phase.kind === "error"
+            ? phase.message
+            : null;
 
   return (
     <div className="flex flex-col items-end gap-1">
       <button
         type="button"
-        onClick={handleClick}
-        disabled={status === "attesting" || status === "saving"}
+        onClick={run}
+        disabled={busy}
         className="flex shrink-0 items-center gap-1.5 rounded-full border border-base-blue px-3 py-1 text-xs font-medium text-base-blue transition hover:bg-blue-tint disabled:opacity-50"
       >
-        <IconSeal className="h-3 w-3" />
-        {status === "attesting"
-          ? "confirm in wallet…"
-          : status === "saving"
-            ? "saving…"
-            : "attest onchain"}
+        <IconSeal className="h-3 w-3" aria-hidden="true" />
+        {label}
       </button>
-      {status === "error" && errorMessage && (
-        <span className="max-w-[180px] text-right text-xs text-text-muted-2">
-          {errorMessage}
+      {note && (
+        <span role="status" className="max-w-[220px] text-right text-xs text-text-muted-2">
+          {note}
         </span>
       )}
     </div>
   );
 }
 
-export function AttestShipButton({ ship, score }: { ship: ShipInput; score: number }) {
+export function AttestShipButton({ shipId }: { shipId: string }) {
   if (!isAttestationConfigured()) {
-    return (
-      <span className="text-xs text-text-muted-2">attestations coming soon</span>
-    );
+    return <span className="text-xs text-text-muted-2">attestations coming soon</span>;
   }
 
   return (
     <Web3Provider>
-      <AttestFlow ship={ship} score={score} />
+      <AttestFlow shipId={shipId} />
     </Web3Provider>
   );
 }

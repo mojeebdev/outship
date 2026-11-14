@@ -1,4 +1,5 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { authErrorPage } from "@/lib/auth/error-page";
 
 export const dynamic = "force-dynamic";
 
@@ -7,10 +8,13 @@ const OAUTH_STATE_COOKIE = "outship_oauth_state";
 export async function GET(request: Request) {
   const { env } = await getCloudflareContext({ async: true });
   if (!env.GITHUB_APP_CLIENT_ID) {
-    return new Response(
-      "GitHub App isn't configured yet — set GITHUB_APP_CLIENT_ID.",
-      { status: 501 },
-    );
+    console.error("auth login: GITHUB_APP_CLIENT_ID is missing");
+    return authErrorPage({
+      title: "sign-in isn't available right now",
+      message: "outship's github sign-in isn't set up on this server yet. please try again later.",
+      status: 501,
+      retry: false,
+    });
   }
 
   const state = crypto.randomUUID();

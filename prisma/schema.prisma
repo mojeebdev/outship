@@ -16,44 +16,90 @@ enum ShipType {
   PUSH
 }
 
+/// How a ship is weighted (src/lib/score.ts). Only MERGE ships use anything
+/// but STANDARD.
+enum WeightClass {
+  STANDARD
+  // Merged by someone other than the PR's author.
+  REVIEWED
+  // From outside the repo: the author isn't its owner, a member or a collaborator.
+  EXTERNAL
+}
+
 model Builder {
-  id             String    @id @default(cuid())
-  githubId       Int       @unique
-  githubLogin    String    @unique
-  installationId Int?
+  id                   String            @id @default(cuid())
+  githubId             Int               @unique
+  githubLogin          String            @unique
+  installationId       Int?
   // Primary verified email from GitHub (needs the App's "Email addresses"
   // permission). Used for the welcome and account email only.
-  email          String?
-  welcomedAt     DateTime?
-  walletAddress  String?
-  currentStreak  Int       @default(0)
-  longestStreak  Int       @default(0)
-  lastShipDate   DateTime?
-  score          Int       @default(0)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  ships          Ship[]
+  email                String?
+  welcomedAt           DateTime?
+  walletAddress        String?
+  currentStreak        Int               @default(0)
+  longestStreak        Int               @default(0)
+  lastShipDate         DateTime?
+  score                Int               @default(0)
+  // Bumped on every score/streak write; see recomputeBuilder.
+  statsVersion         Int               @default(0)
+  // First OAuth sign-in. Null means an unclaimed profile: created by the
+  // webhook because someone shipped in a repo with the App installed.
+  claimedAt            DateTime?
+  // Off every public page (the profile 404s); ships still count privately.
+  hidden               Boolean           @default(false)
+  // The one-time claim comment on a merged PR. Set before posting, so at
+  // most once per person, ever.
+  claimInvitedAt       DateTime?
+  // Public GitHub profile fields, from GET /user at sign-in.
+  name                 String?
+  bio                  String?
+  location             String?
+  blog                 String?
+  twitterUsername      String?
+  // GitHub contribution history for the last 365 days, from GraphQL at
+  // sign-in. Context on profiles only: never part of score, streak or rank.
+  historyContributions Int?
+  historyCommits       Int?
+  historyPullRequests  Int?
+  historyReviews       Int?
+  // Contributions to private repos GitHub only gives as a count.
+  historyRestricted    Int?
+  historySyncedAt      DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  ships                Ship[]
+  contributionDays     ContributionDay[]
 
   @@index([score])
 }
 
 model Ship {
-  id          String       @id @default(cuid())
-  builder     Builder      @relation(fields: [builderId], references: [id])
-  builderId   String
-  repo        String
-  shipType    ShipType
-  identifier  String
-  commitSha   String
+  id              String       @id @default(cuid())
+  builder         Builder      @relation(fields: [builderId], references: [id])
+  builderId       String
+  repo            String
+  shipType        ShipType
+  identifier      String
+  // A real 40-character SHA, or null when a release's tag couldn't be
+  // resolved yet (such ships can't be attested until it is).
+  commitSha       String?
   // Ships from private repos count toward streak and score, but their repo
   // and identifier are never shown publicly and they can't be attested.
-  isPrivate   Boolean      @default(false)
-  shippedAt   DateTime
-  createdAt   DateTime     @default(now())
-  attestation Attestation?
+  isPrivate       Boolean      @default(false)
+  weightClass     WeightClass  @default(STANDARD)
+  // RELEASE only: a non-empty body or at least one asset. Null = recorded
+  // before this was checked.
+  releaseHasNotes Boolean?
+  // repository.language when the ship landed.
+  language        String?
+  shippedAt       DateTime
+  createdAt       DateTime     @default(now())
+  attestation     Attestation?
 
   @@unique([repo, shipType, identifier])
   @@index([builderId, shippedAt])
+  @@index([shippedAt])
+  @@index([commitSha])
 }
 
 model Attestation {
@@ -63,8 +109,38 @@ model Attestation {
   easUid        String   @unique
   txHash        String
   chain         String   @default("base")
+  // Taken from the attestation's decoded onchain data, never from the client.
   scoreSnapshot Int
+  // 1 = the original schema with no resolver (legacy, unverifiable);
+  // 2 = outship-signed, checked onchain before it was stored.
+  schemaVersion Int      @default(1)
   attestedAt    DateTime @default(now())
+}
+
+/// One day of a builder's GitHub contribution calendar. Only days with
+/// contributions are stored.
+model ContributionDay {
+  builder   Builder @relation(fields: [builderId], references: [id], onDelete: Cascade)
+  builderId String
+  /// UTC day, "YYYY-MM-DD".
+  date      String
+  count     Int
+
+  @@id([builderId, date])
+}
+
+/// A GitHub App installation. id is GitHub's installation id.
+model Installation {
+  id                  Int       @id
+  accountLogin        String
+  // "User" or "Organization"
+  accountType         String
+  // Whether the App may post the one-time claim comment in this install's
+  // repos. The installer switches it on /profile.
+  claimInvitesEnabled Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  suspendedAt         DateTime?
+  deletedAt           DateTime?
 }
 
 enum SubscriberStatus {

@@ -1,12 +1,54 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/site-shell";
 import { IconShip } from "@/components/icons";
+import {
+  BARE_RELEASE_POINTS,
+  MAX_DAILY_POINTS,
+  MERGE_POINTS,
+  RELEASE_POINTS,
+  REVIEWED_MERGE_POINTS,
+} from "@/lib/score";
 
 export const metadata: Metadata = {
   title: "changelog — outship",
 };
 
 const entries = [
+  {
+    date: "nov 2026",
+    title: "richer profiles, a live home page and a README badge",
+    description:
+      "profiles now show your github name, bio, location and links, your top languages, a breakdown of releases, merged PRs and pushes, and your rank this week and all time. the home page shows the latest public ships as they land and how many builders shipped today. and there's a badge for your github README at outship.dev/@you/badge.svg; copy it from your profile.",
+  },
+  {
+    date: "nov 2026",
+    title: "leaderboards a newcomer can win",
+    description:
+      "the leaderboard now opens on this week, from monday 00:00 UTC, with tabs for this month and all time. filter by language, page past the top 50, and see who's rising: the biggest gains on last week. ties go to whoever got there first.",
+  },
+  {
+    date: "nov 2026",
+    title: "scoring that rewards real work",
+    description: `a merged PR is now worth ${REVIEWED_MERGE_POINTS} points instead of ${MERGE_POINTS} when someone other than its author merged it, or when it came from outside the repo: work a second person looked at is harder to fake. a release is worth ${RELEASE_POINTS} only with notes or a file attached; a bare tag is worth ${BARE_RELEASE_POINTS}. the most a day can earn is now ${MAX_DAILY_POINTS}, and when a day has more ships than the cap, the ones worth most count. streaks are now worked out from your ships themselves, so a late or repeated webhook can't break one. every builder was rescored under the new rules; releases from before this change keep full points, since there's no record of what they contained.`,
+  },
+  {
+    date: "nov 2026",
+    title: "your last year on github, on your profile",
+    description:
+      "signing in now imports your github contribution graph and totals for the last year, so a new profile doesn't start empty. it's shown as a heatmap labelled github history, and it never counts toward score, streak or rank: only ships github verifies as they happen do.",
+  },
+  {
+    date: "nov 2026",
+    title: "unclaimed profiles, and a way to hide yours",
+    description:
+      "people who ship in a repo with the outship app but haven't signed in now have clearly labelled unclaimed profiles: public activity only, unranked and not indexed. the first merged PR may get one comment from the app inviting them to claim or hide it, once per person, and installers can switch that off. any builder can now hide their profile from public pages, and profiles show your github name, bio, location and links.",
+  },
+  {
+    date: "nov 2026",
+    title: "attestations outship can stand behind",
+    description:
+      "attesting a ship now works in two steps: outship signs the ship's details from its own records, then your wallet sends the attestation and pays the fee. the new schema's resolver contract on base refuses anything outship didn't sign, and outship reads each attestation back from base before showing it. receipts made with the first schema, which anyone could write to, are marked legacy · unverified.",
+  },
   {
     date: "nov 2026",
     title: "the weekly ship recap, and a welcome email",
