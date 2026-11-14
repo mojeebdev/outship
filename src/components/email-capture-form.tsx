@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { IconArrowRight } from "@/components/icons";
 
-type Status = "idle" | "submitting" | "submitted" | "error";
+type Status = "idle" | "submitting" | "submitted" | "limited" | "error";
 
 export function EmailCaptureForm() {
   const [status, setStatus] = useState<Status>("idle");
@@ -20,6 +20,10 @@ export function EmailCaptureForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      if (response.status === 429) {
+        setStatus("limited");
+        return;
+      }
       if (!response.ok) throw new Error(await response.text());
       setStatus("submitted");
     } catch {
@@ -30,7 +34,7 @@ export function EmailCaptureForm() {
   if (status === "submitted") {
     return (
       <p className="text-sm text-blue-tint">
-        you&apos;re on the list — first recap lands soon.
+        almost there: check your inbox to confirm.
       </p>
     );
   }
@@ -58,6 +62,11 @@ export function EmailCaptureForm() {
       {status === "error" && (
         <p className="text-xs text-white/60">
           something went wrong — try again in a bit.
+        </p>
+      )}
+      {status === "limited" && (
+        <p className="text-xs text-white/60">
+          too many tries from here — give it a few minutes.
         </p>
       )}
     </form>

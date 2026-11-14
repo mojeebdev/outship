@@ -49,7 +49,7 @@ export default async function ProfilePage() {
   }
 
   const db = await getDb();
-  const [rankAbove, totalShips, recentShips] = await Promise.all([
+  const [rankAbove, totalShips, recentShips, subscriber] = await Promise.all([
     db.builder.count({ where: { score: { gt: builder.score } } }),
     db.ship.count({ where: { builderId: builder.id } }),
     db.ship.findMany({
@@ -58,7 +58,9 @@ export default async function ProfilePage() {
       take: 20,
       include: { attestation: true },
     }),
+    builder.email ? db.subscriber.findUnique({ where: { email: builder.email } }) : null,
   ]);
+  const recapOn = subscriber?.status === "CONFIRMED";
 
   const stats = [
     { label: "streak", value: builder.currentStreak, Icon: IconStreak },
@@ -217,6 +219,34 @@ export default async function ProfilePage() {
             </ol>
           )}
         </div>
+
+        {builder.email && (
+          <form
+            method="post"
+            action="/api/recap/preference"
+            className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div>
+              <p className="font-medium">weekly ship recap</p>
+              <p className="mt-1 text-sm text-text-muted-1">
+                {recapOn
+                  ? `on: every monday to ${builder.email}.`
+                  : `off. who shipped, fresh releases and the longest streaks, every monday to ${builder.email}.`}
+              </p>
+            </div>
+            <input type="hidden" name="recap" value={recapOn ? "off" : "on"} />
+            <button
+              type="submit"
+              className={
+                recapOn
+                  ? "shrink-0 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition hover:border-void"
+                  : "shrink-0 rounded-md border border-base-blue bg-base-blue px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+              }
+            >
+              {recapOn ? "turn off" : "turn on"}
+            </button>
+          </form>
+        )}
       </div>
     </SiteShell>
   );

@@ -52,10 +52,11 @@ export function clientIdentifier(request: Request): string {
 export async function consumeRateLimit(
   identifier: string,
   scope: string,
+  limits: readonly { name: string; windowSeconds: number; max: number }[] = RATE_LIMITS,
 ): Promise<RateLimitVerdict> {
   const nowSeconds = Math.floor(Date.now() / 1000);
 
-  const windows = RATE_LIMITS.map((limit) => {
+  const windows = limits.map((limit) => {
     const windowStart = nowSeconds - (nowSeconds % limit.windowSeconds);
     return { limit, windowStart, key: `${scope}:${limit.name}:${identifier}` };
   });

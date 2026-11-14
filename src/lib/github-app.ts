@@ -33,3 +33,27 @@ export async function fetchUserInstallationId(
   const own = installations.find((installation) => installation.account?.id === githubUserId);
   return (own ?? installations[0])?.id ?? null;
 }
+
+/**
+ * The user's primary, verified email. Needs the App's "Email addresses"
+ * (read) account permission; without it GitHub answers 403/404 and this
+ * falls back to the public profile email, which is often unset.
+ */
+export async function fetchPrimaryEmail(
+  accessToken: string,
+  publicEmail: string | null | undefined,
+): Promise<string | null> {
+  const response = await fetch("https://api.github.com/user/emails", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/vnd.github+json",
+      "User-Agent": "outship",
+    },
+  });
+  if (response.ok) {
+    const emails = (await response.json()) as { email: string; primary: boolean; verified: boolean }[];
+    const primary = emails.find((entry) => entry.primary && entry.verified);
+    if (primary) return primary.email.toLowerCase();
+  }
+  return publicEmail ? publicEmail.toLowerCase() : null;
+}

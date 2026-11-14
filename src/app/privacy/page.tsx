@@ -36,10 +36,12 @@ export default function PrivacyPage() {
 
         <Section title="when you sign in with github">
           <p>
-            we store your github user id and username, and the id of your
-            outship github app installation. github gives us a temporary
-            token during sign-in; we use it to read your profile and which
-            installations you can see, then discard it. we never store it.
+            we store your github user id and username, the id of your
+            outship github app installation, and the primary verified email
+            address on your github account. github gives us a temporary
+            token during sign-in; we use it to read your profile, that email
+            address and which installations you can see, then discard it. we
+            never store it.
           </p>
         </Section>
 
@@ -80,10 +82,21 @@ export default function PrivacyPage() {
 
         <Section title="email">
           <p>
-            if you join the weekly ship recap, we store your email address
-            and use it only to send outship email: a welcome, the weekly
-            recap, and messages about your account. every recap includes an
-            unsubscribe link, or email us to be removed.
+            we only use email addresses to send outship email, never for
+            ads, and we never sell or share them.
+          </p>
+          <p>
+            if you signed in with github, we send one welcome email and,
+            when needed, messages about your account. the weekly ship recap
+            is off until you switch it on from your profile.
+          </p>
+          <p>
+            if you join the weekly ship recap from the signup form, we store
+            your email address and send one email asking you to confirm. the
+            recap only starts once you do; if you don&apos;t, you won&apos;t
+            hear from us again. every recap has a one-click unsubscribe link,
+            and you can always email us to be removed. we keep a record that
+            an address unsubscribed so it stays unsubscribed.
           </p>
         </Section>
 

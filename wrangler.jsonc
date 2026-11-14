@@ -42,10 +42,25 @@
 			"id": "1f79279d71ee40bbb6c39f829a7c2a46"
 		}
 	],
+	"send_email": [
+		{
+			// Cloudflare Email Service. The binding can only send as these two
+			// addresses, so nothing in this Worker can send mail as anyone else.
+			// Replies go to support@mail.outship.dev via Reply-To.
+			"name": "EMAIL",
+			"allowed_sender_addresses": [
+				"welcome@mail.outship.dev",
+				"recap@mail.outship.dev"
+			]
+		}
+	],
 	"triggers": {
 		// 00:05 UTC daily: end streaks for builders who missed yesterday
 		// (src/lib/expire-streaks.ts).
-		"crons": ["5 0 * * *"]
+		// Mondays 09:00-11:00 UTC hourly: the weekly recap
+		// (src/lib/email/weekly-recap.ts). Runs three times so a send that
+		// stops partway resumes; anyone already sent this week is skipped.
+		"crons": ["5 0 * * *", "0 9-11 * * 1"]
 	},
 	"observability": {
 		"enabled": true
