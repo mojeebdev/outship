@@ -22,6 +22,8 @@ import { AttestShipButton } from "@/components/attest-ship-button";
 import { AttestationBadge } from "@/components/attestation-badge";
 import { BuilderAvatar } from "@/components/builder-bits";
 import { allTimeRank } from "@/lib/builders";
+import { loadHeatmap } from "@/lib/profile-data";
+import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
 
 export const metadata: Metadata = {
   title: "profile — outship",
@@ -52,7 +54,7 @@ export default async function ProfilePage() {
   }
 
   const db = await getDb();
-  const [rank, totalShips, recentShips, subscriber, installation] = await Promise.all([
+  const [rank, totalShips, recentShips, subscriber, installation, heatmap] = await Promise.all([
     allTimeRank(db, builder),
     db.ship.count({ where: { builderId: builder.id } }),
     db.ship.findMany({
@@ -63,6 +65,7 @@ export default async function ProfilePage() {
     }),
     builder.email ? db.subscriber.findUnique({ where: { email: builder.email } }) : null,
     builder.installationId ? db.installation.findUnique({ where: { id: builder.installationId } }) : null,
+    loadHeatmap(db, builder, { publicOnly: false }),
   ]);
   const recapOn = subscriber?.status === "CONFIRMED";
 
@@ -152,6 +155,11 @@ export default async function ProfilePage() {
               <span className="text-sm text-text-muted-1">{label}</span>
             </div>
           ))}
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />
+          {heatmap.totals && <HistoryTotals {...heatmap.totals} />}
         </div>
 
         <div className="flex flex-col gap-4">

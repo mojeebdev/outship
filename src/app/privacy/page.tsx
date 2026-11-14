@@ -43,8 +43,16 @@ export default function PrivacyPage() {
             username. those profile fields are shown on your public profile,
             and refreshed each time you sign in. github gives us a temporary
             token during sign-in; we use it to read your profile, that email
-            address and which installations you can see, then discard it. we
-            never store it.
+            address, which installations you can see and your contribution
+            history, then discard it. we never store it.
+          </p>
+          <p>
+            the contribution history is what github&apos;s own contribution
+            graph shows: how many contributions you made on each day of the
+            last year, and totals for commits, pull requests, reviews and
+            private contributions. no repository names. we refresh it at most
+            once a day, when you sign in, and show it on your profile as
+            context. it never affects your score, streak or rank.
           </p>
         </Section>
 

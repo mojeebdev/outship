@@ -128,11 +128,13 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       },
       {
         question: "what does outship store about me?",
-        text: "your github id, username and primary verified email, your app installation, and the ships themselves. github's sign-in token is used once and discarded. the privacy policy has the full list.",
+        text: "your github id, username, primary verified email and public profile fields, your app installation, a year of daily contribution counts from github, and the ships themselves. github's sign-in token is used once and discarded. the privacy policy has the full list.",
         answer: (
           <>
-            your github id, username and primary verified email, your app
-            installation, and the ships themselves. github&apos;s sign-in token
+            your github id, username, primary verified email and public
+            profile fields, your app installation, a year of daily
+            contribution counts from github, and the ships themselves.
+            github&apos;s sign-in token
             is used once and discarded. the{" "}
             <Link href="/privacy" className={link}>
               privacy policy

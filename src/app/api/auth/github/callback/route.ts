@@ -4,6 +4,7 @@ import { createSessionCookieValue, readCookie, sessionCookieHeader } from "@/lib
 import { fetchPrimaryEmail, fetchUserInstallationId } from "@/lib/github-app";
 import { FROM_WELCOME, sendEmail } from "@/lib/email/send";
 import { builderWelcomeEmail } from "@/lib/email/templates";
+import { importContributionHistory, shouldSyncHistory } from "@/lib/history";
 
 export const dynamic = "force-dynamic";
 
@@ -114,6 +115,17 @@ export async function GET(request: Request) {
   if (!builder.claimedAt) {
     await db.builder.updateMany({ where: { id: builder.id, claimedAt: null }, data: { claimedAt: new Date() } });
     builder = { ...builder, claimedAt: new Date() };
+  }
+
+  // A year of GitHub history, so the profile doesn't start blank. Off the
+  // redirect's critical path; the token is used for this one call and dropped
+  // with the request. At most once a day. Never part of score.
+  if (shouldSyncHistory(builder.historySyncedAt)) {
+    ctx.waitUntil(
+      importContributionHistory(env.DB, builder.id, tokenData.access_token).catch((error) =>
+        console.warn("history import failed", error),
+      ),
+    );
   }
 
   // First sign-in with a known email: welcome them, once. Claiming welcomedAt

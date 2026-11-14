@@ -9,6 +9,12 @@ export const metadata: Metadata = {
 const entries = [
   {
     date: "nov 2026",
+    title: "your last year on github, on your profile",
+    description:
+      "signing in now imports your github contribution graph and totals for the last year, so a new profile doesn't start empty. it's shown as a heatmap labelled github history, and it never counts toward score, streak or rank: only ships github verifies as they happen do.",
+  },
+  {
+    date: "nov 2026",
     title: "unclaimed profiles, and a way to hide yours",
     description:
       "people who ship in a repo with the outship app but haven't signed in now have clearly labelled unclaimed profiles: public activity only, unranked and not indexed. the first merged PR may get one comment from the app inviting them to claim or hide it, once per person, and installers can switch that off. any builder can now hide their profile from public pages, and profiles show your github name, bio, location and links.",

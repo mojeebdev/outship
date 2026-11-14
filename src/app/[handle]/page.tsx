@@ -8,6 +8,8 @@ import { AttestationBadge } from "@/components/attestation-badge";
 import { ConnectGithubButton } from "@/components/connect-github-button";
 import { BuilderAvatar, UnclaimedChip } from "@/components/builder-bits";
 import { allTimeRank, builderForHandle, isClaimed } from "@/lib/builders";
+import { loadHeatmap } from "@/lib/profile-data";
+import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +57,7 @@ export default async function BuilderProfilePage({
   // Private ships count, but an unclaimed profile is public GitHub activity
   // only, so it leaves them out entirely, even from the count.
   const shipWhere = { builderId: builder.id, ...(claimed ? {} : { isPrivate: false }) };
-  const [rank, totalShips, recentShips] = await Promise.all([
+  const [rank, totalShips, recentShips, heatmap] = await Promise.all([
     allTimeRank(db, builder),
     db.ship.count({ where: shipWhere }),
     db.ship.findMany({
@@ -64,6 +66,7 @@ export default async function BuilderProfilePage({
       take: 20,
       include: { attestation: true },
     }),
+    loadHeatmap(db, builder, { publicOnly: true }),
   ]);
 
   const stats = [
@@ -125,6 +128,11 @@ export default async function BuilderProfilePage({
               <span className="text-sm text-text-muted-1">{label}</span>
             </div>
           ))}
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />
+          {heatmap.totals && <HistoryTotals {...heatmap.totals} />}
         </div>
 
         <div className="flex flex-col gap-4">
