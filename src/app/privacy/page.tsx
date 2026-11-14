@@ -70,13 +70,17 @@ export default function PrivacyPage() {
 
         <Section title="onchain attestations">
           <p>
-            attesting a ship is optional. if you do, your wallet signs a
-            transaction on base, and the attestation (your wallet address,
-            the repository, ship type, identifier, commit, time and score)
+            attesting a ship is optional. if you do, we store the wallet
+            address you attest with on your account (one per profile), sign
+            the ship&apos;s details with outship&apos;s key, and your wallet
+            sends a transaction on base. the attestation (your wallet
+            address, the repository, ship type, identifier, commit, time,
+            score, your github username and outship&apos;s id for the ship)
             becomes public and permanent on the blockchain. that links your
-            wallet to your ships for anyone to see. we store the
-            attestation&apos;s id and transaction hash. nobody, including us,
-            can delete or edit data once it&apos;s onchain.
+            wallet and username to your ships for anyone to see. we store the
+            attestation&apos;s id and transaction hash after reading them back
+            from base. nobody, including us, can delete or edit data once
+            it&apos;s onchain.
           </p>
         </Section>
 

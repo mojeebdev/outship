@@ -9,6 +9,12 @@ export const metadata: Metadata = {
 const entries = [
   {
     date: "nov 2026",
+    title: "attestations outship can stand behind",
+    description:
+      "attesting a ship now works in two steps: outship signs the ship's details from its own records, then your wallet sends the attestation and pays the fee. the new schema's resolver contract on base refuses anything outship didn't sign, and outship reads each attestation back from base before showing it. receipts made with the first schema, which anyone could write to, are marked legacy · unverified.",
+  },
+  {
+    date: "nov 2026",
     title: "the weekly ship recap, and a welcome email",
     description:
       "every monday the recap brings the week's most shipped builders, fresh releases and longest streaks to your inbox. signups confirm by email first, builders can switch it on from their profile, and every issue has a one-click unsubscribe. new builders also get a short welcome with how points work.",

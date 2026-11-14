@@ -132,6 +132,7 @@ export default async function BuilderProfilePage({
                     <AttestationBadge
                       chain={ship.attestation.chain}
                       easUid={ship.attestation.easUid}
+                      schemaVersion={ship.attestation.schemaVersion}
                     />
                   )}
                 </li>

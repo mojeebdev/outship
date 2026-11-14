@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
-import { attestationIdentifier, shipDetail, shipLabel } from "@/lib/ships";
+import { shipDetail, shipLabel } from "@/lib/ships";
+import { attestationBlocker } from "@/lib/attest/ship-fields";
 import { getCurrentBuilder } from "@/lib/auth/current-builder";
 import { getDb } from "@/lib/db";
 import { ConnectGithubButton } from "@/components/connect-github-button";
@@ -193,26 +194,17 @@ export default async function ProfilePage() {
                     <AttestationBadge
                       chain={ship.attestation.chain}
                       easUid={ship.attestation.easUid}
+                      schemaVersion={ship.attestation.schemaVersion}
                     />
-                  ) : ship.isPrivate ? (
+                  ) : attestationBlocker(ship) ? (
                     <span
                       className="shrink-0 text-xs text-text-muted-2"
-                      title="An attestation would put this repo's name onchain, permanently."
+                      title={attestationBlocker(ship) ?? undefined}
                     >
                       not attestable
                     </span>
                   ) : (
-                    <AttestShipButton
-                      ship={{
-                        id: ship.id,
-                        repo: ship.repo,
-                        shipType: ship.shipType,
-                        identifier: attestationIdentifier(ship),
-                        commitSha: ship.commitSha,
-                        shippedAtIso: ship.shippedAt.toISOString(),
-                      }}
-                      score={builder.score}
-                    />
+                    <AttestShipButton shipId={ship.id} />
                   )}
                 </li>
               ))}

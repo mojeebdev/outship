@@ -8,14 +8,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "npm run test:word && npm run test:lib",
     "test:word": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs --test \"src/lib/word/__tests__/*.test.ts\"",
+    "test:lib": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs --test \"src/lib/__tests__/*.test.ts\" \"src/lib/attest/__tests__/*.test.ts\"",
+    "test:contracts": "cd contracts && forge test",
     "verify:benchmark": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs scripts/verify-benchmark.mjs",
     "preview": "npm run cf-typegen && opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "npm run cf-typegen && opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
-    "@ethereum-attestation-service/eas-sdk": "^2.10.0",
     "@prisma/adapter-d1": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "@tanstack/react-query": "^5.107.1",

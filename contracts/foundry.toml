@@ -1,0 +1,31 @@
+# Self-contained Foundry project for outship's onchain pieces. It sits outside
+# the Next app: tsconfig.json and eslint.config.mjs both ignore contracts/.
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+cache_path = "cache"
+libs = ["lib"]
+# No solc_version here: OutshipShipResolver.sol pins 0.8.27 in its pragma (so a build
+# today and a verification later produce the same bytecode), while the tests also
+# compile the real EAS contracts, which pin 0.8.19. Foundry picks each per file.
+# paris is the newest EVM target both compilers know.
+evm_version = "paris"
+optimizer = true
+optimizer_runs = 10_000
+# onAttest decodes ten schema fields at once; the IR pipeline keeps that off the stack limit.
+via_ir = true
+
+remappings = [
+  # eas-contracts is pinned to tag v1.3.0: the release whose EAS logic Base's
+  # predeploy at 0x4200…0021 vendors (EIP-712 domain "EAS" / "1.3.0", checked
+  # onchain). See contracts/README.md.
+  "@ethereum-attestation-service/eas-contracts/=lib/eas-contracts/",
+  # The OpenZeppelin release eas-contracts v1.3.0 itself depends on.
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "forge-std/=lib/forge-std/src/",
+]
+
+[fmt]
+line_length = 110

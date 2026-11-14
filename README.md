@@ -163,16 +163,20 @@ actually shipping. When a streak ends, its bonus leaves your score with it.
 
 ## Onchain attestations
 
-Attesting is optional and done from your profile. Your wallet signs a
-transaction on Base mainnet using outship's EAS schema:
+Attesting is optional and done from your profile. outship signs the ship's
+details from its own records, then your wallet sends the attestation on Base
+and pays the gas, using outship's EAS schema (v2):
 
 ```
-string repo, uint8 shipType, string identifier, string commitSha, uint64 timestamp, uint16 scoreSnapshot
+string repo, uint8 shipType, string identifier, string commitSha, uint64 timestamp, uint16 scoreSnapshot, string githubLogin, string shipId, uint64 deadline, bytes outshipSig
 ```
 
-Schema UID: [`0x2edd7f13…805d2`](https://base.easscan.org/schema/view/0x2edd7f1319a9f0197ca2edc42001c9f84134adce9b760e6481a80a2577d805d2)
-(`shipType`: 0 = release, 1 = merged PR, 2 = push). An attestation is public
-and permanent and links your wallet to that ship. See
+The schema's resolver contract ([`contracts/`](contracts/)) only accepts
+attestations carrying outship's signature, so nobody can attest a ship that
+isn't real. Before storing one, outship reads it back from Base and checks it.
+(`shipType`: 0 = release, 1 = merged PR, 2 = push.) An attestation is public
+and permanent and links your wallet to that ship. Attestations made with the
+first schema, which had no resolver, show as "legacy · unverified". See
 [docs/eas-schema.md](docs/eas-schema.md).
 
 ## The weekly ship recap
@@ -198,7 +202,8 @@ by a named author. Same app, same Worker, its own hostname. See
 - **Data:** Cloudflare D1 through Prisma; SQL migrations in `migrations/`
 - **GitHub:** a GitHub App (sign-in, installation and webhooks), verified by
   webhook signature
-- **Onchain:** EAS on Base, through the builder's own wallet
+- **Onchain:** EAS on Base, through the builder's own wallet, with an
+  outship-signed resolver contract (Foundry, in `contracts/`)
 - **Email:** Cloudflare Email Service
 
 ```
@@ -227,8 +232,10 @@ Checks to run before opening a PR:
 
 ```bash
 npm run lint
+npm run typecheck
+npm test
 npm run build
-npm run test:word
+npm run test:contracts   # needs Foundry, and: git submodule update --init --recursive contracts/lib
 ```
 
 ## Contributing

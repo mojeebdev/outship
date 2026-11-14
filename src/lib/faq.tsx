@@ -163,7 +163,11 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
     faqs: [
       {
         question: "what does “attest onchain” do?",
-        text: "it writes a receipt for one ship to base using the ethereum attestation service: the repo, ship type, tag or PR number, commit, time and your score then. your wallet signs it, so the receipt is yours and anyone can check it without asking outship.",
+        text: "it writes a receipt for one ship to base using the ethereum attestation service: the repo, ship type, tag or PR number, commit, time, your github username and your score then. outship signs those details first, and the schema only accepts attestations outship signed, so a receipt can't be made up for a ship that never happened. your wallet sends it and pays the small fee, so the receipt is yours and anyone can check it without asking outship.",
+      },
+      {
+        question: "what does “legacy · unverified” mean?",
+        text: "it marks an attestation made with outship's first schema, before outship signed them. anyone could write to that schema, so outship can't vouch that a legacy receipt matches a real ship. it stays onchain, but new attestations use the signed schema.",
       },
       {
         question: "do i have to attest?",
@@ -171,7 +175,7 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       },
       {
         question: "is an attestation public?",
-        text: "yes, and permanent. it links your wallet address to that ship for anyone to see, which is why only public ships can be attested.",
+        text: "yes, and permanent. it links your wallet address and github username to that ship for anyone to see, which is why only public ships can be attested. your profile keeps one wallet: the first one you attest with.",
       },
     ],
   },

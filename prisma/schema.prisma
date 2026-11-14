@@ -63,7 +63,11 @@ model Attestation {
   easUid        String   @unique
   txHash        String
   chain         String   @default("base")
+  // Taken from the attestation's decoded onchain data, never from the client.
   scoreSnapshot Int
+  // 1 = the original schema with no resolver (legacy, unverifiable);
+  // 2 = outship-signed, checked onchain before it was stored.
+  schemaVersion Int      @default(1)
   attestedAt    DateTime @default(now())
 }
 
