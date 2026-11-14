@@ -1,5 +1,6 @@
 // Worker entry point. OpenNext's generated worker serves the site; this
-// wrapper adds the cron jobs declared in wrangler.jsonc and the MTA-STS policy.
+// wrapper adds the cron jobs declared in wrangler.jsonc, the MTA-STS policy
+// and the www redirect.
 //
 // Plain JS on purpose: .open-next/worker.js only exists after
 // `opennextjs-cloudflare build`, which runs after `next build` type-checks,
@@ -42,9 +43,18 @@ function mtaStsResponse(request) {
   });
 }
 
+// www.outship.dev is only an alias: send it to the apex, keeping the path
+// and query, with a permanent redirect.
+const WWW_HOST = "www.outship.dev";
+const APEX_ORIGIN = "https://outship.dev";
+
 const worker = {
   fetch(request, env, ctx) {
-    if (new URL(request.url).hostname === MTA_STS_HOST) {
+    const url = new URL(request.url);
+    if (url.hostname === WWW_HOST) {
+      return Response.redirect(`${APEX_ORIGIN}${url.pathname}${url.search}`, 301);
+    }
+    if (url.hostname === MTA_STS_HOST) {
       return mtaStsResponse(request);
     }
     return nextHandler.fetch(request, env, ctx);
