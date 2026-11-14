@@ -6,10 +6,12 @@ export function shipLabel(ship: ShipLike): string {
   return LABELS[ship.shipType];
 }
 
-// The second line of a ship in a feed: the tag, the PR number, or — for a
+// The second line of a ship in a feed: the tag, "PR #12", or — for a
 // push, whose identifier is only bookkeeping (day + builder) — the short commit.
 export function shipDetail(ship: ShipLike): string {
-  return ship.shipType === "PUSH" ? ship.commitSha.slice(0, 7) : ship.identifier;
+  if (ship.shipType === "PUSH") return ship.commitSha.slice(0, 7);
+  if (ship.shipType === "MERGE") return `PR #${ship.identifier}`;
+  return ship.identifier;
 }
 
 // What goes onchain as the attestation's identifier. A push's stored
