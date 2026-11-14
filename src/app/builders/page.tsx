@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ConnectGithubButton } from "@/components/connect-github-button";
 import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
 import { IconGrid, IconShip, IconStreak } from "@/components/icons";
@@ -34,9 +35,7 @@ export default async function IndexPage() {
         {builders.length === 0 ? (
           <p className="rounded-lg border border-border bg-white p-8 text-center text-text-muted-1">
             the directory opens once the first cohort connects github —{" "}
-            <Link href="/api/auth/github/login" className="text-base-blue hover:underline">
-              be the first
-            </Link>
+            <ConnectGithubButton variant="link">be the first</ConnectGithubButton>
             .
           </p>
         ) : (

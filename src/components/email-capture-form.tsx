@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { IconArrowRight } from "@/components/icons";
 
 type Status = "idle" | "submitting" | "submitted" | "error";
 
@@ -51,7 +52,7 @@ export function EmailCaptureForm() {
           aria-label="Subscribe to the weekly ship recap"
           className="flex shrink-0 items-center justify-center rounded-md bg-base-blue px-4 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
         >
-          →
+          <IconArrowRight className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
       {status === "error" && (

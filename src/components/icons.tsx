@@ -76,6 +76,103 @@ export function IconGrid(props: IconProps) {
   );
 }
 
+/** i-arrow-right — forward / submit. */
+export function IconArrowRight(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="square"
+      {...props}
+    >
+      <path d="M3 10h13M11 4l6 6-6 6" />
+    </svg>
+  );
+}
+
+/** i-arrow-up-right — opens another page. */
+export function IconArrowUpRight(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="square"
+      {...props}
+    >
+      <path d="M5 15L15 5M7 5h8v8" />
+    </svg>
+  );
+}
+
+/** i-logout — leave the session. */
+export function IconLogout(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="square"
+      {...props}
+    >
+      <path d="M8 3H3v14h5M8 10h9M13 6l4 4-4 4" />
+    </svg>
+  );
+}
+
+/** i-download — save a file. */
+export function IconDownload(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="square"
+      {...props}
+    >
+      <path d="M10 3v10M5 9l5 5 5-5M3 17h14" />
+    </svg>
+  );
+}
+
+/** i-copy — copy to clipboard. */
+export function IconCopy(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="square"
+      {...props}
+    >
+      <rect x="7" y="7" width="10" height="10" />
+      <path d="M13 7V3H3v10h4" />
+    </svg>
+  );
+}
+
+/** i-refresh — start again. */
+export function IconRefresh(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="square"
+      {...props}
+    >
+      <path d="M16 10a6 6 0 1 1-2-4.5M16 3v4h-4" />
+    </svg>
+  );
+}
+
 /** GitHub brand mark — third-party icon, left as-is. */
 export function IconGithub(props: IconProps) {
   return (

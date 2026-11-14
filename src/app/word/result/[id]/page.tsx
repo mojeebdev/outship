@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { IconDownload, IconX } from "@/components/icons";
 import { BlindspotLabBadge } from "@/components/word/blindspotlab-badge";
 import { BenchmarkComparison, ResultStats } from "@/components/word/result-view";
 import { BENCHMARK, shareText } from "@/lib/word/benchmark";
@@ -107,6 +108,7 @@ export default async function WordResultPage({ params }: PageProps<"/word/result
 
         <div className="word-result-actions">
           <a className="word-button-quiet" href={share} target="_blank" rel="noopener noreferrer">
+            <IconX className="word-button-icon" aria-hidden="true" />
             Share on X
           </a>
           <a
@@ -114,6 +116,7 @@ export default async function WordResultPage({ params }: PageProps<"/word/result
             href={`${resultCardUrl(result.id)}?download=1`}
             download={`word-${result.hostname}.png`}
           >
+            <IconDownload className="word-button-icon" aria-hidden="true" />
             Download card
           </a>
         </div>

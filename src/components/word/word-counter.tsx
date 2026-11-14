@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { IconCopy, IconDownload, IconRefresh, IconX } from "@/components/icons";
 
 import {
   BenchmarkComparison,
@@ -346,6 +347,7 @@ export function WordCounter() {
               target="_blank"
               rel="noopener noreferrer"
             >
+              <IconX className="word-button-icon" aria-hidden="true" />
               Share on X
             </a>
             {saved && (
@@ -354,13 +356,16 @@ export function WordCounter() {
                 href={`${saved.cardUrl}?download=1`}
                 download={`word-${hostnameOf(result.url)}.png`}
               >
+                <IconDownload className="word-button-icon" aria-hidden="true" />
                 Download card
               </a>
             )}
             <button type="button" className="word-button-quiet" onClick={handleCopy}>
+              <IconCopy className="word-button-icon" aria-hidden="true" />
               Copy result
             </button>
             <button type="button" className="word-button-quiet" onClick={handleCountAnother}>
+              <IconRefresh className="word-button-icon" aria-hidden="true" />
               Count another page
             </button>
           </div>

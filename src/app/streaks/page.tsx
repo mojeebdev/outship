@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ConnectGithubButton } from "@/components/connect-github-button";
 import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
 import { IconSeal, IconStreak } from "@/components/icons";
@@ -39,9 +40,7 @@ export default async function StreaksPage() {
         {builders.length === 0 ? (
           <p className="rounded-lg border border-border bg-white p-8 text-center text-text-muted-1">
             no active streaks yet —{" "}
-            <Link href="/api/auth/github/login" className="text-base-blue hover:underline">
-              connect github
-            </Link>{" "}
+            <ConnectGithubButton variant="link">connect github</ConnectGithubButton>{" "}
             and ship today to start one.
           </p>
         ) : (

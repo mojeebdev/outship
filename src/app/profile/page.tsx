@@ -3,7 +3,16 @@ import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { getCurrentBuilder } from "@/lib/auth/current-builder";
 import { getDb } from "@/lib/db";
-import { IconGrid, IconNode, IconSeal, IconShip, IconStreak } from "@/components/icons";
+import { ConnectGithubButton } from "@/components/connect-github-button";
+import {
+  IconArrowUpRight,
+  IconGrid,
+  IconLogout,
+  IconNode,
+  IconSeal,
+  IconShip,
+  IconStreak,
+} from "@/components/icons";
 import { AttestShipButton } from "@/components/attest-ship-button";
 import { AttestationBadge } from "@/components/attestation-badge";
 
@@ -27,12 +36,9 @@ export default async function ProfilePage() {
           <p className="text-base text-text-muted-1 sm:text-lg">
             connect github to see your streak, ships, and score.
           </p>
-          <Link
-            href="/api/auth/github/login"
-            className="mt-2 rounded-md bg-base-blue px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
-          >
-            connect github →
-          </Link>
+          <div className="mt-2">
+            <ConnectGithubButton />
+          </div>
         </section>
       </SiteShell>
     );
@@ -68,14 +74,17 @@ export default async function ProfilePage() {
           <div className="flex items-center gap-4 text-sm">
             <Link
               href={`/@${builder.githubLogin}`}
-              className="text-text-muted-1 hover:text-base-blue"
+              className="inline-flex items-center gap-1.5 text-text-muted-1 hover:text-base-blue"
             >
               view public profile
+              <IconArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
             <Link
               href="/api/auth/logout"
-              className="text-text-muted-1 hover:text-base-blue"
+              prefetch={false}
+              className="inline-flex items-center gap-1.5 text-text-muted-1 hover:text-base-blue"
             >
+              <IconLogout className="h-3.5 w-3.5" aria-hidden="true" />
               log out
             </Link>
           </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConnectGithubButton } from "@/components/connect-github-button";
 import { IconNode, IconSeal, IconShip, IconStreak } from "@/components/icons";
 
 export function Hero() {
@@ -31,16 +32,12 @@ export function Hero() {
         </p>
 
         <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/api/auth/github/login"
-            className="rounded-md bg-base-blue px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
-          >
-            connect github →
-          </Link>
+          <ConnectGithubButton />
           <Link
             href="/leaderboard"
-            className="rounded-md border border-void px-6 py-3 text-sm font-medium transition hover:bg-void hover:text-white"
+            className="inline-flex items-center justify-center gap-2.5 rounded-md border border-void px-6 py-3 text-sm font-medium transition hover:bg-void hover:text-white"
           >
+            <IconStreak className="h-5 w-5 shrink-0" aria-hidden="true" />
             see the leaderboard
           </Link>
         </div>
