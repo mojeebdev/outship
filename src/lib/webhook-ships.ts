@@ -31,7 +31,8 @@ export type WebhookShip = {
   repo: string;
   shipType: ShipType;
   identifier: string;
-  commitSha: string;
+  /** A full SHA, or null for a release whose tag still has to be resolved. */
+  commitSha: string | null;
   isPrivate: boolean;
   shippedAt: Date;
   weightClass: WeightClass;
@@ -96,8 +97,9 @@ export function shipFromPayload(
       repo,
       shipType: "RELEASE",
       identifier: release.tag_name,
-      // best effort: release payloads don't always carry a real commit SHA
-      commitSha: release.target_commitish,
+      // target_commitish is usually a branch name; only a full SHA is kept,
+      // and the webhook resolves the tag to its commit otherwise.
+      commitSha: /^[0-9a-f]{40}$/.test(release.target_commitish) ? release.target_commitish : null,
       isPrivate,
       shippedAt: new Date(release.published_at ?? release.created_at),
       weightClass: "STANDARD",

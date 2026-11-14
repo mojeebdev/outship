@@ -80,7 +80,9 @@ model Ship {
   repo            String
   shipType        ShipType
   identifier      String
-  commitSha       String
+  // A real 40-character SHA, or null when a release's tag couldn't be
+  // resolved yet (such ships can't be attested until it is).
+  commitSha       String?
   // Ships from private repos count toward streak and score, but their repo
   // and identifier are never shown publicly and they can't be attested.
   isPrivate       Boolean      @default(false)
@@ -97,6 +99,7 @@ model Ship {
   @@unique([repo, shipType, identifier])
   @@index([builderId, shippedAt])
   @@index([shippedAt])
+  @@index([commitSha])
 }
 
 model Attestation {

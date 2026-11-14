@@ -106,7 +106,7 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       },
       {
         question: "do commits from bots or AI agents count?",
-        text: "releases and pull requests authored by bots don't score. a push made by a bot, such as an AI agent's github app, is credited to the commit's author, but only if they're already an outship builder.",
+        text: "releases and pull requests authored by bots don't score. a push made by a bot, such as an AI agent's github app, is credited to the commit's author, but only if they're already an outship builder and the bot pushed into repos where they installed the outship app themselves. a commit's author can be set to anyone, so nothing looser would be safe.",
       },
       {
         question: "why didn't my ship show up?",

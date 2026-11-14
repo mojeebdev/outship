@@ -90,3 +90,9 @@ test("drafts and bot releases aren't ships", () => {
   assert.equal(shipFromPayload("release", release({ draft: true })), null);
   assert.equal(shipFromPayload("release", release({ author: { ...alice, type: "Bot" } })), null);
 });
+
+test("a release keeps its commit only when the payload gives a full SHA", () => {
+  assert.equal(shipFromPayload("release", release({ target_commitish: "main" }))?.commitSha, null);
+  const sha = "b".repeat(40);
+  assert.equal(shipFromPayload("release", release({ target_commitish: sha }))?.commitSha, sha);
+});

@@ -11,6 +11,7 @@ import {
   shipAttestationFields,
 } from "@/lib/attest/ship-fields";
 import { encodeShipAttestationData, shipTypedData } from "@/lib/attest/typed-data";
+import { resolveReleaseShipCommit } from "@/lib/release-commit";
 import {
   EAS_CONTRACT_ADDRESS,
   OUTSHIP_RESOLVER_ADDRESS,
@@ -75,9 +76,18 @@ export async function POST(
   if (!ship || ship.builderId !== builder.id) {
     return Response.json({ error: "ship not found" }, { status: 404 });
   }
+  if (ship.attestation) return Response.json({ error: "ship already attested" }, { status: 409 });
+  if (!ship.isPrivate && ship.shipType === "RELEASE" && !ship.commitSha) {
+    // The webhook couldn't resolve this release's tag; try again now.
+    const sha = await resolveReleaseShipCommit(
+      db,
+      { appId: env.GITHUB_APP_ID, privateKey: env.GITHUB_APP_PRIVATE_KEY },
+      ship,
+    ).catch(() => null);
+    if (sha) ship.commitSha = sha;
+  }
   const blocker = attestationBlocker(ship);
   if (blocker) return Response.json({ error: blocker }, { status: 400 });
-  if (ship.attestation) return Response.json({ error: "ship already attested" }, { status: 409 });
 
   // One wallet per builder. The first attestation links it; after that every
   // receipt has to go to the same address, so a profile's receipts can't be

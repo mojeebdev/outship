@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb } from "@/lib/db";
+import { authErrorPage } from "@/lib/auth/error-page";
 import { createSessionCookieValue, readCookie, sessionCookieHeader } from "@/lib/auth/session";
 import { fetchPrimaryEmail, fetchUserInstallationId } from "@/lib/github-app";
 import { FROM_WELCOME, sendEmail } from "@/lib/email/send";
@@ -39,12 +40,29 @@ function profileFields(user: GithubUser) {
 }
 
 export async function GET(request: Request) {
+  try {
+    return await signIn(request);
+  } catch (error) {
+    // A network failure talking to GitHub, or D1 hiccuping: still a page.
+    console.error("auth callback failed", error);
+    return authErrorPage({
+      title: "sign-in hit a snag",
+      message: "something went wrong on our side while signing you in. nothing was half-saved; try again.",
+      status: 500,
+    });
+  }
+}
+
+async function signIn(request: Request) {
   const { env, ctx } = await getCloudflareContext({ async: true });
   if (!env.GITHUB_APP_CLIENT_ID || !env.GITHUB_APP_CLIENT_SECRET || !env.SESSION_SECRET) {
-    return new Response(
-      "GitHub App isn't configured yet — set GITHUB_APP_CLIENT_ID, GITHUB_APP_CLIENT_SECRET, and SESSION_SECRET.",
-      { status: 501 },
-    );
+    console.error("auth callback: GITHUB_APP_CLIENT_ID, GITHUB_APP_CLIENT_SECRET or SESSION_SECRET is missing");
+    return authErrorPage({
+      title: "sign-in isn't available right now",
+      message: "outship's github sign-in isn't set up on this server yet. nothing was saved. please try again later.",
+      status: 501,
+      retry: false,
+    });
   }
 
   const url = new URL(request.url);
@@ -52,8 +70,20 @@ export async function GET(request: Request) {
   const state = url.searchParams.get("state");
   const expectedState = readCookie(request.headers.get("cookie"), OAUTH_STATE_COOKIE);
 
+  if (url.searchParams.get("error") === "access_denied") {
+    return authErrorPage({
+      title: "sign-in cancelled",
+      message: "you cancelled on github, so nothing was connected. you can sign in whenever you like.",
+      status: 400,
+    });
+  }
+
   if (!code || !state || !expectedState || state !== expectedState) {
-    return new Response("Invalid OAuth state — try connecting again.", { status: 400 });
+    return authErrorPage({
+      title: "that sign-in link expired",
+      message: "sign-in links last ten minutes and only work in the browser that started them. start again and it'll go through.",
+      status: 400,
+    });
   }
 
   const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
@@ -66,15 +96,17 @@ export async function GET(request: Request) {
       redirect_uri: new URL("/api/auth/github/callback", request.url).toString(),
     }),
   });
-  const tokenData = (await tokenResponse.json()) as {
+  const tokenData = (await tokenResponse.json().catch(() => ({}))) as {
     access_token?: string;
     error_description?: string;
   };
   if (!tokenData.access_token) {
-    return new Response(
-      `GitHub sign-in failed: ${tokenData.error_description ?? "unknown error"}`,
-      { status: 400 },
-    );
+    console.warn(`auth callback: token exchange failed: ${tokenData.error_description ?? tokenResponse.status}`);
+    return authErrorPage({
+      title: "github didn't finish the sign-in",
+      message: "github turned down the sign-in code, usually because it was already used or took too long. start again and it'll go through.",
+      status: 400,
+    });
   }
 
   const userResponse = await fetch("https://api.github.com/user", {
@@ -85,7 +117,11 @@ export async function GET(request: Request) {
     },
   });
   if (!userResponse.ok) {
-    return new Response("Couldn't read your GitHub profile — try again.", { status: 400 });
+    return authErrorPage({
+      title: "couldn't read your github profile",
+      message: "github didn't answer when outship asked who you are. that's usually brief; try again in a moment.",
+      status: 502,
+    });
   }
   const user = (await userResponse.json()) as GithubUser;
 

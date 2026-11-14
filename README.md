@@ -149,7 +149,9 @@ actually shipping. When a streak ends, its bonus leaves your score with it.
   same commit, it's scored as the merge.
 - **Bots don't score.** Releases and PRs authored by bots are skipped. A push
   made by a bot is credited to the commit's author only if they're already an
-  outship builder.
+  outship builder *and* it's their own installation of the App the bot pushed
+  into. (A commit's author is whatever its email says, so anything looser
+  could be spoofed.)
 - **Contributors get credit.** If you author a merged PR or a release in a
   repo where someone else installed the app, that ship is yours, even before
   you sign up.
