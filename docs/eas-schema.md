@@ -29,19 +29,27 @@ string repo,uint8 shipType,string identifier,string commitSha,uint64 timestamp,u
 
 ## Wiring it up
 
-Set these as build-time env vars (they're `NEXT_PUBLIC_*`, so they get
-baked into the client bundle — not secrets):
+**Base mainnet is done.** The schema is registered as
 
-- `NEXT_PUBLIC_EAS_SCHEMA_UID` — the schema UID from step 5.
-- `NEXT_PUBLIC_CHAIN` — `base-sepolia` while testing, unset (or `base`) once
-  you switch to mainnet.
+```
+0x2edd7f1319a9f0197ca2edc42001c9f84134adce9b760e6481a80a2577d805d2
+```
 
-Locally: add them to `.env`. In production: add them in the Cloudflare
-dashboard under the Worker's Settings → Variables and redeploy (dashboard
-build/deploy commands are what Cloudflare's hosted CI actually reads —
-see the deployment notes for `wrangler.jsonc` vs. dashboard settings).
+(verified with `SchemaRegistry.getSchema` on Base: no resolver, revocable, and a
+schema string identical to `SHIP_ATTESTATION_SCHEMA`). That UID is the default in
+`src/lib/web3/eas.ts`, so the attest button is live on mainnet with no
+configuration. It is a public onchain identifier, so it is committed rather than
+supplied as a variable: `NEXT_PUBLIC_*` values are only inlined into the client
+bundle if they are present while `next build` runs, and a variable set in the
+wrong place of the Cloudflare dashboard silently leaves the button on
+"attestations coming soon".
 
-Until `NEXT_PUBLIC_EAS_SCHEMA_UID` is set, `isAttestationConfigured()`
-returns `false` and the UI shows "attestations coming soon" instead of the
-attest button, so it's safe to ship this feature ahead of registering the
-schema.
+To use a different schema (for example one registered on Base Sepolia), set at
+**build** time:
+
+- `NEXT_PUBLIC_EAS_SCHEMA_UID` - that schema's UID. It overrides the default.
+- `NEXT_PUBLIC_CHAIN` - `base-sepolia`. On Sepolia there is no default UID, so the
+  button stays off until the override is set.
+
+In Cloudflare these go under the Worker's **Settings -> Build -> Variables and
+secrets** (Workers Builds), not the runtime Variables tab.

@@ -9,9 +9,19 @@ export const SCHEMA_REGISTRY_ADDRESS = "0x42000000000000000000000000000000000000
 export const SHIP_ATTESTATION_SCHEMA =
   "string repo,uint8 shipType,string identifier,string commitSha,uint64 timestamp,uint16 scoreSnapshot";
 
-// Set once the schema above has actually been registered on-chain via
-// SchemaRegistry.register() — see docs/eas-schema.md.
-export const SHIP_ATTESTATION_SCHEMA_UID = process.env.NEXT_PUBLIC_EAS_SCHEMA_UID ?? "";
+// The schema above, registered on Base mainnet; SchemaRegistry.getSchema
+// returns exactly this string with no resolver. It's a public onchain
+// identifier, so it lives in source rather than depending on a build variable
+// that Next only inlines if it's present during the build.
+const BASE_MAINNET_SCHEMA_UID =
+  "0x2edd7f1319a9f0197ca2edc42001c9f84134adce9b760e6481a80a2577d805d2";
+
+// NEXT_PUBLIC_EAS_SCHEMA_UID overrides it (e.g. a schema registered on Base
+// Sepolia). On Sepolia there is no default, since the mainnet UID doesn't exist
+// there — see docs/eas-schema.md.
+export const SHIP_ATTESTATION_SCHEMA_UID =
+  process.env.NEXT_PUBLIC_EAS_SCHEMA_UID ||
+  (process.env.NEXT_PUBLIC_CHAIN === "base-sepolia" ? "" : BASE_MAINNET_SCHEMA_UID);
 
 export function isAttestationConfigured(): boolean {
   return SHIP_ATTESTATION_SCHEMA_UID.length > 0;
