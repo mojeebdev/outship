@@ -1,4 +1,4 @@
-import { DAILY_CAPS, SHIP_WEIGHTS } from "@/lib/score";
+import { BARE_RELEASE_POINTS, DAILY_CAPS, MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, REVIEWED_MERGE_POINTS } from "@/lib/score";
 import { GITHUB_APP_INSTALL_URL } from "@/lib/github-app";
 import { SITE_URL, type Email } from "./send";
 
@@ -34,7 +34,7 @@ function layout(bodyHtml: string, footer: string): string {
 
 const STANDARD_FOOTER = `outship, a BlindspotLab product. reply to this email and it reaches a real person.`;
 
-const POINTS_LINE = `releases ${SHIP_WEIGHTS.RELEASE} points, merged PRs ${SHIP_WEIGHTS.MERGE}, a push to your default branch ${SHIP_WEIGHTS.PUSH}, plus a point per streak day. each day up to ${DAILY_CAPS.RELEASE} releases, ${DAILY_CAPS.MERGE} merged PRs and ${DAILY_CAPS.PUSH} push count.`;
+const POINTS_LINE = `a release with notes or files ${RELEASE_POINTS} points (a bare tag ${BARE_RELEASE_POINTS}), a merged PR ${MERGE_POINTS}, or ${REVIEWED_MERGE_POINTS} when someone else merged it or you contributed from outside, a push to your default branch ${PUSH_POINTS}, plus a point per streak day. each day up to ${DAILY_CAPS.RELEASE} releases, ${DAILY_CAPS.MERGE} merged PRs and ${DAILY_CAPS.PUSH} push count.`;
 
 /** Sent from welcome@ when someone joins the recap from the footer form. */
 export function recapConfirmEmail(token: string): Email {

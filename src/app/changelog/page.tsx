@@ -1,12 +1,24 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/site-shell";
 import { IconShip } from "@/components/icons";
+import {
+  BARE_RELEASE_POINTS,
+  MAX_DAILY_POINTS,
+  MERGE_POINTS,
+  RELEASE_POINTS,
+  REVIEWED_MERGE_POINTS,
+} from "@/lib/score";
 
 export const metadata: Metadata = {
   title: "changelog — outship",
 };
 
 const entries = [
+  {
+    date: "nov 2026",
+    title: "scoring that rewards real work",
+    description: `a merged PR is now worth ${REVIEWED_MERGE_POINTS} points instead of ${MERGE_POINTS} when someone other than its author merged it, or when it came from outside the repo: work a second person looked at is harder to fake. a release is worth ${RELEASE_POINTS} only with notes or a file attached; a bare tag is worth ${BARE_RELEASE_POINTS}. the most a day can earn is now ${MAX_DAILY_POINTS}, and when a day has more ships than the cap, the ones worth most count. streaks are now worked out from your ships themselves, so a late or repeated webhook can't break one. every builder was rescored under the new rules; releases from before this change keep full points, since there's no record of what they contained.`,
+  },
   {
     date: "nov 2026",
     title: "your last year on github, on your profile",

@@ -5,6 +5,7 @@ import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
 import { IconSeal, IconShip, IconStreak } from "@/components/icons";
 import { PUBLIC_BUILDER } from "@/lib/builders";
+import { MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, REVIEWED_MERGE_POINTS } from "@/lib/score";
 import { UnclaimedChip } from "@/components/builder-bits";
 
 export const metadata: Metadata = {
@@ -37,9 +38,11 @@ export default async function LeaderboardPage() {
         <div>
           <h1 className="text-3xl font-medium sm:text-4xl">the leaderboard</h1>
           <p className="mt-2 text-text-muted-1">
-            ranked by verified ships, pulled straight from github: releases
-            5, merged PRs 2, a push to main 1, plus a point per streak day.
-            daily caps keep it about shipping, not scripting.
+            ranked by verified ships, pulled straight from github: a release
+            with notes {RELEASE_POINTS}, a merged PR {MERGE_POINTS} (or{" "}
+            {REVIEWED_MERGE_POINTS} when someone else merged it), a push to
+            main {PUSH_POINTS}, plus a point per streak day. daily caps keep
+            it about shipping, not scripting.
           </p>
         </div>
 

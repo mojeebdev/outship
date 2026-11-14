@@ -16,6 +16,16 @@ enum ShipType {
   PUSH
 }
 
+/// How a ship is weighted (src/lib/score.ts). Only MERGE ships use anything
+/// but STANDARD.
+enum WeightClass {
+  STANDARD
+  // Merged by someone other than the PR's author.
+  REVIEWED
+  // From outside the repo: the author isn't its owner, a member or a collaborator.
+  EXTERNAL
+}
+
 model Builder {
   id                   String            @id @default(cuid())
   githubId             Int               @unique
@@ -30,6 +40,8 @@ model Builder {
   longestStreak        Int               @default(0)
   lastShipDate         DateTime?
   score                Int               @default(0)
+  // Bumped on every score/streak write; see recomputeBuilder.
+  statsVersion         Int               @default(0)
   // First OAuth sign-in. Null means an unclaimed profile: created by the
   // webhook because someone shipped in a repo with the App installed.
   claimedAt            DateTime?
@@ -62,19 +74,25 @@ model Builder {
 }
 
 model Ship {
-  id          String       @id @default(cuid())
-  builder     Builder      @relation(fields: [builderId], references: [id])
-  builderId   String
-  repo        String
-  shipType    ShipType
-  identifier  String
-  commitSha   String
+  id              String       @id @default(cuid())
+  builder         Builder      @relation(fields: [builderId], references: [id])
+  builderId       String
+  repo            String
+  shipType        ShipType
+  identifier      String
+  commitSha       String
   // Ships from private repos count toward streak and score, but their repo
   // and identifier are never shown publicly and they can't be attested.
-  isPrivate   Boolean      @default(false)
-  shippedAt   DateTime
-  createdAt   DateTime     @default(now())
-  attestation Attestation?
+  isPrivate       Boolean      @default(false)
+  weightClass     WeightClass  @default(STANDARD)
+  // RELEASE only: a non-empty body or at least one asset. Null = recorded
+  // before this was checked.
+  releaseHasNotes Boolean?
+  // repository.language when the ship landed.
+  language        String?
+  shippedAt       DateTime
+  createdAt       DateTime     @default(now())
+  attestation     Attestation?
 
   @@unique([repo, shipType, identifier])
   @@index([builderId, shippedAt])

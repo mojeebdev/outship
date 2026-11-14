@@ -3,12 +3,16 @@
 // drift from the scoring.
 import Link from "next/link";
 import { GITHUB_APP_INSTALL_URL } from "@/lib/github-app";
-import { DAILY_CAPS, SHIP_WEIGHTS, STREAK_CAP } from "@/lib/score";
-
-const MAX_DAILY_POINTS =
-  SHIP_WEIGHTS.RELEASE * DAILY_CAPS.RELEASE +
-  SHIP_WEIGHTS.MERGE * DAILY_CAPS.MERGE +
-  SHIP_WEIGHTS.PUSH * DAILY_CAPS.PUSH;
+import {
+  BARE_RELEASE_POINTS,
+  DAILY_CAPS,
+  MAX_DAILY_POINTS,
+  MERGE_POINTS,
+  PUSH_POINTS,
+  RELEASE_POINTS,
+  REVIEWED_MERGE_POINTS,
+  STREAK_CAP,
+} from "@/lib/score";
 
 const SUPPORT_EMAIL = "support@mail.outship.dev";
 
@@ -76,11 +80,16 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       {
         question: "what counts as a ship?",
         featured: true,
-        text: `a published release (${SHIP_WEIGHTS.RELEASE} points), a pull request merged into the default branch (${SHIP_WEIGHTS.MERGE} points), and a push to the default branch (${SHIP_WEIGHTS.PUSH} point). work on other branches doesn't count until it lands.`,
+        text: `a published release, a pull request merged into the default branch, and a push to the default branch. work on other branches doesn't count until it lands.`,
+      },
+      {
+        question: "how many points is each ship worth?",
+        featured: true,
+        text: `a release with notes or at least one file attached is ${RELEASE_POINTS} points; a bare tag with neither is ${BARE_RELEASE_POINTS}. a merged pull request is ${MERGE_POINTS}, or ${REVIEWED_MERGE_POINTS} when someone other than its author merged it, or when it came from outside the repo. a push to the default branch is ${PUSH_POINTS}, once a day. the extra point for a second pair of eyes is there because work someone else looked at is harder to fake.`,
       },
       {
         question: "is there a daily limit?",
-        text: `yes. per builder, per UTC day, at most ${DAILY_CAPS.RELEASE} releases, ${DAILY_CAPS.MERGE} merged PRs and ${DAILY_CAPS.PUSH} push score, so at most ${MAX_DAILY_POINTS} points a day from ships. anything past the cap still shows on your profile, it just doesn't add points. splitting work into dozens of PRs or tags doesn't pay.`,
+        text: `yes. per builder, per UTC day, at most ${DAILY_CAPS.RELEASE} releases, ${DAILY_CAPS.MERGE} merged PRs and ${DAILY_CAPS.PUSH} push score, so at most ${MAX_DAILY_POINTS} points a day from ships. when a day has more than that, the ones worth most count. anything past the cap still shows on your profile, it just doesn't add points. splitting work into dozens of PRs or tags doesn't pay.`,
       },
       {
         question: "how do streaks work?",

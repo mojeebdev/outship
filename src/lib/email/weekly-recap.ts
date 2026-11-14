@@ -1,4 +1,4 @@
-import { shipPoints } from "@/lib/score";
+import { shipPoints, type WeightClass } from "@/lib/score";
 import { FROM_RECAP, sendEmail, unsubscribeHeaders } from "./send";
 import { weeklyRecapEmail, type RecapData } from "./templates";
 
@@ -28,6 +28,8 @@ export function isoWeekLabel(date: Date): string {
 
 type ShipRow = {
   shipType: "RELEASE" | "MERGE" | "PUSH";
+  weightClass: WeightClass;
+  releaseHasNotes: number | null;
   shippedAt: string;
   repo: string;
   identifier: string;
@@ -40,7 +42,7 @@ export async function buildRecapData(db: D1Database, now = new Date()): Promise<
   const since = new Date(now.getTime() - 7 * 86_400_000).toISOString();
   const { results: ships } = await db
     .prepare(
-      `SELECT s."shipType", s."shippedAt", s."repo", s."identifier", s."isPrivate", b."githubLogin"
+      `SELECT s."shipType", s."weightClass", s."releaseHasNotes", s."shippedAt", s."repo", s."identifier", s."isPrivate", b."githubLogin"
          FROM "Ship" s JOIN "Builder" b ON b."id" = s."builderId"
         WHERE julianday(s."shippedAt") >= julianday(?1) AND b."hidden" = 0`,
     )
@@ -56,7 +58,14 @@ export async function buildRecapData(db: D1Database, now = new Date()): Promise<
     .map(([login, rows]) => ({
       login,
       ships: rows.length,
-      points: shipPoints(rows.map((row) => ({ shipType: row.shipType, shippedAt: new Date(row.shippedAt) }))),
+      points: shipPoints(
+        rows.map((row) => ({
+          shipType: row.shipType,
+          shippedAt: new Date(row.shippedAt),
+          weightClass: row.weightClass,
+          releaseHasNotes: row.releaseHasNotes === null ? null : Boolean(row.releaseHasNotes),
+        })),
+      ),
     }))
     .sort((a, b) => b.points - a.points || b.ships - a.ships || a.login.localeCompare(b.login))
     .slice(0, 5);

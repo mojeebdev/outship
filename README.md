@@ -100,8 +100,10 @@ the weekly ship recap.
 
 | Ship | When it counts | Points |
 | --- | --- | --- |
-| **Release** | a release is published | **5** |
+| **Release** | a release is published with notes or at least one asset | **5** |
+| **Bare release** | a release with an empty body and no assets | **2** |
 | **Merged PR** | a pull request is merged into the default branch | **2** |
+| **Reviewed or outside PR** | merged by someone other than its author, or authored by someone outside the repo (not its owner, a member or a collaborator) | **3** |
 | **Push** | a push lands on the default branch | **1** |
 
 ### Daily caps
@@ -112,12 +114,15 @@ Per builder, per UTC day, at most this many of each type score:
 | --- | --- | --- |
 | 2 | 5 | 1 |
 
-That's at most 21 points a day from ships. Anything past the cap is still
+That's at most 26 points a day from ships. When a day has more than the cap,
+the ones worth most count. Anything past the cap is still
 recorded on your profile, it just doesn't add points, so spamming tags or
 splitting work into dozens of PRs doesn't pay.
 
 ### Streaks
 
+- Streaks are worked out from your ships themselves, so a late or repeated
+  webhook can't break or inflate one.
 - Ship on a UTC day and your streak is alive for that day.
 - Ship the next UTC day and it grows by one. More ships on the same day don't
   grow it further.
