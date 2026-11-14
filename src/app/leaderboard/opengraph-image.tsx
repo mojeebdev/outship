@@ -1,39 +1,17 @@
 import { ImageResponse } from "next/og";
 import { getDb } from "@/lib/db";
+import { RANKED_BUILDER } from "@/lib/builders";
+import { OG_BASE_BLUE as BASE_BLUE, OG_SIZE, OG_VOID as VOID, OG_WHITE as WHITE, OgWordmark as Wordmark } from "@/lib/og";
 
 export const alt = "outship leaderboard";
-export const size = { width: 1200, height: 630 };
+export const size = OG_SIZE;
 export const contentType = "image/png";
 export const dynamic = "force-dynamic";
-
-const VOID = "#000000";
-const WHITE = "#ffffff";
-const BASE_BLUE = "#0000ff";
-
-function Wordmark() {
-  const bars = [
-    { height: 16, color: WHITE },
-    { height: 26, color: WHITE },
-    { height: 36, color: BASE_BLUE },
-  ];
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 36 }}>
-        {bars.map((bar, index) => (
-          <div
-            key={index}
-            style={{ width: 8, height: bar.height, background: bar.color }}
-          />
-        ))}
-      </div>
-      <span style={{ fontSize: 32, color: WHITE }}>outship</span>
-    </div>
-  );
-}
 
 export default async function Image() {
   const db = await getDb();
   const builders = await db.builder.findMany({
+    where: RANKED_BUILDER,
     orderBy: { score: "desc" },
     take: 5,
     select: { githubLogin: true, score: true },

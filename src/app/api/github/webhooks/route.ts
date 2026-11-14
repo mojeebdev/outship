@@ -2,6 +2,8 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb } from "@/lib/db";
 import { verifyGithubSignature } from "@/lib/github-webhook";
 import { applyShipToStreak, computeScore, shipPoints } from "@/lib/score";
+import { syncInstallation } from "@/lib/installations";
+import { postClaimInvite } from "@/lib/claim-invite";
 
 export const dynamic = "force-dynamic";
 
@@ -184,8 +186,43 @@ async function rescore(db: Db, builderId: string) {
 
 const skipped = () => Response.json({ ok: true, skipped: true });
 
+/**
+ * The one-time claim comment, for a merge credited to someone who has never
+ * signed in. claimInvitedAt is claimed with a conditional update before
+ * posting (as welcomedAt is for the welcome email), so two deliveries racing
+ * can't both post, and nobody is ever invited twice.
+ */
+async function maybeInviteToClaim(
+  db: Db,
+  env: CloudflareEnv,
+  ctx: { waitUntil(promise: Promise<unknown>): void },
+  builder: { id: string; githubLogin: string; claimedAt: Date | null; claimInvitedAt: Date | null },
+  ship: Ship,
+  installationId: number | undefined,
+) {
+  if (ship.shipType !== "MERGE" || ship.isPrivate || !installationId) return;
+  if (builder.claimedAt || builder.claimInvitedAt) return;
+
+  const installation = await db.installation.findUnique({ where: { id: installationId } });
+  if (!installation?.claimInvitesEnabled || installation.deletedAt || installation.suspendedAt) return;
+
+  const { count } = await db.builder.updateMany({
+    where: { id: builder.id, claimedAt: null, claimInvitedAt: null },
+    data: { claimInvitedAt: new Date() },
+  });
+  if (count !== 1) return;
+
+  const shipCount = await db.ship.count({ where: { builderId: builder.id, isPrivate: false } });
+  ctx.waitUntil(
+    postClaimInvite(
+      { appId: env.GITHUB_APP_ID, privateKey: env.GITHUB_APP_PRIVATE_KEY },
+      { installationId, repo: ship.repo, prNumber: Number(ship.identifier), login: builder.githubLogin, shipCount },
+    ),
+  );
+}
+
 export async function POST(request: Request) {
-  const { env } = await getCloudflareContext({ async: true });
+  const { env, ctx } = await getCloudflareContext({ async: true });
   const secret = env.GITHUB_WEBHOOK_SECRET;
   if (!secret) {
     return new Response("webhook secret not configured", { status: 500 });
@@ -204,10 +241,14 @@ export async function POST(request: Request) {
   const event = request.headers.get("x-github-event") ?? "";
   const payload = JSON.parse(rawBody) as Record<string, unknown>;
 
+  const db = await getDb();
+  await syncInstallation(db, event, payload);
+  if (event === "installation" || event === "installation_repositories") {
+    return Response.json({ ok: true });
+  }
+
   const ship = shipFromPayload(event, payload);
   if (!ship) return skipped();
-
-  const db = await getDb();
 
   const builder =
     ship.credit.kind === "user"
@@ -299,6 +340,13 @@ export async function POST(request: Request) {
       score: computeScore({ points, currentStreak: streak.currentStreak }),
     },
   });
+
+  if (ship.credit.kind === "user") {
+    const installationId = (payload.installation as { id?: number } | undefined)?.id;
+    await maybeInviteToClaim(db, env, ctx, builder, ship, installationId).catch((error) =>
+      console.warn("claim-invite: skipped", error),
+    );
+  }
 
   return Response.json({ ok: true });
 }

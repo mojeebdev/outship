@@ -20,6 +20,8 @@ import {
 } from "@/components/icons";
 import { AttestShipButton } from "@/components/attest-ship-button";
 import { AttestationBadge } from "@/components/attestation-badge";
+import { BuilderAvatar } from "@/components/builder-bits";
+import { allTimeRank } from "@/lib/builders";
 
 export const metadata: Metadata = {
   title: "profile — outship",
@@ -50,8 +52,8 @@ export default async function ProfilePage() {
   }
 
   const db = await getDb();
-  const [rankAbove, totalShips, recentShips, subscriber] = await Promise.all([
-    db.builder.count({ where: { score: { gt: builder.score } } }),
+  const [rank, totalShips, recentShips, subscriber, installation] = await Promise.all([
+    allTimeRank(db, builder),
     db.ship.count({ where: { builderId: builder.id } }),
     db.ship.findMany({
       where: { builderId: builder.id },
@@ -60,13 +62,14 @@ export default async function ProfilePage() {
       include: { attestation: true },
     }),
     builder.email ? db.subscriber.findUnique({ where: { email: builder.email } }) : null,
+    builder.installationId ? db.installation.findUnique({ where: { id: builder.installationId } }) : null,
   ]);
   const recapOn = subscriber?.status === "CONFIRMED";
 
   const stats = [
     { label: "streak", value: builder.currentStreak, Icon: IconStreak },
     { label: "ships", value: totalShips, Icon: IconShip },
-    { label: "rank", value: `#${rankAbove + 1}`, Icon: IconGrid },
+    { label: "rank", value: rank ? `#${rank}` : "hidden", Icon: IconGrid },
     { label: "score", value: builder.score, Icon: IconSeal },
   ];
 
@@ -74,9 +77,12 @@ export default async function ProfilePage() {
     <SiteShell>
       <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-text-muted-1">welcome back</p>
-            <h1 className="text-2xl font-medium">{builder.githubLogin}</h1>
+          <div className="flex items-center gap-4">
+            <BuilderAvatar githubId={builder.githubId} login={builder.githubLogin} size={48} />
+            <div>
+              <p className="text-sm text-text-muted-1">welcome back</p>
+              <h1 className="text-2xl font-medium">{builder.githubLogin}</h1>
+            </div>
           </div>
           <div className="flex items-center gap-4 whitespace-nowrap text-sm">
             <Link
@@ -212,6 +218,36 @@ export default async function ProfilePage() {
           )}
         </div>
 
+        <SettingForm
+          action="/api/profile/visibility"
+          name="hidden"
+          on={builder.hidden}
+          title="hide my profile"
+          description={
+            builder.hidden
+              ? "hidden: your public page returns not found and you're off the leaderboard, index and streaks. your ships still count, and you see everything here."
+              : "your profile is public at /@" + builder.githubLogin + ". hide it to take it off every public page; your ships keep counting privately."
+          }
+          onLabel="hide"
+          offLabel="show again"
+        />
+
+        {installation && (
+          <SettingForm
+            action="/api/profile/claim-invites"
+            name="invites"
+            on={installation.claimInvitesEnabled}
+            title="claim invitations in your repos"
+            description={
+              installation.claimInvitesEnabled
+                ? "on: when someone who isn't on outship gets a PR merged in a public repo you installed the app on, the app leaves one short comment inviting them to claim or hide their profile. once per person, ever."
+                : "off: the app never comments in your repos."
+            }
+            onLabel="turn on"
+            offLabel="turn off"
+          />
+        )}
+
         {builder.email && (
           <form
             method="post"
@@ -241,5 +277,46 @@ export default async function ProfilePage() {
         )}
       </div>
     </SiteShell>
+  );
+}
+
+/** An on/off switch posted as a plain form, like the recap one. */
+function SettingForm({
+  action,
+  name,
+  on,
+  title,
+  description,
+  onLabel,
+  offLabel,
+}: {
+  action: string;
+  name: string;
+  on: boolean;
+  title: string;
+  description: string;
+  /** The button when the setting is off (it turns it on). */
+  onLabel: string;
+  /** The button when the setting is on. */
+  offLabel: string;
+}) {
+  return (
+    <form
+      method="post"
+      action={action}
+      className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div>
+        <p className="font-medium">{title}</p>
+        <p className="mt-1 text-sm text-text-muted-1">{description}</p>
+      </div>
+      <input type="hidden" name={name} value={on ? "off" : "on"} />
+      <button
+        type="submit"
+        className="shrink-0 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition hover:border-void"
+      >
+        {on ? offLabel : onLabel}
+      </button>
+    </form>
   );
 }

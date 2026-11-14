@@ -4,6 +4,8 @@ import { ConnectGithubButton } from "@/components/connect-github-button";
 import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
 import { IconSeal, IconStreak } from "@/components/icons";
+import { PUBLIC_BUILDER } from "@/lib/builders";
+import { UnclaimedChip } from "@/components/builder-bits";
 
 export const metadata: Metadata = {
   title: "streaks — outship",
@@ -16,13 +18,14 @@ const THIRTY_DAY_CLUB_THRESHOLD = 30;
 export default async function StreaksPage() {
   const db = await getDb();
   const builders = await db.builder.findMany({
-    where: { currentStreak: { gt: 0 } },
+    where: { ...PUBLIC_BUILDER, currentStreak: { gt: 0 } },
     orderBy: { currentStreak: "desc" },
     take: 50,
     select: {
       githubLogin: true,
       currentStreak: true,
       longestStreak: true,
+      claimedAt: true,
     },
   });
 
@@ -55,12 +58,15 @@ export default async function StreaksPage() {
                   <span className="w-8 shrink-0 text-sm font-medium text-text-muted-2">
                     #{index + 1}
                   </span>
-                  <Link
-                    href={`/@${builder.githubLogin}`}
-                    className="flex-1 font-medium hover:text-base-blue"
-                  >
-                    {builder.githubLogin}
-                  </Link>
+                  <span className="flex min-w-0 flex-1 items-center gap-2">
+                    <Link
+                      href={`/@${builder.githubLogin}`}
+                      className="truncate font-medium hover:text-base-blue"
+                    >
+                      {builder.githubLogin}
+                    </Link>
+                    {!builder.claimedAt && <UnclaimedChip />}
+                  </span>
                   {inThirtyDayClub && (
                     <span className="flex items-center gap-1.5 rounded-full bg-blue-tint px-3 py-1 text-xs font-medium text-base-blue">
                       <IconSeal className="h-3 w-3" />

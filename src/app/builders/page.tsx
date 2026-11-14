@@ -3,7 +3,9 @@ import Link from "next/link";
 import { ConnectGithubButton } from "@/components/connect-github-button";
 import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
-import { IconGrid, IconShip, IconStreak } from "@/components/icons";
+import { IconShip, IconStreak } from "@/components/icons";
+import { PUBLIC_BUILDER } from "@/lib/builders";
+import { BuilderAvatar, UnclaimedChip } from "@/components/builder-bits";
 
 export const metadata: Metadata = {
   title: "index — outship",
@@ -14,9 +16,12 @@ export const dynamic = "force-dynamic";
 export default async function IndexPage() {
   const db = await getDb();
   const builders = await db.builder.findMany({
+    where: PUBLIC_BUILDER,
     orderBy: { githubLogin: "asc" },
     select: {
+      githubId: true,
       githubLogin: true,
+      claimedAt: true,
       currentStreak: true,
       _count: { select: { ships: true } },
     },
@@ -44,12 +49,15 @@ export default async function IndexPage() {
               <Link
                 key={builder.githubLogin}
                 href={`/@${builder.githubLogin}`}
-                className="flex flex-col gap-3 rounded-lg border border-border bg-white p-4 transition hover:border-base-blue"
+                className={`flex flex-col gap-3 rounded-lg border border-border p-4 transition hover:border-base-blue ${
+                  builder.claimedAt ? "bg-white" : "bg-white/50 text-text-muted-1"
+                }`}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded bg-blue-tint">
-                  <IconGrid className="h-4 w-4 text-base-blue" />
+                <span className="flex items-center justify-between gap-2">
+                  <BuilderAvatar githubId={builder.githubId} login={builder.githubLogin} />
+                  {!builder.claimedAt && <UnclaimedChip />}
                 </span>
-                <span className="font-medium">{builder.githubLogin}</span>
+                <span className="truncate font-medium">{builder.githubLogin}</span>
                 <div className="flex items-center gap-3 text-xs text-text-muted-1">
                   <span className="flex items-center gap-1">
                     <IconStreak className="h-3 w-3" />

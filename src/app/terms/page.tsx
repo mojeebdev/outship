@@ -54,6 +54,18 @@ export default function TermsPage() {
           </p>
         </Section>
 
+        <Section title="unclaimed profiles">
+          <p>
+            if you ship in a repository where the outship app is installed,
+            your public activity there can appear on an unclaimed profile
+            before you sign up. signing in claims it. you can hide it at any
+            time from your dashboard, or ask us to remove it. if you install
+            the app, its one-time claim comment may appear on merged pull
+            requests in your public repositories unless you switch it off on
+            your profile.
+          </p>
+        </Section>
+
         <Section title="scores and rankings">
           <p>
             scores, streaks and ranks are computed from github activity by

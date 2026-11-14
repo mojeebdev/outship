@@ -4,6 +4,8 @@ import { ConnectGithubButton } from "@/components/connect-github-button";
 import { SiteShell } from "@/components/site-shell";
 import { getDb } from "@/lib/db";
 import { IconSeal, IconShip, IconStreak } from "@/components/icons";
+import { PUBLIC_BUILDER } from "@/lib/builders";
+import { UnclaimedChip } from "@/components/builder-bits";
 
 export const metadata: Metadata = {
   title: "leaderboard — outship",
@@ -14,15 +16,20 @@ export const dynamic = "force-dynamic";
 export default async function LeaderboardPage() {
   const db = await getDb();
   const builders = await db.builder.findMany({
+    where: PUBLIC_BUILDER,
     orderBy: { score: "desc" },
     take: 50,
     select: {
       githubLogin: true,
       score: true,
       currentStreak: true,
+      claimedAt: true,
       _count: { select: { ships: true } },
     },
   });
+  // Only claimed builders take a rank; unclaimed ones are listed, unnumbered.
+  let rank = 0;
+  const rows = builders.map((builder) => ({ ...builder, rank: builder.claimedAt ? ++rank : null }));
 
   return (
     <SiteShell>
@@ -44,20 +51,25 @@ export default async function LeaderboardPage() {
           </p>
         ) : (
           <ol className="flex flex-col gap-2">
-            {builders.map((builder, index) => (
+            {rows.map((builder) => (
               <li
                 key={builder.githubLogin}
-                className="flex items-center gap-4 rounded-lg border border-border bg-white p-4"
+                className={`flex items-center gap-4 rounded-lg border border-border p-4 ${
+                  builder.rank ? "bg-white" : "bg-white/50 text-text-muted-1"
+                }`}
               >
                 <span className="w-8 shrink-0 text-sm font-medium text-text-muted-2">
-                  #{index + 1}
+                  {builder.rank ? `#${builder.rank}` : "–"}
                 </span>
-                <Link
-                  href={`/@${builder.githubLogin}`}
-                  className="flex-1 font-medium hover:text-base-blue"
-                >
-                  {builder.githubLogin}
-                </Link>
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <Link
+                    href={`/@${builder.githubLogin}`}
+                    className="truncate font-medium hover:text-base-blue"
+                  >
+                    {builder.githubLogin}
+                  </Link>
+                  {!builder.rank && <UnclaimedChip />}
+                </span>
                 <span className="flex items-center gap-1.5 text-sm text-text-muted-1">
                   <IconStreak className="h-3.5 w-3.5" />
                   {builder.currentStreak}

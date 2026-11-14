@@ -42,7 +42,7 @@ export async function buildRecapData(db: D1Database, now = new Date()): Promise<
     .prepare(
       `SELECT s."shipType", s."shippedAt", s."repo", s."identifier", s."isPrivate", b."githubLogin"
          FROM "Ship" s JOIN "Builder" b ON b."id" = s."builderId"
-        WHERE julianday(s."shippedAt") >= julianday(?1)`,
+        WHERE julianday(s."shippedAt") >= julianday(?1) AND b."hidden" = 0`,
     )
     .bind(since)
     .all<ShipRow>();
@@ -70,7 +70,7 @@ export async function buildRecapData(db: D1Database, now = new Date()): Promise<
   const { results: streaks } = await db
     .prepare(
       `SELECT "githubLogin" AS login, "currentStreak" AS streak FROM "Builder"
-        WHERE "currentStreak" > 0 ORDER BY "currentStreak" DESC, "githubLogin" LIMIT 3`,
+        WHERE "currentStreak" > 0 AND "hidden" = 0 ORDER BY "currentStreak" DESC, "githubLogin" LIMIT 3`,
     )
     .all<{ login: string; streak: number }>();
 

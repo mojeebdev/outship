@@ -142,6 +142,14 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
         ),
       },
       {
+        question: "why is there a profile for me i never made?",
+        text: "you shipped in a repo where someone installed the outship app, so those ships were credited to you. the profile is marked unclaimed, shows only public github activity, isn't ranked and isn't indexed by search engines. sign in to claim it, or sign in and hide it; you can also email us to remove it. the app may leave one comment on a merged PR to let you know, once, ever.",
+      },
+      {
+        question: "can i hide my profile?",
+        text: "yes. on your profile, switch on “hide my profile”. your public page then returns not found and you're off the leaderboard, index and streaks; your ships keep counting and you still see them on your own dashboard.",
+      },
+      {
         question: "can i delete my data?",
         text: "yes, email us and we'll delete your account, ships and email address. attestations you've made onchain are the exception: nobody, including us, can delete anything once it's on the blockchain.",
         answer: (

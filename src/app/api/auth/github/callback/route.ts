@@ -9,6 +9,34 @@ export const dynamic = "force-dynamic";
 
 const OAUTH_STATE_COOKIE = "outship_oauth_state";
 
+type GithubUser = {
+  id: number;
+  login: string;
+  email?: string | null;
+  name?: string | null;
+  bio?: string | null;
+  location?: string | null;
+  blog?: string | null;
+  twitter_username?: string | null;
+};
+
+// Public profile fields, refreshed on every sign-in so an edit on GitHub
+// shows up here the next time. Trimmed and length-capped: they're shown on
+// public pages and GitHub's own limits are generous.
+function profileFields(user: GithubUser) {
+  const clean = (value: string | null | undefined, max: number) => {
+    const trimmed = value?.trim();
+    return trimmed ? trimmed.slice(0, max) : null;
+  };
+  return {
+    name: clean(user.name, 100),
+    bio: clean(user.bio, 300),
+    location: clean(user.location, 100),
+    blog: clean(user.blog, 200),
+    twitterUsername: clean(user.twitter_username, 40),
+  };
+}
+
 export async function GET(request: Request) {
   const { env, ctx } = await getCloudflareContext({ async: true });
   if (!env.GITHUB_APP_CLIENT_ID || !env.GITHUB_APP_CLIENT_SECRET || !env.SESSION_SECRET) {
@@ -58,7 +86,7 @@ export async function GET(request: Request) {
   if (!userResponse.ok) {
     return new Response("Couldn't read your GitHub profile — try again.", { status: 400 });
   }
-  const user = (await userResponse.json()) as { id: number; login: string; email?: string | null };
+  const user = (await userResponse.json()) as GithubUser;
 
   const [installationId, email] = await Promise.all([
     fetchUserInstallationId(tokenData.access_token, user.id),
@@ -66,17 +94,27 @@ export async function GET(request: Request) {
   ]);
 
   const db = await getDb();
-  const builder = await db.builder.upsert({
+  const profile = profileFields(user);
+  let builder = await db.builder.upsert({
     where: { githubId: user.id },
     // undefined (GitHub didn't answer) leaves the stored value as it was.
-    update: { githubLogin: user.login, installationId, ...(email ? { email } : {}) },
+    update: { githubLogin: user.login, installationId, ...(email ? { email } : {}), ...profile },
     create: {
       githubId: user.id,
       githubLogin: user.login,
       installationId: installationId ?? null,
       email,
+      claimedAt: new Date(),
+      ...profile,
     },
   });
+
+  // A profile the webhook created before they ever signed in: this sign-in
+  // claims it. Only the first time, so claimedAt keeps its meaning.
+  if (!builder.claimedAt) {
+    await db.builder.updateMany({ where: { id: builder.id, claimedAt: null }, data: { claimedAt: new Date() } });
+    builder = { ...builder, claimedAt: new Date() };
+  }
 
   // First sign-in with a known email: welcome them, once. Claiming welcomedAt
   // before sending means two simultaneous sign-ins can't both send it, and

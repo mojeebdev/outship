@@ -17,22 +17,36 @@ enum ShipType {
 }
 
 model Builder {
-  id             String    @id @default(cuid())
-  githubId       Int       @unique
-  githubLogin    String    @unique
-  installationId Int?
+  id              String    @id @default(cuid())
+  githubId        Int       @unique
+  githubLogin     String    @unique
+  installationId  Int?
   // Primary verified email from GitHub (needs the App's "Email addresses"
   // permission). Used for the welcome and account email only.
-  email          String?
-  welcomedAt     DateTime?
-  walletAddress  String?
-  currentStreak  Int       @default(0)
-  longestStreak  Int       @default(0)
-  lastShipDate   DateTime?
-  score          Int       @default(0)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  ships          Ship[]
+  email           String?
+  welcomedAt      DateTime?
+  walletAddress   String?
+  currentStreak   Int       @default(0)
+  longestStreak   Int       @default(0)
+  lastShipDate    DateTime?
+  score           Int       @default(0)
+  // First OAuth sign-in. Null means an unclaimed profile: created by the
+  // webhook because someone shipped in a repo with the App installed.
+  claimedAt       DateTime?
+  // Off every public page (the profile 404s); ships still count privately.
+  hidden          Boolean   @default(false)
+  // The one-time claim comment on a merged PR. Set before posting, so at
+  // most once per person, ever.
+  claimInvitedAt  DateTime?
+  // Public GitHub profile fields, from GET /user at sign-in.
+  name            String?
+  bio             String?
+  location        String?
+  blog            String?
+  twitterUsername String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  ships           Ship[]
 
   @@index([score])
 }
@@ -69,6 +83,20 @@ model Attestation {
   // 2 = outship-signed, checked onchain before it was stored.
   schemaVersion Int      @default(1)
   attestedAt    DateTime @default(now())
+}
+
+/// A GitHub App installation. id is GitHub's installation id.
+model Installation {
+  id                  Int       @id
+  accountLogin        String
+  // "User" or "Organization"
+  accountType         String
+  // Whether the App may post the one-time claim comment in this install's
+  // repos. The installer switches it on /profile.
+  claimInvitesEnabled Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  suspendedAt         DateTime?
+  deletedAt           DateTime?
 }
 
 enum SubscriberStatus {

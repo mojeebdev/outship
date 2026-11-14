@@ -9,6 +9,12 @@ export const metadata: Metadata = {
 const entries = [
   {
     date: "nov 2026",
+    title: "unclaimed profiles, and a way to hide yours",
+    description:
+      "people who ship in a repo with the outship app but haven't signed in now have clearly labelled unclaimed profiles: public activity only, unranked and not indexed. the first merged PR may get one comment from the app inviting them to claim or hide it, once per person, and installers can switch that off. any builder can now hide their profile from public pages, and profiles show your github name, bio, location and links.",
+  },
+  {
+    date: "nov 2026",
     title: "attestations outship can stand behind",
     description:
       "attesting a ship now works in two steps: outship signs the ship's details from its own records, then your wallet sends the attestation and pays the fee. the new schema's resolver contract on base refuses anything outship didn't sign, and outship reads each attestation back from base before showing it. receipts made with the first schema, which anyone could write to, are marked legacy · unverified.",
