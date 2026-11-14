@@ -1,26 +1,20 @@
 import { getDb } from "@/lib/db";
-import { PUBLIC_BUILDER } from "@/lib/builders";
+import { loadLeaderboard, parsePeriod } from "@/lib/leaderboard";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const db = await getDb();
-
-  const builders = await db.builder.findMany({
-    where: PUBLIC_BUILDER,
-    orderBy: { score: "desc" },
-    take: 50,
-    select: {
-      githubLogin: true,
-      score: true,
-      currentStreak: true,
-      longestStreak: true,
-      claimedAt: true,
-      _count: { select: { ships: true } },
-    },
+// The same boards as /leaderboard: ?period=week|month|all (default week),
+// &language=, &page=. Hidden builders never appear; unclaimed ones have
+// claimed: false and rank: null.
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const board = await loadLeaderboard(await getDb(), {
+    period: parsePeriod(url.searchParams.get("period")),
+    language: url.searchParams.get("language"),
+    page: Number(url.searchParams.get("page") ?? 1) || 1,
   });
-
   return Response.json({
-    builders: builders.map(({ claimedAt, ...builder }) => ({ ...builder, claimed: claimedAt !== null })),
+    ...board,
+    rows: board.rows.map((row) => ({ ...row, reachedAt: row.reachedAt?.toISOString() ?? null })),
   });
 }

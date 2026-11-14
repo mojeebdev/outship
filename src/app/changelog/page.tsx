@@ -16,6 +16,12 @@ export const metadata: Metadata = {
 const entries = [
   {
     date: "nov 2026",
+    title: "leaderboards a newcomer can win",
+    description:
+      "the leaderboard now opens on this week, from monday 00:00 UTC, with tabs for this month and all time. filter by language, page past the top 50, and see who's rising: the biggest gains on last week. ties go to whoever got there first.",
+  },
+  {
+    date: "nov 2026",
     title: "scoring that rewards real work",
     description: `a merged PR is now worth ${REVIEWED_MERGE_POINTS} points instead of ${MERGE_POINTS} when someone other than its author merged it, or when it came from outside the repo: work a second person looked at is harder to fake. a release is worth ${RELEASE_POINTS} only with notes or a file attached; a bare tag is worth ${BARE_RELEASE_POINTS}. the most a day can earn is now ${MAX_DAILY_POINTS}, and when a day has more ships than the cap, the ones worth most count. streaks are now worked out from your ships themselves, so a late or repeated webhook can't break one. every builder was rescored under the new rules; releases from before this change keep full points, since there's no record of what they contained.`,
   },

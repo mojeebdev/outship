@@ -158,7 +158,7 @@ actually shipping. When a streak ends, its bonus leaves your score with it.
 
 | Page | What's there |
 | --- | --- |
-| [`/leaderboard`](https://outship.dev/leaderboard) | everyone, ranked by score |
+| [`/leaderboard`](https://outship.dev/leaderboard) | this week's board (from Monday 00:00 UTC), with [`/month`](https://outship.dev/leaderboard/month) and [`/all`](https://outship.dev/leaderboard/all) tabs, a language filter and who's rising |
 | [`/streaks`](https://outship.dev/streaks) | live streaks, longest first, with each builder's best |
 | [`/builders`](https://outship.dev/builders) | every builder on outship, A to Z |
 | `/@handle` | a builder's public profile: score, streaks and public ships, with a share card for X |

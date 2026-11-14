@@ -96,6 +96,7 @@ model Ship {
 
   @@unique([repo, shipType, identifier])
   @@index([builderId, shippedAt])
+  @@index([shippedAt])
 }
 
 model Attestation {
