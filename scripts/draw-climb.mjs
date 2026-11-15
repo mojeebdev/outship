@@ -1,4 +1,4 @@
-// Draws the home page hero scene: a stone tower on a crag under a big cloud,
+// Draws the home page hero scene: a stone tower on a crag over the sea,
 // with a path winding up to it through a field. Writes three crops of the same
 // drawing to public/scene/, one per layout in src/components/hero.tsx:
 //
@@ -138,26 +138,6 @@ function cloud(id, puffs, flatBase) {
     <g fill="${WHITE}">${lit}${base}</g>
     <path d="${rims}" fill="none" stroke="${BLUE}" stroke-width="1" opacity=".16"/>
   </g>`;
-}
-
-// A towering cumulus: a broad base billowing up into a cauliflower head. The
-// puffs on the rim are smaller, so the edge reads as many lobes.
-function bigCloud(cx, base) {
-  const r = rng(7);
-  const puffs = [];
-  const height = 460;
-  const half = (t) => (t < 0.55 ? 147 + t * 59 : 179 - (t - 0.55) * 294);
-  for (let i = 0; i < 170; i++) {
-    const t = Math.pow(r(), 0.9);
-    const u = r() * 2 - 1;
-    const hw = Math.max(20, half(t));
-    const x = cx + t * 39 + u * hw * 0.92;
-    const y = base - t * height;
-    const rad = (Math.abs(u) > 0.75 ? 12 + r() * 14 : 26 + r() * 26) * (1 - t * 0.25);
-    puffs.push([f(x), f(y), f(rad)]);
-  }
-  for (let k = 0; k < 9; k++) puffs.push([f(cx - 147 + k * 36), f(base - 6), 23.5]);
-  return cloud("cloud-big", puffs);
 }
 
 // A low bank of cloud on the horizon.
@@ -332,7 +312,6 @@ function climber() {
 function world() {
   return `${defs()}
   <rect x="${X_MIN}" y="-1000" width="${X_MAX - X_MIN}" height="3000" fill="${BLUE}"/>
-  ${bigCloud(1480, 640)}
   ${cloudBank("cloud-bank", 1330, 640, 260)}
   <rect x="${X_MIN}" y="${HORIZON}" width="${X_MAX - X_MIN}" height="30" fill="${SEA}"/>
   <path d="M${X_MIN} 672 H${X_MAX} M${X_MIN} 682 H${X_MAX}" stroke="${WHITE}" stroke-width="1" opacity=".5" stroke-dasharray="30 14 60 20"/>
