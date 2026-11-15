@@ -7,6 +7,7 @@ import { IconLock, IconShip } from "@/components/icons";
 import { AttestationBadge } from "@/components/attestation-badge";
 import { ConnectGithubButton } from "@/components/connect-github-button";
 import { builderForHandle, isClaimed } from "@/lib/builders";
+import { ImportedNote } from "@/components/builder-bits";
 import { loadHeatmap, loadProfileFacts } from "@/lib/profile-data";
 import { ProfileHeader, ProfileStats } from "@/components/profile-parts";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
@@ -141,6 +142,7 @@ export default async function BuilderProfilePage({
                     {!ship.isPrivate && (
                       <span className="text-xs text-text-muted-2">
                         {shipDetail(ship)}
+                        <ImportedNote source={ship.source} />
                       </span>
                     )}
                   </div>

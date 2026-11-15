@@ -16,6 +16,12 @@ export const metadata: Metadata = {
 const entries = [
   {
     date: "nov 2026",
+    title: "your last 12 months count",
+    description:
+      "installing the outship app now imports the last year of published releases and merged pull requests from the repos you choose, scored by the same rules and daily caps as live ships, so all-time scores reflect real history. dates come from github's own merge and publish times, which can't be backdated. pushes can't be imported and count from install onwards. imported ships are labelled, and never trigger a claim comment.",
+  },
+  {
+    date: "nov 2026",
     title: "richer profiles, a live home page and a README badge",
     description:
       "profiles now show your github name, bio, location and links, your top languages, a breakdown of releases, merged PRs and pushes, and your rank this week and all time. the home page shows the latest public ships as they land and how many builders shipped today. and there's a badge for your github README at outship.dev/@you/badge.svg; copy it from your profile.",
