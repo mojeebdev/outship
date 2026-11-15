@@ -4,7 +4,6 @@ import { verifyGithubSignature } from "@/lib/github-webhook";
 import { shipFromPayload, type WebhookShip } from "@/lib/webhook-ships";
 import { recomputeBuilder } from "@/lib/rescore";
 import { storeShip } from "@/lib/ship-store";
-import { queueRepos } from "@/lib/backfill";
 import { syncInstallation } from "@/lib/installations";
 import { postClaimInvite } from "@/lib/claim-invite";
 import { resolveReleaseShipCommit } from "@/lib/release-commit";
@@ -88,12 +87,6 @@ export async function POST(request: Request) {
 
   if (INSTALLATION_EVENTS.has(event)) {
     await syncInstallation(db, event, payload);
-    // Repos added to an existing install get their year of history too. (A
-    // new install is picked up whole by the backfill cron.)
-    const added = (payload.repositories_added as { full_name?: string }[] | undefined) ?? [];
-    if (event === "installation_repositories" && appInstallationId !== undefined && added.length > 0) {
-      await queueRepos(db, appInstallationId, added.map((repo) => repo.full_name).filter((name): name is string => !!name));
-    }
     return Response.json({ ok: true });
   }
   if (!SHIP_EVENTS.has(event)) {

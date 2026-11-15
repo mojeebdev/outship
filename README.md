@@ -106,16 +106,11 @@ the weekly ship recap.
 | **Reviewed or outside PR** | merged by someone other than its author, or authored by someone outside the repo (not its owner, a member or a collaborator) | **30** |
 | **Push** | a push lands on the default branch | **10** |
 
-### Your last 12 months count
+### Ships count from the day you join
 
-When you install the App (or add a repo to it), outship imports the last
-year of **published releases**, **merged PRs** and **commits to the default
-branch** from those repos, so your all-time score starts from your real
-history. Releases and merges score by the same rules as live ones. GitHub
-keeps no push history, so past commits stand in for pushes: up to **5 a day**,
-each scored as a push, and only from before the install (after it, live pushes
-count). The import runs in small slices every five minutes, so a large org's
-history takes a little while to arrive.
+Everything you ship after you install the App scores the moment GitHub
+reports it. Work from before you joined isn't imported, so everyone starts
+from the same line.
 
 ### Daily caps
 

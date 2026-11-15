@@ -1,6 +1,5 @@
-// Storing a ship, shared by the live webhook and the 12-month backfill so both
-// apply the same rules: one row per [repo, shipType, identifier], and a merge
-// supersedes the push that landed it.
+// Storing a ship from the live webhook: one row per [repo, shipType,
+// identifier], and a merge supersedes the push that landed it.
 import type { getDb } from "@/lib/db";
 import type { WeightClass } from "@/lib/score";
 
