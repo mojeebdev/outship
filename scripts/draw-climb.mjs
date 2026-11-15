@@ -2,8 +2,8 @@
 // with a path winding up to it through a field. Writes three crops of the same
 // drawing to public/scene/, one per layout in src/components/hero.tsx:
 //
-//   climb-wide.svg  desktop: the copy sits in the sky to the left of the tower
-//   climb-mid.svg   tablet:  the scene sits under the copy
+//   climb-wide.svg  landscape: the copy sits in the sky to the left of the tower
+//   climb-mid.svg   portrait tablet: the scene sits under the copy
 //   climb-tall.svg  phone:   the scene sits under the copy
 //
 // The drawing is generated rather than hand-edited because the field (grass

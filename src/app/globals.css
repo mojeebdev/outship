@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Landscape screens wide enough to put the hero copy beside the tower
+   (tablets held sideways, laptops, desktops). Chosen by shape, not width
+   alone: a portrait tablet is as wide as a landscape one but has room for
+   the scene under the copy instead. */
+@custom-variant wide (@media (min-width: 900px) and (min-aspect-ratio: 4/3));
+
 :root {
   --base-blue: #0000ff;
   --void: #000000;
