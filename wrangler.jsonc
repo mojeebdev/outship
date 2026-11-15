@@ -71,7 +71,12 @@
 		// For the admin panel's visitor numbers (src/lib/cf-analytics.ts). An
 		// account id isn't a secret: it's in every dashboard URL. The API token
 		// that reads analytics is the CLOUDFLARE_ANALYTICS_TOKEN secret.
-		"CLOUDFLARE_ACCOUNT_ID": "1c44f0a287a8d8b44aa136f42ae9e64b"
+		"CLOUDFLARE_ACCOUNT_ID": "1c44f0a287a8d8b44aa136f42ae9e64b",
+		// GitHub requests per 5-minute backfill run (src/lib/backfill.ts). The
+		// code's default of 12 suits the free plan's subrequest limit; on the
+		// paid plan 50 finishes a 90-repo import in under half an hour, well
+		// inside GitHub's 5,000 requests an hour per installation.
+		"BACKFILL_REQUEST_BUDGET": "50"
 	},
 	"observability": {
 		"enabled": true
