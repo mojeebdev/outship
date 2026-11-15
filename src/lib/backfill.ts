@@ -184,7 +184,16 @@ export const RELEASES_QUERY = `query($owner: String!, $name: String!, $first: In
 
 // ── running jobs ─────────────────────────────────────────────────────────────
 
-export type BackfillSummary = { queuedInstalls: number; jobsRun: number; requests: number; imported: number; failed: number };
+export type BackfillSummary = {
+  queuedInstalls: number;
+  jobsRun: number;
+  requests: number;
+  imported: number;
+  failed: number;
+  // Why nothing ran, when nothing could. The cron logs the summary, so a
+  // misconfigured Worker says so instead of looking like an idle queue.
+  skipped?: string;
+};
 
 class GithubError extends Error {
   readonly permanent: boolean;
@@ -324,7 +333,10 @@ export async function runBackfill(
   { budget = DEFAULT_REQUEST_BUDGET, now = new Date() }: { budget?: number; now?: Date } = {},
 ): Promise<BackfillSummary> {
   const summary: BackfillSummary = { queuedInstalls: 0, jobsRun: 0, requests: 0, imported: 0, failed: 0 };
-  if (!credentials.appId || !credentials.privateKey) return summary;
+  if (!credentials.appId || !credentials.privateKey) {
+    const missing = [!credentials.appId && "GITHUB_APP_ID", !credentials.privateKey && "GITHUB_APP_PRIVATE_KEY"].filter(Boolean);
+    return { ...summary, skipped: `missing Worker secret ${missing.join(" and ")}` };
+  }
   summary.queuedInstalls = await queueNewInstallations(db, now);
 
   const touched = new Set<string>();
