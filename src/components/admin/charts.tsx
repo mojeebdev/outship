@@ -116,7 +116,7 @@ function bucketLabel(date: Date, bucketMs: number): string {
 /** A bar chart over time with the busiest bucket called out. */
 export function BarSeries({ title, buckets, bucketMs, unit }: { title: string; buckets: Bucket[]; bucketMs: number; unit: string }) {
   const width = 720;
-  const height = 180;
+  const height = 160;
   const pad = { top: 24, right: 8, bottom: 22, left: 36 };
   const max = Math.max(1, ...buckets.map((bucket) => bucket.value));
   const peakIndex = buckets.reduce((best, bucket, i) => (bucket.value > buckets[best].value ? i : best), 0);
@@ -338,8 +338,10 @@ export function Donut({ title, rows, unit }: { title: string; rows: Ranked[]; un
   return (
     <figure className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-white p-5">
       <figcaption className="font-medium">{title}</figcaption>
-      <div className="flex flex-wrap items-center gap-6">
-        <svg width="140" height="140" viewBox="0 0 140 140" role="img" aria-label={`${title}: ${fmt(total)} ${unit}`} className="shrink-0">
+      {/* Sized so ring and legend sit side by side in the /profile column at
+          laptop widths; wrapped, the card doubles in height. */}
+      <div className="flex flex-wrap items-center gap-5">
+        <svg viewBox="0 0 140 140" role="img" aria-label={`${title}: ${fmt(total)} ${unit}`} className="h-32 w-32 shrink-0">
           <circle cx="70" cy="70" r={r} fill="none" strokeWidth="18" style={{ stroke: "var(--color-border)" }} />
           {total > 0 &&
             rows.map((row, i) => {
@@ -368,7 +370,7 @@ export function Donut({ title, rows, unit }: { title: string; rows: Ranked[]; un
             {unit}
           </text>
         </svg>
-        <ul className="flex min-w-40 flex-1 flex-col gap-2.5 text-sm">
+        <ul className="flex min-w-36 flex-1 flex-col gap-2.5 text-sm">
           {rows.map((row, i) => (
             <li key={row.label} className="flex items-center gap-3">
               <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: shades[i % shades.length] }} />

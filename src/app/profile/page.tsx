@@ -19,13 +19,13 @@ import {
 import { AttestShipButton } from "@/components/attest-ship-button";
 import { AttestationBadge } from "@/components/attestation-badge";
 import { loadHeatmap, loadProfileFacts } from "@/lib/profile-data";
-import { ProfileHeader, TierSteps } from "@/components/profile-parts";
+import { TierSteps } from "@/components/profile-parts";
 import { BarSeries, Donut, KpiCard, WeekHourHeatmap, fmt } from "@/components/admin/charts";
 import { change, profileOverview } from "@/lib/profile-overview";
 import { tierFor } from "@/lib/tiers";
 import { profileShareText, shareOnXHref } from "@/lib/share";
 import { ReadmeBadgeBox } from "@/components/readme-badge-box";
-import { ImportedNote } from "@/components/builder-bits";
+import { BuilderAvatar, ImportedNote } from "@/components/builder-bits";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
 import { ProfileSidebar } from "@/components/profile-sidebar";
 
@@ -90,9 +90,30 @@ export default async function ProfilePage() {
 
   return (
     <SiteShell>
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pb-16 pt-6 sm:pt-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <ProfileHeader builder={builder} claimed languages={facts.languages} eyebrow="welcome back" />
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 pb-16 pt-4 sm:pt-6">
+        {/* A compact header: this is the builder's dashboard, so the room goes
+            to their numbers. Bio, links and languages live on the public page. */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <BuilderAvatar githubId={builder.githubId} login={builder.githubLogin} size={56} />
+            <div className="flex min-w-0 flex-col gap-1">
+              <p className="text-sm text-text-muted-1">welcome back</p>
+              <h1 className="flex flex-wrap items-baseline gap-x-2 text-2xl font-medium">
+                {builder.name ?? builder.githubLogin}
+                {builder.name && <span className="text-base font-normal text-text-muted-1">@{builder.githubLogin}</span>}
+              </h1>
+              {builder.installationId && (
+                <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-text-muted-1">
+                  <IconGithub className="h-3.5 w-3.5" aria-hidden="true" />
+                  tracking your repos ·
+                  <a href={GITHUB_APP_INSTALL_URL} className="inline-flex items-center gap-1 text-base-blue hover:underline">
+                    manage repos
+                    <IconArrowUpRight className="h-3 w-3" aria-hidden="true" />
+                  </a>
+                </p>
+              )}
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 whitespace-nowrap text-sm">
             {/* Off while hidden: the shared link would land on "not found". */}
             {!builder.hidden && (
@@ -132,19 +153,7 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {builder.installationId ? (
-          <p className="-mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-muted-1">
-            <IconGithub className="h-4 w-4" aria-hidden="true" />
-            tracking your repos through the outship GitHub App ·
-            <a
-              href={GITHUB_APP_INSTALL_URL}
-              className="inline-flex items-center gap-1 text-base-blue hover:underline"
-            >
-              manage repos
-              <IconArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </a>
-          </p>
-        ) : (
+        {!builder.installationId && (
           <div className="flex flex-col gap-4 rounded-lg border border-base-blue bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-4">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-blue-tint">
