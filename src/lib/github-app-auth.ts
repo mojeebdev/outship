@@ -50,9 +50,42 @@ export function privateKeyPemToPkcs8(pem: string): Uint8Array {
   // Secrets pasted into a dashboard often arrive with literal "\n"s.
   const normalized = pem.replace(/\\n/g, "\n").trim();
   const match = normalized.match(/-----BEGIN ((?:RSA )?PRIVATE KEY)-----([\s\S]+?)-----END \1-----/);
-  if (!match) throw new Error("GITHUB_APP_PRIVATE_KEY isn't a PEM private key");
-  const bytes = base64Decode(match[2].replace(/\s+/g, ""));
-  return match[1] === "RSA PRIVATE KEY" ? pkcs1ToPkcs8(bytes) : bytes;
+  if (match) {
+    const bytes = base64Decode(match[2].replace(/\s+/g, ""));
+    return match[1] === "RSA PRIVATE KEY" ? pkcs1ToPkcs8(bytes) : bytes;
+  }
+
+  // No PEM armour. Two ways a key commonly gets saved like that: the whole
+  // .pem file base64-encoded (some deploy tools want secrets on one line), or
+  // just the base64 body with the BEGIN/END lines lost in copying.
+  const body = normalized.replace(/\s+/g, "");
+  if (body.length > 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(body)) {
+    const bytes = base64Decode(body);
+    const text = new TextDecoder().decode(bytes);
+    if (text.includes("-----BEGIN")) return privateKeyPemToPkcs8(text);
+    const kind = derKeyKind(bytes);
+    if (kind === "pkcs8") return bytes;
+    if (kind === "pkcs1") return pkcs1ToPkcs8(bytes);
+  }
+
+  // Say what was found, never what it contains: this message reaches logs.
+  throw new Error(
+    `GITHUB_APP_PRIVATE_KEY isn't a PEM private key (it's ${normalized.length} characters with no ` +
+      "-----BEGIN RSA PRIVATE KEY----- line; save the downloaded .pem file's contents)",
+  );
+}
+
+// An RSA private key in DER: SEQUENCE { INTEGER 0, ... }. In PKCS#1 the next
+// field is another INTEGER (the modulus); in PKCS#8 it's the AlgorithmIdentifier
+// SEQUENCE. Anything else isn't a key.
+function derKeyKind(bytes: Uint8Array): "pkcs1" | "pkcs8" | null {
+  if (bytes.length < 16 || bytes[0] !== 0x30) return null;
+  const lengthBytes = bytes[1] & 0x80 ? 1 + (bytes[1] & 0x7f) : 1;
+  const i = 1 + lengthBytes;
+  if (bytes[i] !== 0x02 || bytes[i + 1] !== 0x01 || bytes[i + 2] !== 0x00) return null; // INTEGER 0
+  if (bytes[i + 3] === 0x02) return "pkcs1";
+  if (bytes[i + 3] === 0x30) return "pkcs8";
+  return null;
 }
 
 /** A JWT that authenticates as the App for up to nine minutes. */
@@ -67,7 +100,9 @@ export async function createAppJwt(appId: string, privateKeyPem: string, now = D
   const seconds = Math.floor(now / 1000);
   const encode = (value: unknown) => base64UrlEncode(new TextEncoder().encode(JSON.stringify(value)));
   // iat is backdated a minute for clock drift; GitHub caps exp at ten minutes.
-  const unsigned = `${encode({ alg: "RS256", typ: "JWT" })}.${encode({ iat: seconds - 60, exp: seconds + 540, iss: appId })}`;
+  // The App ID is trimmed: a Worker secret saved with a trailing newline
+  // would otherwise put "123456\n" in iss, and GitHub refuses the token.
+  const unsigned = `${encode({ alg: "RS256", typ: "JWT" })}.${encode({ iat: seconds - 60, exp: seconds + 540, iss: appId.trim() })}`;
   const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(unsigned));
   return `${unsigned}.${base64UrlEncode(new Uint8Array(signature))}`;
 }

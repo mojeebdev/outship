@@ -50,6 +50,32 @@ test("App JWTs verify as RS256 with the App id as issuer, for both key formats",
   }
 });
 
-test("something that isn't a PEM key is refused", () => {
+test("an App ID saved with surrounding whitespace still signs as that App", async () => {
+  const { ok, payload } = verifyJwt(await createAppJwt(" 123456\n", PKCS1));
+  assert.equal(ok, true);
+  assert.equal(payload.iss, "123456");
+});
+
+test("keys saved without their PEM armour still parse", () => {
+  const expected = Buffer.from(privateKeyPemToPkcs8(PKCS8));
+  const body = (pem: string) => pem.replace(/-----[A-Z ]+-----/g, "").trim();
+  // The base64 body with the BEGIN/END lines lost in copying, either format,
+  // with or without its line breaks.
+  assert.deepEqual(Buffer.from(privateKeyPemToPkcs8(body(PKCS1))), expected);
+  assert.deepEqual(Buffer.from(privateKeyPemToPkcs8(body(PKCS1).replace(/\s+/g, ""))), expected);
+  assert.deepEqual(Buffer.from(privateKeyPemToPkcs8(body(PKCS8))), expected);
+  // The whole .pem file base64-encoded onto one line.
+  assert.deepEqual(Buffer.from(privateKeyPemToPkcs8(Buffer.from(PKCS1).toString("base64"))), expected);
+});
+
+test("something that isn't a key is refused, without echoing it", () => {
   assert.throws(() => privateKeyPemToPkcs8("not a key"), /PEM/);
+  // A file name typed at wrangler's prompt instead of the file's contents.
+  assert.throws(() => privateKeyPemToPkcs8("outship.2026-11-15.private-key.pem"), (error: Error) => {
+    assert.match(error.message, /34 characters/);
+    assert.doesNotMatch(error.message, /outship\.2026/);
+    return true;
+  });
+  // Valid base64 that decodes to something other than a key.
+  assert.throws(() => privateKeyPemToPkcs8(Buffer.from("hello world, not a key at all").toString("base64")), /PEM/);
 });

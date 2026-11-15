@@ -11,7 +11,7 @@
 // Work is split into jobs (BackfillJob) and done a slice at a time from the
 // cron, so a large organisation's history never runs into a Worker's limits.
 import type { getDb } from "@/lib/db";
-import { installationFetch, type AppCredentials } from "@/lib/github-app-auth";
+import { installationFetch, privateKeyPemToPkcs8, type AppCredentials } from "@/lib/github-app-auth";
 import { recomputeBuilder } from "@/lib/rescore";
 import type { WeightClass } from "@/lib/score";
 
@@ -336,6 +336,14 @@ export async function runBackfill(
   if (!credentials.appId || !credentials.privateKey) {
     const missing = [!credentials.appId && "GITHUB_APP_ID", !credentials.privateKey && "GITHUB_APP_PRIVATE_KEY"].filter(Boolean);
     return { ...summary, skipped: `missing Worker secret ${missing.join(" and ")}` };
+  }
+  // A key that can't be read is the Worker's problem, not any job's: skip the
+  // run instead of letting every job burn its attempts and park as FAILED,
+  // so fixing the secret is enough for the import to carry on.
+  try {
+    privateKeyPemToPkcs8(credentials.privateKey);
+  } catch (error) {
+    return { ...summary, skipped: error instanceof Error ? error.message : String(error) };
   }
   summary.queuedInstalls = await queueNewInstallations(db, now);
 
