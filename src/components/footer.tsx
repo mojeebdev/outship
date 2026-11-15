@@ -110,9 +110,9 @@ export function Footer() {
           built by mojeeb (@MojeebMotion)
         </a>
         <a href="https://base.org" target="_blank" rel="noreferrer" className={CREDIT}>
-          {/* The Base square, outlined: a blue square would vanish on Base blue. */}
+          {/* The Base square in its white version: blue would vanish on Base blue. */}
           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" aria-hidden="true">
-            <rect x="1" y="1" width="22" height="22" rx="2.5" fill="none" stroke="currentColor" strokeWidth="2.5" />
+            <rect width="24" height="24" rx="2.5" fill="#ffffff" />
           </svg>
           powered by base
         </a>
