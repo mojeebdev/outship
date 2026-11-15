@@ -33,7 +33,7 @@ export function EmailCaptureForm() {
 
   if (status === "submitted") {
     return (
-      <p className="text-sm text-blue-tint">
+      <p className="text-sm text-base-blue">
         almost there: check your inbox to confirm.
       </p>
     );
@@ -48,24 +48,24 @@ export function EmailCaptureForm() {
           required
           placeholder="you@example.com"
           aria-label="Email address"
-          className="w-full rounded-md border border-white/20 bg-transparent px-4 py-2 text-sm text-white placeholder:text-white/40 focus:border-base-blue focus:outline-none"
+          className="w-full rounded-full border border-border bg-white px-4 py-2.5 text-sm text-void placeholder:text-text-muted-2 focus:border-base-blue focus:outline-none"
         />
         <button
           type="submit"
           disabled={status === "submitting"}
           aria-label="Subscribe to the weekly ship recap"
-          className="flex shrink-0 items-center justify-center rounded-md bg-base-blue px-4 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-void text-white transition hover:bg-base-blue disabled:opacity-50"
         >
           <IconArrowRight className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
       {status === "error" && (
-        <p className="text-xs text-white/60">
+        <p className="text-xs text-text-muted-1">
           something went wrong — try again in a bit.
         </p>
       )}
       {status === "limited" && (
-        <p className="text-xs text-white/60">
+        <p className="text-xs text-text-muted-1">
           too many tries from here — give it a few minutes.
         </p>
       )}

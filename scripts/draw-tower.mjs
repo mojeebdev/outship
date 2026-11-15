@@ -1,10 +1,11 @@
-// Draws the home page hero art: the outship tower as a fine-line engraving,
+// Draws the home page art: the outship tower as a fine-line engraving,
 // bleeding off the left edge, with a low ruined arcade running along the
-// bottom and one band of the drawing washed in outship blue. Writes two crops
-// to public/scene/, one per layout in src/components/hero.tsx:
+// bottom and one band of the drawing washed in outship blue. Writes three crops
+// to public/scene/, for src/components/hero.tsx and the footer:
 //
-//   tower-wide.svg  landscape screens: behind the centred copy
-//   tower-tall.svg  portrait screens: under the copy
+//   tower-wide.svg    landscape screens: behind the hero's centred copy
+//   tower-tall.svg    portrait screens: under the hero's copy
+//   tower-arcade.svg  the arcade alone, along the bottom of the footer
 //
 // Generated rather than hand-drawn because an engraving is thousands of
 // strokes (stone courses, hatching); a seeded random generator places the
@@ -31,6 +32,7 @@ const BLUE_TINT = "#e6e6ff";
 const CROPS = {
   wide: { viewBox: [-60, 0, 1660, 1060] },
   tall: { viewBox: [-60, 140, 940, 920] },
+  arcade: { viewBox: [360, 760, 1280, 300] },
 };
 
 function rng(seed) {

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { BuilderAvatar, UnclaimedChip } from "@/components/builder-bits";
+import { IconArrowRight, IconStreak } from "@/components/icons";
 import { getDb } from "@/lib/db";
 import { PUBLIC_BUILDER } from "@/lib/builders";
 import { shipDetail, shipLabel } from "@/lib/ships";
 
-const FEED_SIZE = 12;
+// Five is a glance at the latest; the leaderboard has the rest.
+const FEED_SIZE = 5;
 
 function ago(date: Date, now: Date): string {
   const minutes = Math.max(0, Math.round((now.getTime() - date.getTime()) / 60_000));
@@ -39,16 +41,11 @@ export async function LiveShipFeed() {
   return (
     <section aria-labelledby="feed-heading" className="px-6 py-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 id="feed-heading" className="text-2xl font-medium">shipped just now</h2>
-            <p className="mt-1 text-sm text-text-muted-1">
-              the latest public ships, as github reported them. private repos count, but never show here.
-            </p>
-          </div>
-          <Link href="/leaderboard" className="shrink-0 text-sm text-base-blue hover:underline">
-            this week&apos;s board →
-          </Link>
+        <div>
+          <h2 id="feed-heading" className="text-2xl font-medium">shipped just now</h2>
+          <p className="mt-1 text-sm text-text-muted-1">
+            the latest public ships, as github reported them. private repos count, but never show here.
+          </p>
         </div>
 
         {ships.length === 0 ? (
@@ -85,6 +82,15 @@ export async function LiveShipFeed() {
             ))}
           </ol>
         )}
+
+        <Link
+          href="/leaderboard"
+          className="inline-flex items-center justify-center gap-2.5 self-center rounded-md bg-void px-6 py-3 text-sm font-medium text-white transition hover:bg-base-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-void"
+        >
+          <IconStreak className="h-5 w-5 shrink-0" aria-hidden="true" />
+          see the leaderboard
+          <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+        </Link>
       </div>
     </section>
   );
