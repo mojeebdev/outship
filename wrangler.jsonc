@@ -60,7 +60,9 @@
 		// Mondays 09:00-11:00 UTC hourly: the weekly recap
 		// (src/lib/email/weekly-recap.ts). Runs three times so a send that
 		// stops partway resumes; anyone already sent this week is skipped.
-		"crons": ["5 0 * * *", "0 9-11 * * 1"]
+		// Every 5 minutes: one slice of the 12-month backfill
+		// (src/lib/backfill.ts), until every installation's history is in.
+		"crons": ["5 0 * * *", "0 9-11 * * 1", "*/5 * * * *"]
 	},
 	"observability": {
 		"enabled": true

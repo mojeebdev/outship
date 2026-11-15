@@ -35,3 +35,13 @@ export function BuilderAvatar({
     />
   );
 }
+
+/** Marks a ship that came from the 12-month import rather than a live webhook. */
+export function ImportedNote({ source }: { source: string }) {
+  if (source !== "BACKFILL") return null;
+  return (
+    <span title="imported from github history when the outship app was installed: verified by github's own merge or publish time">
+      {" "}· imported
+    </span>
+  );
+}

@@ -26,6 +26,12 @@ const entries = [
   },
   {
     date: "nov 2026",
+    title: "your last 12 months count",
+    description:
+      "installing the outship app now imports the last year of published releases and merged pull requests from the repos you choose, scored by the same rules and daily caps as live ships, so all-time scores reflect real history. dates come from github's own merge and publish times, which can't be backdated. pushes can't be imported and count from install onwards. imported ships are labelled, and never trigger a claim comment.",
+  },
+  {
+    date: "nov 2026",
     title: "v0.1.5: bigger points, tiers, and a logo in your inbox",
     description: `points are scaled up for launch, with the same balance between kinds of ship: a release with notes ${RELEASE_POINTS} (a bare tag ${BARE_RELEASE_POINTS}), a merged PR ${MERGE_POINTS} or ${REVIEWED_MERGE_POINTS} when someone else merged it, a push ${PUSH_POINTS}, and ${STREAK_POINTS_PER_DAY} points per streak day for up to ${STREAK_CAP} days. a day can earn up to ${MAX_DAILY_POINTS}. every score was recalculated, so nobody's place changed because of the switch. your all-time score now puts you in a tier, from ${TIERS[0].name} to ${TIERS[TIERS.length - 1].name}, shown on your profile, the all-time board and your README badge. and outship's emails carry the logo.`,
   },

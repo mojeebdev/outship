@@ -20,6 +20,7 @@ import { AttestationBadge } from "@/components/attestation-badge";
 import { loadHeatmap, loadProfileFacts } from "@/lib/profile-data";
 import { ProfileHeader, ProfileStats } from "@/components/profile-parts";
 import { ReadmeBadgeBox } from "@/components/readme-badge-box";
+import { ImportedNote } from "@/components/builder-bits";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
 
 export const metadata: Metadata = {
@@ -166,6 +167,7 @@ export default async function ProfilePage() {
                     </span>
                     <span className="text-xs text-text-muted-2">
                       {shipDetail(ship)}
+                      <ImportedNote source={ship.source} />
                     </span>
                   </div>
                   <span className="text-xs text-text-muted-2">

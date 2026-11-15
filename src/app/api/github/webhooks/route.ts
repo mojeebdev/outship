@@ -3,6 +3,8 @@ import { getDb } from "@/lib/db";
 import { verifyGithubSignature } from "@/lib/github-webhook";
 import { shipFromPayload, type WebhookShip } from "@/lib/webhook-ships";
 import { recomputeBuilder } from "@/lib/rescore";
+import { storeShip } from "@/lib/ship-store";
+import { queueRepos } from "@/lib/backfill";
 import { syncInstallation } from "@/lib/installations";
 import { postClaimInvite } from "@/lib/claim-invite";
 import { resolveReleaseShipCommit } from "@/lib/release-commit";
@@ -86,6 +88,12 @@ export async function POST(request: Request) {
 
   if (INSTALLATION_EVENTS.has(event)) {
     await syncInstallation(db, event, payload);
+    // Repos added to an existing install get their year of history too. (A
+    // new install is picked up whole by the backfill cron.)
+    const added = (payload.repositories_added as { full_name?: string }[] | undefined) ?? [];
+    if (event === "installation_repositories" && appInstallationId !== undefined && added.length > 0) {
+      await queueRepos(db, appInstallationId, added.map((repo) => repo.full_name).filter((name): name is string => !!name));
+    }
     return Response.json({ ok: true });
   }
   if (!SHIP_EVENTS.has(event)) {
@@ -138,47 +146,10 @@ export async function POST(request: Request) {
     if (alreadyToday) return skipped();
   }
 
-  try {
-    await db.ship.create({
-      data: {
-        builderId: builder.id,
-        repo: ship.repo,
-        shipType: ship.shipType,
-        identifier: ship.identifier,
-        commitSha: ship.commitSha,
-        isPrivate: ship.isPrivate,
-        shippedAt: ship.shippedAt,
-        weightClass: ship.weightClass,
-        releaseHasNotes: ship.releaseHasNotes,
-        language: ship.language,
-      },
-    });
-  } catch (error) {
-    // unique constraint on [repo, shipType, identifier] — a redelivered
-    // webhook, or a second push to the same repo today
-    if (
-      error instanceof Error &&
-      "code" in error &&
-      (error as { code?: string }).code === "P2002"
-    ) {
-      return Response.json({ ok: true, duplicate: true });
-    }
-    throw error;
-  }
-
-  if (ship.shipType === "MERGE" && ship.commitSha) {
-    // The push that landed this PR may have arrived first and been counted as
-    // a push. The merge supersedes it (unless it was already attested).
-    const superseded = await db.ship.findMany({
-      where: { shipType: "PUSH", commitSha: ship.commitSha, attestation: { is: null } },
-      select: { id: true, builderId: true },
-    });
-    if (superseded.length > 0) {
-      await db.ship.deleteMany({ where: { id: { in: superseded.map((s) => s.id) } } });
-      const others = new Set(superseded.map((s) => s.builderId).filter((id) => id !== builder.id));
-      for (const otherId of others) await recomputeBuilder(db, otherId);
-    }
-  }
+  const stored = await storeShip(db, builder.id, ship, "WEBHOOK");
+  // A redelivered webhook, or a second push to the same repo today.
+  if (!stored.stored) return Response.json({ ok: true, duplicate: true });
+  for (const otherId of stored.others) await recomputeBuilder(db, otherId);
 
   // Derived from the stored ships, not incremented: redeliveries,
   // out-of-order events and concurrent webhooks all converge.
