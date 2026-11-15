@@ -37,7 +37,14 @@ export function streakBonus(currentStreak: number): number {
 // When a day has more than the cap, the highest-scoring ones count.
 export const DAILY_CAPS = { RELEASE: 2, MERGE: 5, PUSH: 1 } as const;
 
-/** The most a builder can earn from ships in one UTC day. */
+/**
+ * Past commits imported from before a builder installed outship score as
+ * pushes, up to this many a day. Live pushes stay at one a day: this only
+ * applies to history, which has no push events to go by, only commits.
+ */
+export const PAST_COMMITS_PER_DAY = 5;
+
+/** The most a builder can earn from live ships in one UTC day. */
 export const MAX_DAILY_POINTS =
   RELEASE_POINTS * DAILY_CAPS.RELEASE + REVIEWED_MERGE_POINTS * DAILY_CAPS.MERGE + PUSH_POINTS * DAILY_CAPS.PUSH;
 
@@ -51,6 +58,8 @@ export type ScorableShip = {
   weightClass?: WeightClass | null;
   /** RELEASE only. null: recorded before outship looked (counted as a full release). */
   releaseHasNotes?: boolean | null;
+  /** "BACKFILL" for ships imported from history. Missing means live. */
+  source?: string | null;
 };
 
 /** What one ship is worth before daily caps. */
@@ -71,18 +80,27 @@ export function toUtcDayNumber(date: Date): number {
   return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 86_400_000);
 }
 
+/**
+ * Which daily cap a ship counts against: its type's, per UTC day, except
+ * imported past commits, which have their own (PAST_COMMITS_PER_DAY).
+ */
+export function capBucket(ship: ScorableShip): { key: string; cap: number } {
+  const day = toUtcDayNumber(ship.shippedAt);
+  if (ship.shipType === "PUSH" && ship.source === "BACKFILL") return { key: `${day}:PUSH:past`, cap: PAST_COMMITS_PER_DAY };
+  return { key: `${day}:${ship.shipType}`, cap: DAILY_CAPS[ship.shipType] };
+}
+
 /** Points from ships after the daily caps. Order of the input doesn't matter. */
 export function shipPoints(ships: ScorableShip[]): number {
-  const byDayAndType = new Map<string, number[]>();
+  const buckets = new Map<string, { cap: number; weights: number[] }>();
   for (const ship of ships) {
-    const key = `${toUtcDayNumber(ship.shippedAt)}:${ship.shipType}`;
-    const weights = byDayAndType.get(key);
-    if (weights) weights.push(shipWeight(ship));
-    else byDayAndType.set(key, [shipWeight(ship)]);
+    const { key, cap } = capBucket(ship);
+    const bucket = buckets.get(key);
+    if (bucket) bucket.weights.push(shipWeight(ship));
+    else buckets.set(key, { cap, weights: [shipWeight(ship)] });
   }
   let points = 0;
-  for (const [key, weights] of byDayAndType) {
-    const cap = DAILY_CAPS[key.slice(key.indexOf(":") + 1) as ShipType];
+  for (const { cap, weights } of buckets.values()) {
     weights.sort((a, b) => b - a);
     for (let i = 0; i < Math.min(cap, weights.length); i++) points += weights[i];
   }

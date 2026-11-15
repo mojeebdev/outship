@@ -19,7 +19,7 @@ const now = new Date();
 
 const [builders, ships] = d1(
   `SELECT "id", "githubLogin", "score", "currentStreak", "longestStreak", "lastShipDate" FROM "Builder";
-   SELECT "builderId", "shipType", "shippedAt", "weightClass", "releaseHasNotes" FROM "Ship"`,
+   SELECT "builderId", "shipType", "shippedAt", "weightClass", "releaseHasNotes", "source" FROM "Ship"`,
   target,
 );
 
@@ -31,6 +31,7 @@ for (const ship of ships) {
     shippedAt: new Date(ship.shippedAt),
     weightClass: ship.weightClass,
     releaseHasNotes: ship.releaseHasNotes === null ? null : Boolean(ship.releaseHasNotes),
+    source: ship.source,
   });
   shipsByBuilder.set(ship.builderId, list);
 }

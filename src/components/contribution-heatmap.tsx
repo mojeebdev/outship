@@ -25,7 +25,7 @@ export function ContributionHeatmap({
   counts: Map<string, number>;
   /** What a cell counts, singular: "contribution" or "verified ship". */
   unit: string;
-  /** The caption, e.g. "github history · not part of score". */
+  /** The caption, e.g. "github history". */
   label: string;
   now?: Date;
 }) {
@@ -101,7 +101,7 @@ export function HistoryTotals({
   ];
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-xs uppercase tracking-wide text-text-muted-2">github history · not part of score</p>
+      <p className="text-xs uppercase tracking-wide text-text-muted-2">github history</p>
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {items.map(({ label, value }) => (
           <div key={label} className="rounded-lg border border-border bg-white px-4 py-3">

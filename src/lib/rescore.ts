@@ -21,7 +21,7 @@ export async function recomputeBuilder(db: Db, builderId: string, now = new Date
     if (!builder) return false;
     const ships = await db.ship.findMany({
       where: { builderId },
-      select: { shipType: true, shippedAt: true, weightClass: true, releaseHasNotes: true },
+      select: { shipType: true, shippedAt: true, weightClass: true, releaseHasNotes: true, source: true },
     });
     const stats = scoreBuilder(ships, now);
     const { count } = await db.builder.updateMany({

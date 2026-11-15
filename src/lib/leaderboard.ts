@@ -8,7 +8,7 @@
 // hidden builders aren't loaded at all.
 import type { getDb } from "@/lib/db";
 import { PUBLIC_BUILDER } from "@/lib/builders";
-import { DAILY_CAPS, shipWeight, streakBonus, toUtcDayNumber, type ScorableShip, type ShipType } from "@/lib/score";
+import { capBucket, shipWeight, streakBonus, type ScorableShip } from "@/lib/score";
 
 type Db = Awaited<ReturnType<typeof getDb>>;
 
@@ -85,8 +85,7 @@ export function pointsWithReachedAt(ships: ScorableShip[]): { points: number; re
   let reachedAt: Date | null = null;
   const ordered = [...ships].sort((a, b) => a.shippedAt.getTime() - b.shippedAt.getTime());
   for (const ship of ordered) {
-    const key = `${toUtcDayNumber(ship.shippedAt)}:${ship.shipType}`;
-    const cap = DAILY_CAPS[ship.shipType as ShipType];
+    const { key, cap } = capBucket(ship);
     const weights = buckets.get(key) ?? [];
     const before = topSum(weights, cap);
     weights.push(shipWeight(ship));
@@ -217,6 +216,7 @@ const SHIP_SELECT = {
   shippedAt: true,
   weightClass: true,
   releaseHasNotes: true,
+  source: true,
   language: true,
 } as const;
 

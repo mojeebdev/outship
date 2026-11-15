@@ -30,6 +30,7 @@ type ShipRow = {
   shipType: "RELEASE" | "MERGE" | "PUSH";
   weightClass: WeightClass;
   releaseHasNotes: number | null;
+  source: string;
   shippedAt: string;
   repo: string;
   identifier: string;
@@ -42,7 +43,7 @@ export async function buildRecapData(db: D1Database, now = new Date()): Promise<
   const since = new Date(now.getTime() - 7 * 86_400_000).toISOString();
   const { results: ships } = await db
     .prepare(
-      `SELECT s."shipType", s."weightClass", s."releaseHasNotes", s."shippedAt", s."repo", s."identifier", s."isPrivate", b."githubLogin"
+      `SELECT s."shipType", s."weightClass", s."releaseHasNotes", s."source", s."shippedAt", s."repo", s."identifier", s."isPrivate", b."githubLogin"
          FROM "Ship" s JOIN "Builder" b ON b."id" = s."builderId"
         WHERE julianday(s."shippedAt") >= julianday(?1) AND b."hidden" = 0`,
     )
@@ -64,6 +65,7 @@ export async function buildRecapData(db: D1Database, now = new Date()): Promise<
           shippedAt: new Date(row.shippedAt),
           weightClass: row.weightClass,
           releaseHasNotes: row.releaseHasNotes === null ? null : Boolean(row.releaseHasNotes),
+          source: row.source,
         })),
       ),
     }))

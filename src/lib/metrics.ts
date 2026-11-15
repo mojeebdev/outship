@@ -84,7 +84,7 @@ export async function windowCounts(d1: D1Database, range: Range): Promise<Counts
     d1.prepare(`SELECT ${selects.join(",\n")}`).bind(start, end).first<Record<string, unknown>>(),
     d1
       .prepare(
-        `SELECT "builderId", "shipType", "shippedAt", "weightClass", "releaseHasNotes" FROM "Ship"
+        `SELECT "builderId", "shipType", "shippedAt", "weightClass", "releaseHasNotes", "source" FROM "Ship"
           WHERE julianday("shippedAt") >= julianday(?1) AND julianday("shippedAt") < julianday(?2)`,
       )
       .bind(start, end)
@@ -94,6 +94,7 @@ export async function windowCounts(d1: D1Database, range: Range): Promise<Counts
         shippedAt: string;
         weightClass: WeightClass;
         releaseHasNotes: number | null;
+        source: string;
       }>(),
   ]);
   const counts = Object.fromEntries(Object.entries(row ?? {}).map(([key, value]) => [key, num(value)])) as Counts;
@@ -107,6 +108,7 @@ export async function windowCounts(d1: D1Database, range: Range): Promise<Counts
       shippedAt: new Date(ship.shippedAt),
       weightClass: ship.weightClass,
       releaseHasNotes: ship.releaseHasNotes === null ? null : Boolean(ship.releaseHasNotes),
+      source: ship.source,
     });
     byBuilder.set(ship.builderId, list);
   }

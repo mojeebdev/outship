@@ -52,8 +52,7 @@ export default function AboutPage() {
           doesn&apos;t, and if you stop, your streak shows it. a release with
           notes is worth {RELEASE_POINTS} points, a merged pull request{" "}
           {MERGE_POINTS}, or {REVIEWED_MERGE_POINTS} when someone else merged
-          it, and a push {PUSH_POINTS}, with daily caps; your github history
-          shows on your profile but never counts. the{" "}
+          it, and a push {PUSH_POINTS}, with daily caps. the{" "}
           <Link href="/faq#scoring" className="text-base-blue hover:underline">
             faq
           </Link>{" "}
