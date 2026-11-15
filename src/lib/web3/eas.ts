@@ -19,20 +19,21 @@ const useTestnet = process.env.NEXT_PUBLIC_CHAIN === "base-sepolia";
 export const SHIP_ATTESTATION_SCHEMA =
   "string repo,uint8 shipType,string identifier,string commitSha,uint64 timestamp,uint16 scoreSnapshot,string githubLogin,string shipId,uint64 deadline,bytes outshipSig";
 
-// TODO(schema v2): after deploying OutshipShipResolver and registering the
-// schema above with it (revocable off), paste the resolver address and the
-// schema UID here. See docs/eas-schema.md. Both are public onchain values, so
+// The deployed OutshipShipResolver and the schema registered with it
+// (revocable off). See docs/eas-schema.md. Both are public onchain values, so
 // they live in source rather than in build variables (Next only inlines a
-// NEXT_PUBLIC_* value that is present while `next build` runs). Until both are
-// set, the attest button says "attestations coming soon".
+// NEXT_PUBLIC_* value that is present while `next build` runs). While a
+// network's pair is empty, the attest button says "attestations coming soon".
 const V2_DEPLOYMENTS = {
   base: {
-    resolver: "", // TODO: OutshipShipResolver on Base mainnet
-    schemaUid: "", // TODO: schema v2 UID on Base mainnet
+    // Checked onchain: the registry holds this UID with this resolver,
+    // revocable false, and exactly SHIP_ATTESTATION_SCHEMA.
+    resolver: "0xA8463967324D1B396695c9Ac4Bf3FBEAcFE734Bc",
+    schemaUid: "0xd89c92fd8db77c2a94dcfef7c69043a7a4e956d9b716e1fa2aaaca5d9bc9d515",
   },
   "base-sepolia": {
-    resolver: "", // TODO: OutshipShipResolver on Base Sepolia
-    schemaUid: "", // TODO: schema v2 UID on Base Sepolia
+    resolver: "", // not deployed on Base Sepolia
+    schemaUid: "",
   },
 } as const;
 

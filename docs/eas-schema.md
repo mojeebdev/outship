@@ -7,6 +7,12 @@ human with a funded wallet does them; nothing in this repo holds a key.
 
 ## Schema v2 (current)
 
+Deployed on Base mainnet:
+
+- schema UID [`0xd89c92fd8db77c2a94dcfef7c69043a7a4e956d9b716e1fa2aaaca5d9bc9d515`](https://base.easscan.org/schema/view/0xd89c92fd8db77c2a94dcfef7c69043a7a4e956d9b716e1fa2aaaca5d9bc9d515)
+- resolver `OutshipShipResolver` at `0xA8463967324D1B396695c9Ac4Bf3FBEAcFE734Bc`
+  (signer `0xa1c01560D74d6c8eB7B48A1A6Ee47BD13b61CfDD`, owner `0xaF28a2556EE1c4eda84d7824EB554399c4392004`)
+
 ```
 string repo,uint8 shipType,string identifier,string commitSha,uint64 timestamp,uint16 scoreSnapshot,string githubLogin,string shipId,uint64 deadline,bytes outshipSig
 ```
