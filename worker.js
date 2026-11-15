@@ -9,6 +9,7 @@
 import nextHandler from "./.open-next/worker.js";
 import { expireStaleStreaks } from "./src/lib/expire-streaks";
 import { sendWeeklyRecap } from "./src/lib/email/weekly-recap";
+import { CRON_HEADER, cronToken } from "./src/lib/cron-auth";
 
 // Must match the crons in wrangler.jsonc.
 const DAILY_STREAKS = "5 0 * * *";
@@ -68,7 +69,7 @@ const worker = {
       const response = await nextHandler.fetch(
         new Request("https://outship.dev/api/internal/backfill", {
           method: "POST",
-          headers: { "x-outship-cron": env.SESSION_SECRET ?? "" },
+          headers: { [CRON_HEADER]: await cronToken(env.SESSION_SECRET) },
         }),
         env,
         ctx,
