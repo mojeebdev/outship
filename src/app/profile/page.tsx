@@ -18,7 +18,10 @@ import {
 import { AttestShipButton } from "@/components/attest-ship-button";
 import { AttestationBadge } from "@/components/attestation-badge";
 import { loadHeatmap, loadProfileFacts } from "@/lib/profile-data";
-import { ProfileHeader, ProfileStats } from "@/components/profile-parts";
+import { ProfileHeader, TierSteps } from "@/components/profile-parts";
+import { BarSeries, Donut, KpiCard, WeekHourHeatmap, fmt } from "@/components/admin/charts";
+import { change, profileOverview } from "@/lib/profile-overview";
+import { tierFor } from "@/lib/tiers";
 import { ReadmeBadgeBox } from "@/components/readme-badge-box";
 import { ImportedNote } from "@/components/builder-bits";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
@@ -52,9 +55,12 @@ export default async function ProfilePage() {
   }
 
   const db = await getDb();
-  const [facts, totalShips, recentShips, subscriber, installation, heatmap] = await Promise.all([
+  const [facts, allShips, recentShips, subscriber, installation, heatmap] = await Promise.all([
     loadProfileFacts(db, builder, { publicOnly: false }),
-    db.ship.count({ where: { builderId: builder.id } }),
+    db.ship.findMany({
+      where: { builderId: builder.id },
+      select: { shipType: true, shippedAt: true, weightClass: true, releaseHasNotes: true, source: true },
+    }),
     db.ship.findMany({
       where: { builderId: builder.id },
       orderBy: { shippedAt: "desc" },
@@ -66,10 +72,12 @@ export default async function ProfilePage() {
     loadHeatmap(db, builder, { publicOnly: false }),
   ]);
   const recapOn = subscriber?.status === "CONFIRMED";
+  const overview = profileOverview(allShips);
+  const rank = (value: number | null) => (value ? `#${value}` : "–");
 
   return (
     <SiteShell>
-      <div className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-16">
+      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <ProfileHeader builder={builder} claimed languages={facts.languages} eyebrow="welcome back" />
           <div className="flex items-center gap-4 whitespace-nowrap text-sm">
@@ -127,7 +135,57 @@ export default async function ProfilePage() {
           </div>
         )}
 
-        <ProfileStats builder={builder} facts={facts} totalShips={totalShips} unrankedLabel="hidden" />
+        {/* The overview: what a builder checks first. Every number is from
+            their own ships, private ones included (this page is theirs). */}
+        <section aria-label="your overview" className="flex flex-col gap-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCard
+              highlight
+              label="score"
+              value={fmt(builder.score)}
+              spark={overview.weeklyPoints}
+              note={`${tierFor(builder.score).tier.name} · ${
+                builder.hidden ? "hidden from the boards" : `${rank(facts.weekRank)} this week · ${rank(facts.allTimeRank)} all time`
+              }`}
+            />
+            <KpiCard
+              label="points this week"
+              value={fmt(overview.pointsThisWeek)}
+              deltaValue={change(overview.pointsThisWeek, overview.pointsLastWeek)}
+              note={`vs ${fmt(overview.pointsLastWeek)} last week`}
+              spark={overview.dailyPoints.slice(-14).map((day) => day.value)}
+            />
+            <KpiCard
+              label="ships this month"
+              value={fmt(overview.shipsThisMonth)}
+              deltaValue={change(overview.shipsThisMonth, overview.shipsLastMonth)}
+              note={`vs ${fmt(overview.shipsLastMonth)} last month`}
+              spark={overview.weeklyShips}
+            />
+            <KpiCard
+              label="streak"
+              value={`${builder.currentStreak} day${builder.currentStreak === 1 ? "" : "s"}`}
+              note={`best ${builder.longestStreak} · the last 14 days`}
+              spark={overview.activeDays}
+            />
+          </div>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <BarSeries title="points, the last 30 days" buckets={overview.dailyPoints} bucketMs={86_400_000} unit="points" />
+            <Donut
+              title="your ships"
+              unit="ships"
+              rows={[
+                { label: "merged PRs", value: overview.byType.MERGE },
+                { label: "pushes", value: overview.byType.PUSH },
+                { label: "releases", value: overview.byType.RELEASE },
+              ]}
+            />
+          </div>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
+            <TierSteps score={builder.score} />
+            <WeekHourHeatmap grid={overview.weekHour} title="when you ship" />
+          </div>
+        </section>
 
         <div className="flex flex-col gap-4">
           <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />

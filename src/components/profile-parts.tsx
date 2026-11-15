@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import { BuilderAvatar, UnclaimedChip } from "@/components/builder-bits";
 import { IconArrowUpRight, IconGrid, IconSeal, IconShip, IconStreak, IconX, type IconProps } from "@/components/icons";
 import type { ProfileFacts } from "@/lib/profile-data";
-import { tierFor } from "@/lib/tiers";
+import { TIERS, tierFor } from "@/lib/tiers";
 
 type HeaderBuilder = {
   githubId: number;
@@ -172,5 +172,48 @@ export function TierBar({ standing }: { standing: ReturnType<typeof tierFor> }) 
         <div className="h-full rounded-full bg-base-blue" style={{ width: `${percent}%` }} />
       </div>
     </div>
+  );
+}
+
+/**
+ * Every tier as a segment, filled up to where the builder stands: the climb
+ * at a glance, with the points to the next tier. Tiers are uneven in size,
+ * so each segment is one step, not a share of the points.
+ */
+export function TierSteps({ score }: { score: number }) {
+  const standing = tierFor(score);
+  const current = TIERS.findIndex((tier) => tier.name === standing.tier.name);
+  return (
+    <section className="flex min-w-0 flex-col justify-between gap-6 rounded-2xl border border-border bg-white p-5">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-sm text-text-muted-1">the climb</h2>
+        <p className="text-3xl font-medium tracking-tight">{standing.tier.name}</p>
+        <p className="text-sm text-text-muted-1">
+          {standing.next
+            ? `${score.toLocaleString("en-US")} of ${standing.next.min.toLocaleString("en-US")} · ${standing.toNext.toLocaleString("en-US")} points to ${standing.next.name}`
+            : "the top tier. nowhere left to climb."}
+        </p>
+      </div>
+      <ol className="grid grid-cols-3 gap-x-1.5 gap-y-4 sm:grid-cols-6">
+        {TIERS.map((tier, i) => {
+          const fill = i < current ? 100 : i === current ? Math.max(6, Math.round(standing.progress * 100)) : 0;
+          return (
+            <li key={tier.name} className="flex min-w-0 flex-col gap-2">
+              <span
+                className="h-3 overflow-hidden rounded-full bg-blue-tint"
+                role="img"
+                aria-label={`${tier.name}: ${i < current ? "reached" : i === current ? "you are here" : "ahead"}`}
+              >
+                <span className="block h-full rounded-full bg-base-blue" style={{ width: `${fill}%` }} />
+              </span>
+              <span className={`text-xs leading-tight ${i === current ? "font-medium text-void" : "text-text-muted-2"}`}>
+                {tier.name}
+                <span className="block text-[11px] font-normal tabular-nums text-text-muted-2">{tier.min.toLocaleString("en-US")}</span>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }

@@ -1,5 +1,5 @@
-// The admin panel's charts: plain SVG rendered on the server, in outship's
-// own colours. No chart library, no client JavaScript; every number is also
+// Charts for the admin panel, /stats and the builder's own /profile: plain
+// SVG rendered on the server, in outship's own colours. No chart library, no client JavaScript; every number is also
 // in the markup (titles and labels), so it reads without hovering.
 import type { Bucket, Cohort, Ranked } from "@/lib/metrics";
 
@@ -212,13 +212,13 @@ export function Ring({ title, value, label, detail }: { title: string; value: nu
 const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 /** Ships by UTC weekday and hour. */
-export function WeekHourHeatmap({ grid }: { grid: number[][] }) {
+export function WeekHourHeatmap({ grid, title = "when people ship" }: { grid: number[][]; title?: string }) {
   const max = Math.max(1, ...grid.flat());
   const cell = 22;
   const left = 34;
   return (
     <figure className="flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-white p-5">
-      <figcaption className="font-medium">when people ship <span className="text-sm font-normal text-text-muted-2">· UTC hour by weekday</span></figcaption>
+      <figcaption className="font-medium">{title} <span className="text-sm font-normal text-text-muted-2">· UTC hour by weekday</span></figcaption>
       <div className="overflow-x-auto">
         <svg width={left + 24 * cell} height={7 * cell + 18} role="img" aria-label="ships by UTC hour and weekday">
           {grid.map((row, d) =>
@@ -300,5 +300,66 @@ export function CohortTable({ cohorts }: { cohorts: Cohort[] }) {
         </table>
       </div>
     </section>
+  );
+}
+
+/**
+ * A share of a whole as a donut, with the legend beside it: each slice's
+ * count and percentage, so it reads without hovering. Shades of the blue,
+ * darkest first.
+ */
+export function Donut({ title, rows, unit }: { title: string; rows: Ranked[]; unit: string }) {
+  const total = rows.reduce((sum, row) => sum + row.value, 0);
+  const shades = ["var(--color-base-blue)", "color-mix(in srgb, var(--color-base-blue) 55%, white)", "color-mix(in srgb, var(--color-base-blue) 22%, white)"];
+  const r = 52;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+  return (
+    <figure className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-white p-5">
+      <figcaption className="font-medium">{title}</figcaption>
+      <div className="flex flex-wrap items-center gap-6">
+        <svg width="140" height="140" viewBox="0 0 140 140" role="img" aria-label={`${title}: ${fmt(total)} ${unit}`} className="shrink-0">
+          <circle cx="70" cy="70" r={r} fill="none" strokeWidth="18" style={{ stroke: "var(--color-border)" }} />
+          {total > 0 &&
+            rows.map((row, i) => {
+              const length = (row.value / total) * circumference;
+              const slice = (
+                <circle
+                  key={row.label}
+                  cx="70"
+                  cy="70"
+                  r={r}
+                  fill="none"
+                  strokeWidth="18"
+                  strokeDasharray={`${length} ${circumference - length}`}
+                  strokeDashoffset={-offset}
+                  transform="rotate(-90 70 70)"
+                  style={{ stroke: shades[i % shades.length] }}
+                />
+              );
+              offset += length;
+              return slice;
+            })}
+          <text x="70" y="68" textAnchor="middle" fontSize="22" fontWeight="500" style={{ fill: "var(--color-void)" }}>
+            {fmt(total)}
+          </text>
+          <text x="70" y="86" textAnchor="middle" fontSize="11" style={{ fill: "var(--color-text-muted-2)" }}>
+            {unit}
+          </text>
+        </svg>
+        <ul className="flex min-w-40 flex-1 flex-col gap-2.5 text-sm">
+          {rows.map((row, i) => (
+            <li key={row.label} className="flex items-center gap-3">
+              <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: shades[i % shades.length] }} />
+              <span className="flex-1">{row.label}</span>
+              <span className="tabular-nums text-text-muted-1">{fmt(row.value)}</span>
+              <span className="w-10 text-right tabular-nums text-text-muted-2">
+                {total > 0 ? `${Math.round((row.value / total) * 100)}%` : "–"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </figure>
   );
 }
