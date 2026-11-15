@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 export type ProfileSection = { id: string; label: string };
 
@@ -37,6 +37,29 @@ export function ProfileSidebar({ sections }: { sections: ProfileSection[] }) {
       window.removeEventListener("resize", pick);
     };
   }, [sections]);
+
+  // Opening /profile#settings: the browser jumps there while the page loads,
+  // but anything that resets the scroll afterwards (seen on the live site, not
+  // reproduced locally) would leave you at the top with #settings in the bar.
+  // Going there again once the page is up makes the link land either way.
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!sections.some((section) => section.id === id)) return;
+    const frame = requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView());
+    return () => cancelAnimationFrame(frame);
+  }, [sections]);
+
+  // A click scrolls to the section here rather than leaving it to the
+  // browser's own jump, for the same reason, and marks it at once. The href
+  // stays, so the links still work before the script loads.
+  const go = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
+    const target = document.getElementById(id);
+    if (!target || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault();
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.history.pushState(null, "", `#${id}`);
+    setActive(id);
+  };
 
   // On phones the strip is wider than the screen: keep the current pill in
   // view. scrollLeft, not scrollIntoView, so the page itself never jumps.
@@ -75,7 +98,12 @@ export function ProfileSidebar({ sections }: { sections: ProfileSection[] }) {
         <ul className="flex gap-2">
           {sections.map(({ id, label }) => (
             <li key={id} className="shrink-0">
-              <a href={`#${id}`} aria-current={id === active ? "true" : undefined} className={link(id, false)}>
+              <a
+                href={`#${id}`}
+                onClick={(event) => go(event, id)}
+                aria-current={id === active ? "true" : undefined}
+                className={link(id, false)}
+              >
                 {label}
               </a>
             </li>
@@ -87,7 +115,12 @@ export function ProfileSidebar({ sections }: { sections: ProfileSection[] }) {
         <ul className="flex flex-col gap-0.5">
           {sections.map(({ id, label }) => (
             <li key={id}>
-              <a href={`#${id}`} aria-current={id === active ? "true" : undefined} className={link(id, true)}>
+              <a
+                href={`#${id}`}
+                onClick={(event) => go(event, id)}
+                aria-current={id === active ? "true" : undefined}
+                className={link(id, true)}
+              >
                 {label}
               </a>
             </li>
