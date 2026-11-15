@@ -2,9 +2,13 @@
 // with a path winding up to it through a field. Writes three crops of the same
 // drawing to public/scene/, one per layout in src/components/hero.tsx:
 //
-//   climb-wide.svg  landscape: the copy sits in the sky to the left of the tower
-//   climb-mid.svg   portrait tablet: the scene sits under the copy
-//   climb-tall.svg  phone:   the scene sits under the copy
+//   climb-wide.svg  desktop and landscape tablets: fills the hero behind the
+//                   centred copy, with the tower on the right
+//   climb-mid.svg   portrait tablets: under the copy
+//   climb-tall.svg  phones: under the copy
+//
+// Every crop ends just right of the tower, so it stands on the right of the
+// hero, clear of the centred copy, whatever the screen's width.
 //
 // The drawing is generated rather than hand-edited because the field (grass
 // strokes, flowers, bushes) is thousands of marks placed by a seeded random
@@ -32,13 +36,17 @@ const STONE_SHADE = "#d9d9d0";
 
 // Each crop is a window onto one 1600 x 1000 world. The ground and sea run
 // wider than that so wide windows never run out of world.
+// The tower spans x = 1088 to 1286 with its shaded side; every crop's right
+// edge is 1420. The wide crop is drawn very wide (2720) because the hero
+// shows it with object-fit: cover anchored bottom right, so wider screens
+// reveal more of the left instead of cropping the top of the tower.
 const CROPS = {
-  wide: { viewBox: [-330, 0, 2030, 1000] },
-  mid: { viewBox: [380, 40, 1320, 970] },
-  tall: { viewBox: [760, 70, 900, 940] },
+  wide: { viewBox: [-1300, 40, 2720, 970] },
+  mid: { viewBox: [120, 40, 1300, 970] },
+  tall: { viewBox: [520, 60, 900, 950] },
 };
-const X_MIN = -400;
-const X_MAX = 1800;
+const X_MIN = -1400;
+const X_MAX = 1700;
 // Marks outside the crop being written are dropped (after drawing them from
 // the random generator, so every crop still shows the same field).
 let visible = () => true;
@@ -237,7 +245,7 @@ function crag(cx, top) {
 function field() {
   const r = rng(21);
   const grass = [];
-  for (let i = 0; i < 1800; i++) {
+  for (let i = 0; i < (X_MAX - X_MIN) * 0.82; i++) {
     const y = 700 + Math.pow(r(), 0.8) * 300;
     const x = X_MIN + r() * (X_MAX - X_MIN);
     if (onPath(x, y, 2) || !visible(x)) continue;
@@ -263,13 +271,13 @@ function field() {
 function ponds() {
   const pond = (cx, cy, rx, ry) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx + 6}" ry="${ry + 4}" fill="${CREAM}" stroke="${BLACK}" stroke-width="1"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${BLUE}"/>
     <path d="M${cx - rx * 0.6} ${cy - ry * 0.2} h${rx * 0.5} M${cx - rx * 0.1} ${cy + ry * 0.3} h${rx * 0.6}" stroke="${WHITE}" stroke-width="1.5" opacity=".7"/>`;
-  return pond(760, 852, 120, 17) + pond(1390, 846, 130, 18);
+  return pond(760, 852, 120, 17) + pond(1390, 846, 130, 18) + pond(80, 840, 110, 15) + pond(-760, 856, 140, 18);
 }
 
 function bushes() {
   const r = rng(31);
   const out = [];
-  for (const [cx, cy, w] of [[640, 832, 70], [890, 872, 55], [600, 900, 80], [1270, 870, 120], [1520, 868, 70], [1250, 820, 30], [430, 820, 40]]) {
+  for (const [cx, cy, w] of [[640, 832, 70], [890, 872, 55], [600, 900, 80], [1270, 870, 120], [1520, 868, 70], [1250, 820, 30], [430, 820, 40], [-60, 860, 60], [220, 836, 60], [-20, 900, 80], [-560, 850, 70], [-900, 866, 60], [-1150, 830, 50]]) {
     for (let i = 0; i < w / 6; i++) {
       const x = cx - w / 2 + r() * w;
       const y = cy - r() * 18;
@@ -284,7 +292,7 @@ function bushes() {
 function flowers() {
   const r = rng(41);
   const out = [];
-  for (let i = 0; i < 1100; i++) {
+  for (let i = 0; i < (X_MAX - X_MIN) * 0.5; i++) {
     const y = 890 + Math.pow(r(), 0.7) * 115;
     const x = X_MIN + r() * (X_MAX - X_MIN);
     const s = (1.5 + ((y - 890) / 110) * 5) * (0.7 + r() * 0.5);
@@ -313,6 +321,8 @@ function world() {
   return `${defs()}
   <rect x="${X_MIN}" y="-1000" width="${X_MAX - X_MIN}" height="3000" fill="${BLUE}"/>
   ${cloudBank("cloud-bank", 1330, 640, 260)}
+  ${cloudBank("cloud-bank-left", 120, 644, 220)}
+  ${cloudBank("cloud-bank-far", -500, 646, 240)}
   <rect x="${X_MIN}" y="${HORIZON}" width="${X_MAX - X_MIN}" height="30" fill="${SEA}"/>
   <path d="M${X_MIN} 672 H${X_MAX} M${X_MIN} 682 H${X_MAX}" stroke="${WHITE}" stroke-width="1" opacity=".5" stroke-dasharray="30 14 60 20"/>
   ${field()}
