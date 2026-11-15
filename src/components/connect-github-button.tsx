@@ -5,10 +5,10 @@ const LOGIN_PATH = "/api/auth/github/login";
 
 type Props = {
   /**
-   * "button" is the filled call to action; "inverse" is the same button in
-   * white, for blue backgrounds; "link" sits inside a sentence.
+   * "button" is the filled call to action; "dark" is the same button in
+   * black, for the home page's hero; "link" sits inside a sentence.
    */
-  variant?: "button" | "inverse" | "link";
+  variant?: "button" | "dark" | "link";
   children?: ReactNode;
 };
 
@@ -28,8 +28,8 @@ export function ConnectGithubButton({ variant = "button", children }: Props) {
   }
 
   const colors =
-    variant === "inverse"
-      ? "border-white bg-white text-base-blue focus-visible:outline-white"
+    variant === "dark"
+      ? "border-void bg-void text-white focus-visible:outline-void"
       : "border-base-blue bg-base-blue text-white focus-visible:outline-base-blue";
   return (
     <a
