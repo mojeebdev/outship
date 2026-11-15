@@ -21,6 +21,7 @@ import { Web3Provider } from "@/components/web3-provider";
 import { wagmiConfig, activeChain } from "@/lib/web3/config";
 import { EAS_ABI } from "@/lib/web3/eas-abi";
 import { EAS_CONTRACT_ADDRESS, isAttestationConfigured } from "@/lib/web3/eas";
+import { BUILDER_CODE_SUFFIX } from "@/lib/web3/builder-code";
 import { AttestationBadge } from "@/components/attestation-badge";
 import { IconSeal } from "@/components/icons";
 
@@ -151,6 +152,9 @@ function AttestFlow({ shipId }: { shipId: string }) {
       args,
       account,
       chainId: activeChain.id,
+      // Base Builder Code, per call: wagmi doesn't apply a dataSuffix set in
+      // createConfig to transactions sent through a connected wallet.
+      dataSuffix: BUILDER_CODE_SUFFIX,
     });
   }
 
