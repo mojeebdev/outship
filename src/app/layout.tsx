@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import Script from "next/script";
 import { SITE_URL, jsonLd, siteStructuredData } from "@/lib/structured-data";
+import { WEB_ANALYTICS_TOKEN } from "@/lib/web-analytics";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -26,6 +28,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           dangerouslySetInnerHTML={{ __html: jsonLd(siteStructuredData) }}
         />
         {children}
+        {WEB_ANALYTICS_TOKEN && (
+          // Cookieless page-load counts (see /privacy). Loads after the page.
+          <Script
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            strategy="afterInteractive"
+            data-cf-beacon={JSON.stringify({ token: WEB_ANALYTICS_TOKEN })}
+          />
+        )}
       </body>
     </html>
   );

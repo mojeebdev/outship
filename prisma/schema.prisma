@@ -73,10 +73,12 @@ model Builder {
   // Contributions to private repos GitHub only gives as a count.
   historyRestricted    Int?
   historySyncedAt      DateTime?
+  lastSignedInAt       DateTime?
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
   ships                Ship[]
   contributionDays     ContributionDay[]
+  signIns              SignInEvent[]
 
   @@index([score])
 }
@@ -136,6 +138,16 @@ model ContributionDay {
   count     Int
 
   @@id([builderId, date])
+}
+
+/// One sign-in, for the admin KPIs. Just who and when.
+model SignInEvent {
+  id        String   @id @default(cuid())
+  builder   Builder  @relation(fields: [builderId], references: [id], onDelete: Cascade)
+  builderId String
+  at        DateTime @default(now())
+
+  @@index([at])
 }
 
 /// A GitHub App installation. id is GitHub's installation id.

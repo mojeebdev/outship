@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "terms — outship",
 };
 
-const UPDATED = "november 14, 2026";
+const UPDATED = "november 15, 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

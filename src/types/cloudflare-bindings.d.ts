@@ -16,6 +16,11 @@ declare global {
     // GitHub requests per 5-minute backfill run (default 12, safe on the
     // Workers free plan). Raise it on a paid plan to import history faster.
     BACKFILL_REQUEST_BUDGET?: string;
+    // GitHub logins allowed into /admin, comma-separated (default: mojeebdev).
+    ADMIN_GITHUB_LOGINS?: string;
+    // Cloudflare Web Analytics, read for the admin panel (src/lib/cf-analytics.ts).
+    CLOUDFLARE_ANALYTICS_TOKEN?: string;
+    CF_WEB_ANALYTICS_SITE_TAG?: string;
   }
 }
 
