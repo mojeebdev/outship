@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { ConnectGithubButton } from "@/components/connect-github-button";
 import { IconNode, IconSeal, IconShip, IconStreak } from "@/components/icons";
+import { ClimbScene } from "@/components/climb-scene";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-6 py-10 text-center sm:py-24">
+    <section className="relative overflow-hidden px-6 pt-10 text-center sm:pt-24">
       <IconNode className="pointer-events-none absolute left-8 top-16 hidden h-10 w-10 text-void/10 sm:block" />
       <IconShip className="pointer-events-none absolute right-10 top-24 hidden h-8 w-8 text-base-blue/15 sm:block" />
       <IconStreak className="pointer-events-none absolute bottom-16 left-16 hidden h-9 w-9 text-void/10 sm:block" />
@@ -42,6 +43,16 @@ export function Hero() {
           </Link>
         </div>
       </div>
+
+      {/* The climb: every verified ship moves you up the tiers. Links to the
+          all-time board, where the tiers are shown. */}
+      <Link
+        href="/leaderboard/all"
+        aria-label="the climb from deckhand to admiral: see the all-time board"
+        className="relative -mx-6 mt-12 block sm:mt-16"
+      >
+        <ClimbScene />
+      </Link>
     </section>
   );
 }
