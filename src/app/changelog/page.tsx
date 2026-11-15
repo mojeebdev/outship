@@ -64,7 +64,7 @@ const entries = [
     date: "nov 2026",
     title: "your last year on github, on your profile",
     description:
-      "signing in now imports your github contribution graph and totals for the last year, so a new profile doesn't start empty. it's shown as a heatmap labelled github history, and it never counts toward score, streak or rank: only ships github verifies as they happen do.",
+      "signing in now imports your github contribution graph and totals for the last year, so a new profile doesn't start empty. it's shown as a heatmap labelled github history.",
   },
   {
     date: "nov 2026",

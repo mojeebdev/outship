@@ -51,8 +51,7 @@ export default function PrivacyPage() {
             graph shows: how many contributions you made on each day of the
             last year, and totals for commits, pull requests, reviews and
             private contributions. no repository names. we refresh it at most
-            once a day, when you sign in, and show it on your profile as
-            context. it never affects your score, streak or rank.
+            once a day, when you sign in, and show it on your profile.
           </p>
         </Section>
 
@@ -67,9 +66,9 @@ export default function PrivacyPage() {
           </p>
           <p>
             when the app is installed, or gains a repository, we also import
-            the last 12 months of that repository&apos;s published releases
-            and merged pull requests, with the same details, so your history
-            counts from day one. pushes can&apos;t be imported. imported ships
+            the last 12 months of that repository&apos;s published releases,
+            merged pull requests and commits to the default branch, with the
+            same details, so your history counts from day one. imported ships
             are marked as imported, and they never trigger the one-time claim
             comment.
           </p>

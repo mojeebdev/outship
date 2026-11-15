@@ -36,7 +36,7 @@ export async function loadHeatmap(db: Db, builder: HistoryBuilder, { publicOnly 
     return {
       counts: new Map(days.map((day) => [day.date, day.count])),
       unit: "contribution",
-      label: "github history · not part of score",
+      label: "github history",
       totals: {
         commits: builder.historyCommits ?? 0,
         pullRequests: builder.historyPullRequests ?? 0,

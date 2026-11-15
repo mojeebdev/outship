@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { importedMergeWeight, parsePullsPage, parseReleasesPage } from "../backfill";
+import { importedMergeWeight, parseCommitsPage, parsePullsPage, parseReleasesPage } from "../backfill";
 
 const SINCE = new Date("2025-11-15T00:00:00Z");
 const SHA = "a".repeat(40);
@@ -127,4 +127,66 @@ test("drafts, authorless and year-old releases are skipped, and paging stops", (
 
 test("a repo GitHub won't show gives no page", () => {
   assert.deepEqual(parsePullsPage({ data: { repository: null } }, SINCE), { ships: [], repo: null, nextCursor: null });
+});
+
+const commitsPage = (nodes: unknown[], hasNextPage = false) => ({
+  data: {
+    repository: {
+      isPrivate: true,
+      defaultBranchRef: {
+        name: "main",
+        target: { history: { pageInfo: { hasNextPage, endCursor: "C2" }, nodes } },
+      },
+      primaryLanguage: { name: "Rust" },
+      owner: { __typename: "User", login: "alice", databaseId: 1 },
+    },
+  },
+});
+const commit = (oid: string, overrides: Record<string, unknown> = {}) => ({
+  oid,
+  committedDate: "2026-03-02T10:15:00Z",
+  parents: { totalCount: 1 },
+  author: { user: alice },
+  ...overrides,
+});
+
+test("past commits become imported pushes, named by day and sha", () => {
+  const page = parseCommitsPage(commitsPage([commit("b".repeat(40))], true));
+  assert.deepEqual(page.ships, [
+    {
+      githubId: 1,
+      githubLogin: "alice",
+      shipType: "PUSH",
+      identifier: `2026-03-02:${"b".repeat(40)}`,
+      commitSha: "b".repeat(40),
+      shippedAt: new Date("2026-03-02T10:15:00Z"),
+      weightClass: "STANDARD",
+      releaseHasNotes: null,
+    },
+  ]);
+  assert.equal(page.repo?.private, true);
+  assert.equal(page.repo?.language, "Rust");
+  assert.equal(page.nextCursor, "C2");
+});
+
+test("merge commits, commits with no GitHub account, and odd shas are skipped", () => {
+  const page = parseCommitsPage(
+    commitsPage([
+      commit("c".repeat(40), { parents: { totalCount: 2 } }),
+      commit("d".repeat(40), { author: { user: null } }),
+      commit("e".repeat(40), { author: { user: bot } }),
+      commit("not-a-sha"),
+    ]),
+  );
+  assert.deepEqual(page.ships, []);
+  assert.equal(page.nextCursor, null);
+});
+
+test("an empty repo has no history, and that's one finished page", () => {
+  const json = commitsPage([]);
+  (json.data.repository as { defaultBranchRef: unknown }).defaultBranchRef = null;
+  const page = parseCommitsPage(json);
+  assert.deepEqual(page.ships, []);
+  assert.ok(page.repo);
+  assert.equal(page.nextCursor, null);
 });

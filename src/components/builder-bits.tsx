@@ -40,7 +40,7 @@ export function BuilderAvatar({
 export function ImportedNote({ source }: { source: string }) {
   if (source !== "BACKFILL") return null;
   return (
-    <span title="imported from github history when the outship app was installed: verified by github's own merge or publish time">
+    <span title="imported from github history when the outship app was installed">
       {" "}· imported
     </span>
   );

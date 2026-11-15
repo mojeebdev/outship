@@ -10,6 +10,7 @@ import {
   DAILY_CAPS,
   MAX_DAILY_POINTS,
   MERGE_POINTS,
+  PAST_COMMITS_PER_DAY,
   PUSH_POINTS,
   RELEASE_POINTS,
   REVIEWED_MERGE_POINTS,
@@ -77,6 +78,21 @@ test("daily caps limit each type per UTC day", () => {
     shipPoints(ships),
     DAILY_CAPS.RELEASE * RELEASE_POINTS + DAILY_CAPS.MERGE * MERGE_POINTS + DAILY_CAPS.PUSH * PUSH_POINTS,
   );
+});
+
+test("imported past commits score as pushes, up to PAST_COMMITS_PER_DAY a day", () => {
+  const day = "2026-03-02";
+  const past = (iso: string): ScorableShip => ({ shipType: "PUSH", shippedAt: at(iso), source: "BACKFILL" });
+  const commits = Array.from({ length: PAST_COMMITS_PER_DAY + 3 }, (_, i) => past(`${day}T${String(i + 10)}:00:00Z`));
+  assert.equal(shipPoints(commits), PAST_COMMITS_PER_DAY * PUSH_POINTS);
+  // Their own cap: a live push the same day still counts once on top, and
+  // live pushes stay at one a day.
+  assert.equal(
+    shipPoints([...commits, push(`${day}T22:00:00Z`), push(`${day}T23:00:00Z`)]),
+    (PAST_COMMITS_PER_DAY + DAILY_CAPS.PUSH) * PUSH_POINTS,
+  );
+  // The next day's commits count again.
+  assert.equal(shipPoints([...commits, past("2026-03-03T09:00:00Z")]), (PAST_COMMITS_PER_DAY + 1) * PUSH_POINTS);
 });
 
 test("caps reset at UTC midnight, not local midnight", () => {
