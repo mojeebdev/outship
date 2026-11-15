@@ -43,7 +43,7 @@ export function NavMenu({ links }: { links: NavLink[] }) {
         aria-expanded={open}
         aria-controls="site-menu"
         onClick={() => setOpen((value) => !value)}
-        className="flex h-9 w-9 flex-col items-center justify-center gap-1 rounded border border-border transition hover:border-void"
+        className="flex h-10 w-10 flex-col items-center justify-center gap-1 rounded-full border border-border bg-white shadow-sm transition hover:border-void"
       >
         <span
           className={`block h-px w-4 bg-void transition-transform ${
@@ -61,9 +61,9 @@ export function NavMenu({ links }: { links: NavLink[] }) {
         id="site-menu"
         aria-label="Main"
         hidden={!open}
-        className="absolute inset-x-0 top-full z-20 border-b border-border bg-cream shadow-sm"
+        className="absolute inset-x-4 top-full z-20 rounded-2xl border border-border bg-white shadow-md sm:inset-x-6"
       >
-        <ul className="mx-auto flex max-w-6xl flex-col px-6 py-2">
+        <ul className="flex flex-col px-5 py-2">
           {links.map(({ href, label }) => {
             const active = pathname === href;
             return (
