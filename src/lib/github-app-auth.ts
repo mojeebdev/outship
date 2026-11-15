@@ -67,7 +67,9 @@ export async function createAppJwt(appId: string, privateKeyPem: string, now = D
   const seconds = Math.floor(now / 1000);
   const encode = (value: unknown) => base64UrlEncode(new TextEncoder().encode(JSON.stringify(value)));
   // iat is backdated a minute for clock drift; GitHub caps exp at ten minutes.
-  const unsigned = `${encode({ alg: "RS256", typ: "JWT" })}.${encode({ iat: seconds - 60, exp: seconds + 540, iss: appId })}`;
+  // The App ID is trimmed: a Worker secret saved with a trailing newline
+  // would otherwise put "123456\n" in iss, and GitHub refuses the token.
+  const unsigned = `${encode({ alg: "RS256", typ: "JWT" })}.${encode({ iat: seconds - 60, exp: seconds + 540, iss: appId.trim() })}`;
   const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(unsigned));
   return `${unsigned}.${base64UrlEncode(new Uint8Array(signature))}`;
 }

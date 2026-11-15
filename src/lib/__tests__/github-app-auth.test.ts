@@ -50,6 +50,12 @@ test("App JWTs verify as RS256 with the App id as issuer, for both key formats",
   }
 });
 
+test("an App ID saved with surrounding whitespace still signs as that App", async () => {
+  const { ok, payload } = verifyJwt(await createAppJwt(" 123456\n", PKCS1));
+  assert.equal(ok, true);
+  assert.equal(payload.iss, "123456");
+});
+
 test("something that isn't a PEM key is refused", () => {
   assert.throws(() => privateKeyPemToPkcs8("not a key"), /PEM/);
 });
