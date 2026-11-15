@@ -5,7 +5,7 @@
 //
 //   tower-wide.svg    landscape screens: behind the hero's centred copy
 //   tower-tall.svg    portrait screens: under the hero's copy
-//   tower-arcade.svg  the arcade alone, along the bottom of the footer
+//   tower-print.svg   the footer's two-colour print: cream stone on blue
 //
 // Generated rather than hand-drawn because an engraving is thousands of
 // strokes (stone courses, hatching); a seeded random generator places the
@@ -32,7 +32,6 @@ const BLUE_TINT = "#e6e6ff";
 const CROPS = {
   wide: { viewBox: [-60, 0, 1660, 1060] },
   tall: { viewBox: [-60, 140, 940, 920] },
-  arcade: { viewBox: [360, 760, 1280, 300] },
 };
 
 function rng(seed) {
@@ -58,11 +57,14 @@ const WEIGHTS = {
 function strokes() {
   const buckets = Object.fromEntries(Object.keys(WEIGHTS).map((key) => [key, []]));
   const add = (weight, d) => buckets[weight].push(d);
-  const render = (clipFor = {}) =>
+  // `bold` thickens and darkens every stroke: the print's lines have to hold
+  // their own against cream, where the hero's sit on a pale page.
+  const render = (clipFor = {}, bold = 1) =>
     Object.entries(buckets)
       .filter(([, list]) => list.length > 0)
       .map(([key, list]) => {
-        const { width, opacity } = WEIGHTS[key];
+        const width = f(WEIGHTS[key].width * bold * 10) / 10;
+        const opacity = Math.min(1, f(WEIGHTS[key].opacity * bold * 10) / 10);
         const clip = clipFor[key] ? ` clip-path="url(#${clipFor[key]})"` : "";
         return `<path d="${list.join(" ")}" stroke-width="${width}" opacity="${opacity}"${clip}/>`;
       })
@@ -141,13 +143,26 @@ function tower(add) {
   add("edge", `M${X + W + 45} ${TOP + 330} V${TOP + 700} M${X + W + 65} ${TOP + 336} V${TOP + 700}`);
   for (let y = TOP + 334; y < TOP + 700; y += 2.5) add("hatch", `M${X + W + 46} ${f(y)} H${X + W + 64}`);
 
-  return { sideFace: `M${X + W} ${TOP} L${X + W + S} ${TOP + slope} V${BOT} H${X + W} Z`, markAt: [X + W / 2 - 30, TOP + 160] };
+  const openings = [
+    ...Array.from({ length: 6 }, (_, i) => {
+      const ax = X + 10 + i * cell + 5;
+      const aw = cell - 10;
+      return `${arch(ax, TOP + 34 + aw / 2, aw, TOP + 112)} Z`;
+    }),
+    `${arch(gx, gSpring, gw, BOT)} Z`,
+    `M${X + W + 45} ${TOP + 330} V${TOP + 700} H${X + W + 65} V${TOP + 336} Z`,
+  ];
+  return {
+    sideFace: `M${X + W} ${TOP} L${X + W + S} ${TOP + slope} V${BOT} H${X + W} Z`,
+    front: `M${X} ${TOP} H${X + W} V${BOT} H${X} Z`,
+    openings,
+    markAt: [X + W / 2 - 30, TOP + 160],
+  };
 }
 
 // The low ruined arcade along the bottom, settling lower toward the right.
-function ruins(add) {
+function ruins(add, START = 360) {
   const r = rng(9);
-  const START = 360;
   const END = 1640;
   const BASE = 1060;
   const top = (x) => 820 + (x - START) * 0.06 + Math.sin(x / 37) * 6;
@@ -167,6 +182,10 @@ function ruins(add) {
   }
   // a little timber scaffold on the ruin: still being built
   add("edge", "M1080 760 V830 M1140 770 V832 M1070 778 H1150 M1070 800 H1150");
+
+  const openings = [];
+  for (let x = START + 40; x < END - 20; x += 130) openings.push(`${arch(x, top(x) + 50 + 40, 80, BASE)} Z`);
+  return { wall: `M${START} ${BASE} V${f(top(START))} L${edge.join(" L")} V${BASE} Z`, openings };
 }
 
 function drawing() {
@@ -185,10 +204,46 @@ function drawing() {
 }
 
 mkdirSync(OUT, { recursive: true });
+// The footer's version, a two-colour print for a blue background, like a
+// linocut: the stone is cream and the line work is blue, cut into it. The
+// arcade runs the full width; a small tower stands whole at its right end,
+// so nothing is cut off by the top of the frame.
+const CREAM = "#f5f5f0";
+const PRINT_VIEWBOX = [0, 480, 1640, 580];
+// Arch openings are a deeper blue, so their blue hatching reads as cut lines.
+const DEEP_BLUE = "#0000a8";
+function printDrawing() {
+  const towerStrokes = strokes();
+  const { sideFace, front, openings: towerOpenings, markAt } = tower(towerStrokes.add);
+  const ruinStrokes = strokes();
+  const { wall, openings: ruinOpenings } = ruins(ruinStrokes.add, 0);
+  const mark = `<g transform="translate(${markAt[0]} ${markAt[1]}) scale(2.5)" stroke-width="0.5"><rect x="0" y="18" width="5" height="6"/><rect x="6" y="14" width="5" height="10"/><rect x="12" y="10" width="5" height="14"/><polygon points="12,10 17,10 24,0"/></g>`;
+  // The tower is 410 wide and stands on y = 1060 in its own drawing.
+  const scale = 0.5;
+  const towerAt = `translate(${f(1360 + 60 * scale)} ${f(1010 - 1060 * scale)}) scale(${scale})`;
+  return `<defs>
+  <clipPath id="side"><path d="${sideFace}"/></clipPath>
+  <g id="tower-art" fill="none" stroke="currentColor" stroke-linecap="round">${towerStrokes.render({ shade: "side" }, 1.6)}${mark}</g>
+  <g id="ruin-art" fill="none" stroke="currentColor" stroke-linecap="round">${ruinStrokes.render({}, 1.6)}</g>
+</defs>
+<g transform="${towerAt}">
+  <path d="${front} ${sideFace}" fill="${CREAM}"/>
+  <path d="${towerOpenings.join(" ")}" fill="${DEEP_BLUE}"/>
+  <use href="#tower-art" color="${BLUE}"/>
+</g>
+<path d="${wall}" fill="${CREAM}"/>
+<path d="${ruinOpenings.join(" ")}" fill="${DEEP_BLUE}"/>
+<use href="#ruin-art" color="${BLUE}"/>`;
+}
+
 const body = drawing();
-for (const [name, { viewBox }] of Object.entries(CROPS)) {
+const outputs = [
+  ...Object.entries(CROPS).map(([name, { viewBox }]) => [`tower-${name}.svg`, viewBox, body]),
+  ["tower-print.svg", PRINT_VIEWBOX, printDrawing()],
+];
+for (const [file, viewBox, content] of outputs) {
   const [, , w, h] = viewBox;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox.join(" ")}" width="${w}" height="${h}">${body}</svg>\n`;
-  writeFileSync(join(OUT, `tower-${name}.svg`), svg);
-  console.log(`public/scene/tower-${name}.svg  ${(svg.length / 1024).toFixed(0)} KB`);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox.join(" ")}" width="${w}" height="${h}">${content}</svg>\n`;
+  writeFileSync(join(OUT, file), svg);
+  console.log(`public/scene/${file}  ${(svg.length / 1024).toFixed(0)} KB`);
 }
