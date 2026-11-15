@@ -153,6 +153,13 @@ async function signIn(request: Request) {
     builder = { ...builder, claimedAt: new Date() };
   }
 
+  // For the admin KPIs: who signed in, and when. Nothing else.
+  const signedInAt = new Date();
+  await Promise.all([
+    db.signInEvent.create({ data: { builderId: builder.id, at: signedInAt } }),
+    db.builder.update({ where: { id: builder.id }, data: { lastSignedInAt: signedInAt } }),
+  ]);
+
   // A year of GitHub history, so the profile doesn't start blank. Off the
   // redirect's critical path; the token is used for this one call and dropped
   // with the request. At most once a day. Never part of score.

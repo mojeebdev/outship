@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "privacy — outship",
 };
 
-const UPDATED = "november 14, 2026";
+const UPDATED = "november 15, 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -29,9 +29,9 @@ export default function PrivacyPage() {
         <p className="text-text-muted-1">
           this covers outship (outship.dev) and word (word.outship.dev), both
           run by BlindspotLab Limited. short version: we keep what&apos;s
-          needed to show what you shipped, nothing is sold, there are no
-          analytics or ad trackers, and anything you put onchain is public
-          and permanent.
+          needed to show what you shipped, nothing is sold, there are no ad
+          trackers or tracking cookies, and anything you put onchain is
+          public and permanent.
         </p>
 
         <Section title="when you sign in with github">
@@ -179,9 +179,20 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
+        <Section title="analytics">
+          <p>
+            we count page views with cloudflare web analytics. it sets no
+            cookies, doesn&apos;t fingerprint your browser and doesn&apos;t
+            follow you across sites: it records which page loaded, the
+            referring site, your rough location (country) and device type, in
+            aggregate. we also record when builders sign in, to count active
+            builders. nothing from either is sold or used for ads.
+          </p>
+        </Section>
+
         <Section title="who else handles data">
           <ul className="flex list-disc flex-col gap-1 pl-5">
-            <li>cloudflare: hosting, our database, and sending email</li>
+            <li>cloudflare: hosting, our database, sending email, and cookieless page-view counts</li>
             <li>github: sign-in, and the ship data its app sends us</li>
             <li>base and the ethereum attestation service: attestations you choose to make</li>
             <li>zoho: our support inbox</li>

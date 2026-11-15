@@ -20,6 +20,12 @@ export const metadata: Metadata = {
 const entries = [
   {
     date: "nov 2026",
+    title: "outship in numbers",
+    description:
+      "outship.dev/stats shows the public numbers, live: verified ships, builders, repos, onchain receipts, the last 30 days against the 30 before, ships per week for a year and the languages shipped. page views are now counted with cloudflare's cookieless web analytics; the privacy policy says exactly what that records.",
+  },
+  {
+    date: "nov 2026",
     title: "the outship API",
     description:
       "a public API for verified shipping records: a builder's score, tier, streaks and ranks, their public ships with onchain receipts, a one-call check of whether someone shipped something, and the leaderboards. free to try without a key, with keys for higher limits. docs at outship.dev/developers.",
