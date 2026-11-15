@@ -90,7 +90,7 @@ export default async function ProfilePage() {
 
   return (
     <SiteShell>
-      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pb-16 pt-6 sm:pt-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <ProfileHeader builder={builder} claimed languages={facts.languages} eyebrow="welcome back" />
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 whitespace-nowrap text-sm">
@@ -133,7 +133,7 @@ export default async function ProfilePage() {
         </div>
 
         {builder.installationId ? (
-          <p className="-mt-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-muted-1">
+          <p className="-mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-muted-1">
             <IconGithub className="h-4 w-4" aria-hidden="true" />
             tracking your repos through the outship GitHub App ·
             <a
@@ -168,9 +168,9 @@ export default async function ProfilePage() {
           </div>
         )}
 
-        <div className="grid gap-10 lg:grid-cols-[11rem_minmax(0,1fr)]">
+        <div className="grid gap-8 lg:grid-cols-[10rem_minmax(0,1fr)]">
           <ProfileSidebar sections={sections} />
-          <div className="flex min-w-0 flex-col gap-10">
+          <div className="flex min-w-0 flex-col gap-8">
             {/* The overview: what a builder checks first. Every number is from
                 their own ships, private ones included (this page is theirs). */}
             <section id="overview" aria-label="your overview" className={sectionClass}>
@@ -180,9 +180,12 @@ export default async function ProfilePage() {
                   label="score"
                   value={fmt(builder.score)}
                   spark={overview.weeklyPoints}
-                  note={`${tierFor(builder.score).tier.name} · ${
-                    builder.hidden ? "hidden from the boards" : `${rank(facts.weekRank)} this week · ${rank(facts.allTimeRank)} all time`
-                  }`}
+                  note={[
+                    tierFor(builder.score).tier.name,
+                    ...(builder.hidden
+                      ? ["hidden from the boards"]
+                      : [`${rank(facts.weekRank)} this week`, `${rank(facts.allTimeRank)} all time`]),
+                  ]}
                 />
                 <KpiCard
                   label="points this week"
@@ -201,7 +204,7 @@ export default async function ProfilePage() {
                 <KpiCard
                   label="streak"
                   value={`${builder.currentStreak} day${builder.currentStreak === 1 ? "" : "s"}`}
-                  note={`best ${builder.longestStreak} · the last 14 days`}
+                  note={[`best ${builder.longestStreak}`, "the last 14 days"]}
                   spark={overview.activeDays}
                 />
               </div>

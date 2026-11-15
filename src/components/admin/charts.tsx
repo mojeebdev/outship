@@ -1,6 +1,7 @@
 // Charts for the admin panel, /stats and the builder's own /profile: plain
 // SVG rendered on the server, in outship's own colours. No chart library, no client JavaScript; every number is also
 // in the markup (titles and labels), so it reads without hovering.
+import { Fragment } from "react";
 import type { Bucket, Cohort, Ranked } from "@/lib/metrics";
 
 const nf = new Intl.NumberFormat("en-US");
@@ -29,7 +30,10 @@ export function Spark({ values, dark = false }: { values: number[]; dark?: boole
   const height = 32;
   const step = width / Math.max(1, values.length);
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true" className="shrink-0">
+    // Fills the room the card has, up to 96px: in a narrow card the bars get
+    // thinner instead of being cut off at the edge or pushing the value onto
+    // a second line.
+    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true" className="h-8 w-full max-w-24">
       {values.map((value, i) => {
         const h = Math.max(2, (value / max) * height);
         return (
@@ -62,9 +66,11 @@ export function KpiCard({
   previous?: string;
   deltaValue?: number | null;
   spark?: number[];
-  note?: string;
+  /** One line, or parts that wrap only between each other ("a · b · c"). */
+  note?: string | string[];
   highlight?: boolean;
 }) {
+  const notes = note === undefined ? [] : Array.isArray(note) ? note : [note];
   return (
     <div
       className={`flex flex-col justify-between gap-4 rounded-2xl border p-5 ${
@@ -73,13 +79,28 @@ export function KpiCard({
     >
       <span className={`text-sm ${highlight ? "text-white/70" : "text-text-muted-1"}`}>{label}</span>
       <div className="flex items-end justify-between gap-3">
-        <span className="text-3xl font-medium tracking-tight">{value}</span>
-        {spark && spark.length > 1 && <Spark values={spark} dark={highlight} />}
+        <span className="whitespace-nowrap text-3xl font-medium tracking-tight">{value}</span>
+        {spark && spark.length > 1 && (
+          <span className="flex min-w-6 flex-1 justify-end">
+            <Spark values={spark} dark={highlight} />
+          </span>
+        )}
       </div>
       <div className={`flex flex-wrap items-center gap-x-2 text-xs ${highlight ? "text-white/60" : "text-text-muted-2"}`}>
         {deltaValue !== undefined && <DeltaBadge value={deltaValue} />}
         {previous !== undefined && <span>vs {previous} the period before</span>}
-        {note && <span>{note}</span>}
+        {notes.length > 0 && (
+          <span>
+            {/* Each part stays whole; a line only breaks after a separator,
+                which a no-break space keeps on the line before. */}
+            {notes.map((part, i) => (
+              <Fragment key={i}>
+                {i > 0 && "\u00a0· "}
+                <span className="whitespace-nowrap">{part}</span>
+              </Fragment>
+            ))}
+          </span>
+        )}
       </div>
     </div>
   );
