@@ -13,7 +13,8 @@ import {
   loadRising,
   type Period,
 } from "@/lib/leaderboard";
-import { MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, REVIEWED_MERGE_POINTS, STREAK_CAP } from "@/lib/score";
+import { tierFor } from "@/lib/tiers";
+import { MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, REVIEWED_MERGE_POINTS, STREAK_CAP, STREAK_POINTS_PER_DAY } from "@/lib/score";
 
 export type LeaderboardSearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -30,7 +31,7 @@ function href(period: Period, { language, page }: { language?: string | null; pa
 const INTRO: Record<Period, string> = {
   week: "since monday 00:00 UTC, the same week as the monday recap. resets every week, so anyone can top it.",
   month: "since the 1st of the month, UTC.",
-  all: `every verified ship since the start, plus a point per streak day (up to ${STREAK_CAP}).`,
+  all: `every verified ship since the start, plus ${STREAK_POINTS_PER_DAY} points per streak day (up to ${STREAK_CAP} days).`,
 };
 
 export async function LeaderboardView({
@@ -169,6 +170,10 @@ export async function LeaderboardView({
                   {row.githubLogin}
                 </Link>
                 {!row.claimed && <UnclaimedChip />}
+                {/* Tiers read the all-time score, so they only mean something on that board. */}
+                {period === "all" && (
+                  <span className="hidden shrink-0 text-xs text-text-muted-2 sm:inline">{tierFor(row.score).tier.name}</span>
+                )}
               </span>
               <span className="flex items-center gap-1.5 text-sm text-text-muted-1" title="current streak">
                 <IconStreak className="h-3.5 w-3.5" aria-hidden="true" />

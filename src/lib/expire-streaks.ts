@@ -1,4 +1,4 @@
-import { STREAK_CAP } from "@/lib/score";
+import { STREAK_CAP, STREAK_POINTS_PER_DAY } from "@/lib/score";
 
 /**
  * Streaks are derived from ships (deriveStreak in src/lib/score.ts), but only
@@ -16,19 +16,22 @@ export async function expireStaleStreaks(db: D1Database, now = new Date()): Prom
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1),
   );
 
-  // score = points + min(streak, STREAK_CAP), so drop exactly that bonus.
+  // score = points + STREAK_POINTS_PER_DAY * min(streak, STREAK_CAP)
+  // (streakBonus), so drop exactly that bonus. Floored at zero so a score
+  // still on an older points scale (between a deploy and its rescore) can't
+  // go negative.
   // julianday() parses Prisma's stored ISO strings regardless of offset format.
   const result = await db
     .prepare(
       `UPDATE "Builder"
-         SET "score" = "score" - MIN("currentStreak", ?1),
+         SET "score" = MAX(0, "score" - ?4 * MIN("currentStreak", ?1)),
              "currentStreak" = 0,
              "statsVersion" = "statsVersion" + 1,
              "updatedAt" = ?2
        WHERE "currentStreak" > 0
          AND julianday("lastShipDate") < julianday(?3)`,
     )
-    .bind(STREAK_CAP, now.toISOString(), startOfYesterday.toISOString())
+    .bind(STREAK_CAP, now.toISOString(), startOfYesterday.toISOString(), STREAK_POINTS_PER_DAY)
     .run();
 
   return result.meta.changes ?? 0;

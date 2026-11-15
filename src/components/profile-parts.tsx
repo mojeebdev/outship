@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 import { BuilderAvatar, UnclaimedChip } from "@/components/builder-bits";
 import { IconArrowUpRight, IconGrid, IconSeal, IconShip, IconStreak, IconX, type IconProps } from "@/components/icons";
 import type { ProfileFacts } from "@/lib/profile-data";
+import { tierFor } from "@/lib/tiers";
 
 type HeaderBuilder = {
   githubId: number;
@@ -124,11 +125,13 @@ export function ProfileStats({
   unrankedLabel: string;
 }) {
   const rank = (value: number | null, fallback: string) => (value ? `#${value}` : fallback);
+  const standing = tierFor(builder.score);
   return (
     <div className="flex flex-col gap-4">
+      <TierBar standing={standing} />
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label={`streak · best ${builder.longestStreak}`} value={builder.currentStreak} Icon={IconStreak} />
-        <Stat label="score" value={builder.score} Icon={IconSeal} />
+        <Stat label="score" value={builder.score.toLocaleString("en-US")} Icon={IconSeal} />
         <Stat label="rank this week" value={rank(facts.weekRank, facts.allTimeRank ? "–" : unrankedLabel)} Icon={IconGrid} />
         <Stat label="rank all time" value={rank(facts.allTimeRank, unrankedLabel)} Icon={IconGrid} />
       </div>
@@ -140,6 +143,33 @@ export function ProfileStats({
         <span className="text-text-muted-1">{facts.byType.RELEASE} releases</span>
         <span className="text-text-muted-1">{facts.byType.MERGE} merged PRs</span>
         <span className="text-text-muted-1">{facts.byType.PUSH} pushes</span>
+      </div>
+    </div>
+  );
+}
+
+/** The builder's tier and how far they are through it, straight from their score. */
+export function TierBar({ standing }: { standing: ReturnType<typeof tierFor> }) {
+  const percent = Math.round(standing.progress * 100);
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-white px-5 py-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="text-lg font-medium">{standing.tier.name}</span>
+        <span className="text-sm text-text-muted-1">
+          {standing.next
+            ? `${standing.toNext.toLocaleString("en-US")} points to ${standing.next.name}`
+            : "the top tier. nowhere left to climb."}
+        </span>
+      </div>
+      <div
+        role="progressbar"
+        aria-label={`progress to ${standing.next?.name ?? "the top"}`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        className="h-2 overflow-hidden rounded-full bg-blue-tint"
+      >
+        <div className="h-full rounded-full bg-base-blue" style={{ width: `${percent}%` }} />
       </div>
     </div>
   );

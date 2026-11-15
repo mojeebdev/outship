@@ -13,7 +13,7 @@ import {
   type LeaderboardBuilder,
   type LeaderboardShip,
 } from "../leaderboard";
-import { MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, STREAK_CAP } from "../score";
+import { MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, STREAK_CAP, STREAK_POINTS_PER_DAY } from "../score";
 
 const NOW = new Date("2026-11-14T12:00:00Z"); // Saturday
 
@@ -87,7 +87,7 @@ test("the streak bonus is for all time only, and capped", () => {
   const builders = [builder("a", { currentStreak: 50 })];
   const ships = [ship("a", "2026-11-14T01:00:00Z")];
   assert.equal(rankBuilders(builders, ships, { includeStreak: false })[0].score, MERGE_POINTS);
-  assert.equal(rankBuilders(builders, ships, { includeStreak: true })[0].score, MERGE_POINTS + STREAK_CAP);
+  assert.equal(rankBuilders(builders, ships, { includeStreak: true })[0].score, MERGE_POINTS + STREAK_CAP * STREAK_POINTS_PER_DAY);
 });
 
 test("windows list only builders who shipped in them", () => {

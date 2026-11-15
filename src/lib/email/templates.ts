@@ -1,4 +1,4 @@
-import { BARE_RELEASE_POINTS, DAILY_CAPS, MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, REVIEWED_MERGE_POINTS } from "@/lib/score";
+import { BARE_RELEASE_POINTS, DAILY_CAPS, STREAK_POINTS_PER_DAY, MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, REVIEWED_MERGE_POINTS } from "@/lib/score";
 import { GITHUB_APP_INSTALL_URL } from "@/lib/github-app";
 import { SITE_URL, type Email } from "./send";
 
@@ -20,12 +20,21 @@ function button(href: string, label: string): string {
   return `<a href="${escapeHtml(href)}" style="display:inline-block;background:${BLUE};color:#ffffff;text-decoration:none;font-weight:500;padding:12px 22px;border-radius:6px">${escapeHtml(label)}</a>`;
 }
 
+// The real outship mark (bars breaking into a point) as a PNG on a white tile:
+// Gmail and Outlook don't show SVG, and the tile keeps the black bars visible
+// when a mail app switches to dark mode. Served from the site, 3x for sharpness.
+const LOGO_URL = `${SITE_URL}/brand/email-mark.png`;
+const HEADER = `<table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<td style="padding-right:10px;vertical-align:middle"><img src="${LOGO_URL}" width="32" height="32" alt="" style="display:block;border:0;width:32px;height:32px"></td>
+<td style="vertical-align:middle;font-size:18px;font-weight:600;color:${VOID}">outship</td>
+</tr></table>`;
+
 /** The shared frame. `footer` is already-safe HTML. */
 function layout(bodyHtml: string, footer: string): string {
   return `<!doctype html><html><body style="margin:0;background:${CREAM};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${VOID}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CREAM}"><tr><td align="center" style="padding:32px 16px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e0e0e0;border-radius:8px">
-<tr><td style="padding:28px 28px 0;font-size:18px;font-weight:600;color:${VOID}">outship</td></tr>
+<tr><td style="padding:28px 28px 0">${HEADER}</td></tr>
 <tr><td style="padding:16px 28px 28px;font-size:15px;line-height:1.6">${bodyHtml}</td></tr>
 </table>
 <p style="max-width:560px;margin:16px auto 0;font-size:12px;line-height:1.5;color:${MUTED}">${footer}</p>
@@ -34,7 +43,7 @@ function layout(bodyHtml: string, footer: string): string {
 
 const STANDARD_FOOTER = `outship, a BlindspotLab product. reply to this email and it reaches a real person.`;
 
-const POINTS_LINE = `a release with notes or files ${RELEASE_POINTS} points (a bare tag ${BARE_RELEASE_POINTS}), a merged PR ${MERGE_POINTS}, or ${REVIEWED_MERGE_POINTS} when someone else merged it or you contributed from outside, a push to your default branch ${PUSH_POINTS}, plus a point per streak day. each day up to ${DAILY_CAPS.RELEASE} releases, ${DAILY_CAPS.MERGE} merged PRs and ${DAILY_CAPS.PUSH} push count.`;
+const POINTS_LINE = `a release with notes or files ${RELEASE_POINTS} points (a bare tag ${BARE_RELEASE_POINTS}), a merged PR ${MERGE_POINTS}, or ${REVIEWED_MERGE_POINTS} when someone else merged it or you contributed from outside, a push to your default branch ${PUSH_POINTS}, plus ${STREAK_POINTS_PER_DAY} points per streak day. each day up to ${DAILY_CAPS.RELEASE} releases, ${DAILY_CAPS.MERGE} merged PRs and ${DAILY_CAPS.PUSH} push count.`;
 
 /** Sent from welcome@ when someone joins the recap from the footer form. */
 export function recapConfirmEmail(token: string): Email {

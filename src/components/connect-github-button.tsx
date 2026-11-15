@@ -4,8 +4,11 @@ import { IconGithub } from "@/components/icons";
 const LOGIN_PATH = "/api/auth/github/login";
 
 type Props = {
-  /** "button" is the filled call to action; "link" sits inside a sentence. */
-  variant?: "button" | "link";
+  /**
+   * "button" is the filled call to action; "inverse" is the same button in
+   * white, for blue backgrounds; "link" sits inside a sentence.
+   */
+  variant?: "button" | "inverse" | "link";
   children?: ReactNode;
 };
 
@@ -24,10 +27,14 @@ export function ConnectGithubButton({ variant = "button", children }: Props) {
     );
   }
 
+  const colors =
+    variant === "inverse"
+      ? "border-white bg-white text-base-blue focus-visible:outline-white"
+      : "border-base-blue bg-base-blue text-white focus-visible:outline-base-blue";
   return (
     <a
       href={LOGIN_PATH}
-      className="inline-flex items-center justify-center gap-2.5 rounded-md border border-base-blue bg-base-blue px-6 py-3 text-sm font-medium text-white transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-blue"
+      className={`inline-flex items-center justify-center gap-2.5 rounded-md border px-6 py-3 text-sm font-medium transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 ${colors}`}
     >
       <IconGithub className="h-5 w-5 shrink-0" aria-hidden="true" />
       {children ?? "connect with github"}
