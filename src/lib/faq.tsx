@@ -12,6 +12,7 @@ import {
   RELEASE_POINTS,
   REVIEWED_MERGE_POINTS,
   STREAK_CAP,
+  STREAK_POINTS_PER_DAY,
 } from "@/lib/score";
 
 const SUPPORT_EMAIL = "support@mail.outship.dev";
@@ -102,7 +103,7 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       {
         question: "how is my score worked out?",
         featured: true,
-        text: `points from ships, after the daily caps, plus your current streak counted up to ${STREAK_CAP}. a long streak helps, but it can't outweigh actually shipping, and when a streak ends its bonus leaves your score with it.`,
+        text: `points from ships, after the daily caps, plus ${STREAK_POINTS_PER_DAY} points for each day of your current streak, counted up to ${STREAK_CAP} days. a long streak helps, but it can't outweigh actually shipping, and when a streak ends its bonus leaves your score with it.`,
       },
       {
         question: "does a merged PR also count as a push?",

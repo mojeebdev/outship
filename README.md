@@ -100,11 +100,11 @@ the weekly ship recap.
 
 | Ship | When it counts | Points |
 | --- | --- | --- |
-| **Release** | a release is published with notes or at least one asset | **5** |
-| **Bare release** | a release with an empty body and no assets | **2** |
-| **Merged PR** | a pull request is merged into the default branch | **2** |
-| **Reviewed or outside PR** | merged by someone other than its author, or authored by someone outside the repo (not its owner, a member or a collaborator) | **3** |
-| **Push** | a push lands on the default branch | **1** |
+| **Release** | a release is published with notes or at least one asset | **50** |
+| **Bare release** | a release with an empty body and no assets | **20** |
+| **Merged PR** | a pull request is merged into the default branch | **20** |
+| **Reviewed or outside PR** | merged by someone other than its author, or authored by someone outside the repo (not its owner, a member or a collaborator) | **30** |
+| **Push** | a push lands on the default branch | **10** |
 
 ### Your last 12 months count
 
@@ -124,7 +124,7 @@ Per builder, per UTC day, at most this many of each type score:
 | --- | --- | --- |
 | 2 | 5 | 1 |
 
-That's at most 26 points a day from ships. When a day has more than the cap,
+That's at most 260 points a day from ships. When a day has more than the cap,
 the ones worth most count. Anything past the cap is still
 recorded on your profile, it just doesn't add points, so spamming tags or
 splitting work into dozens of PRs doesn't pay.
@@ -144,11 +144,18 @@ splitting work into dozens of PRs doesn't pay.
 ### Your score
 
 ```
-score = points from ships (after daily caps) + current streak (counted up to 30)
+score = points from ships (after daily caps) + 10 × current streak (counted up to 30 days)
 ```
 
-A long streak helps, but it's capped at 30 bonus points, so it can't outweigh
+A long streak helps, but it's capped at 300 bonus points, so it can't outweigh
 actually shipping. When a streak ends, its bonus leaves your score with it.
+
+### Tiers
+
+Your all-time score puts you in a tier: **deckhand** (0), **sailor** (500),
+**navigator** (2,000), **first mate** (5,000), **captain** (12,000) and
+**admiral** (25,000). It's only a name for your score, so only verified ships
+move it. It shows on your profile, the all-time board and your README badge.
 
 ### Fair-play rules
 

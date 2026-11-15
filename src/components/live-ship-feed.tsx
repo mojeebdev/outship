@@ -56,25 +56,27 @@ export async function LiveShipFeed() {
             nothing shipped yet. the first ship lands here the moment github reports it.
           </p>
         ) : (
-          <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          // One ship per row, newest first, so the feed reads top to bottom
+          // like a log of what just happened.
+          <ol className="flex flex-col gap-2">
             {ships.map((ship) => (
               <li key={ship.id}>
                 <Link
                   href={`/@${ship.builder.githubLogin}`}
-                  className={`flex h-full items-start gap-3 rounded-lg border border-border p-4 transition hover:border-base-blue ${
+                  className={`flex items-center gap-3 rounded-lg border border-border px-4 py-3 transition hover:border-base-blue sm:gap-4 ${
                     ship.builder.claimedAt ? "bg-white" : "bg-white/50"
                   }`}
                 >
                   <BuilderAvatar githubId={ship.builder.githubId} login={ship.builder.githubLogin} size={32} />
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="flex items-center gap-2 text-sm font-medium">
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-4">
+                    <span className="flex min-w-0 items-center gap-2 text-sm font-medium sm:w-56 sm:shrink-0">
                       <span className="truncate">{ship.builder.githubLogin}</span>
                       {!ship.builder.claimedAt && <UnclaimedChip />}
                     </span>
-                    <span className="truncate text-sm text-text-muted-1">
+                    <span className="min-w-0 flex-1 truncate text-sm text-text-muted-1">
                       {shipLabel(ship)} · {ship.repo}
                     </span>
-                    <span className="text-xs text-text-muted-2">
+                    <span className="truncate text-xs text-text-muted-2 sm:shrink-0 sm:text-right">
                       {shipDetail(ship)} · {ago(ship.shippedAt, now)}
                     </span>
                   </span>
