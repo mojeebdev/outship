@@ -93,6 +93,19 @@ export default function TermsPage() {
           </p>
         </Section>
 
+        <Section title="the API">
+          <p>
+            the outship API (outship.dev/developers) serves public shipping
+            data. API keys are personal to whoever they were issued to; keep
+            them secret, and we may revoke a key that&apos;s shared, abused or
+            used against these terms. don&apos;t use the API to contact
+            builders who haven&apos;t opted in, to republish outship&apos;s
+            leaderboard as your own product, or to suggest outship endorses
+            anyone. we may change rate limits, and breaking changes get a new
+            API version, with notice.
+          </p>
+        </Section>
+
         <Section title="your content">
           <p>
             your code stays yours. you let us store and display the ship data

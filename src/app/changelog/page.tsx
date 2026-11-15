@@ -20,6 +20,12 @@ export const metadata: Metadata = {
 const entries = [
   {
     date: "nov 2026",
+    title: "the outship API",
+    description:
+      "a public API for verified shipping records: a builder's score, tier, streaks and ranks, their public ships with onchain receipts, a one-call check of whether someone shipped something, and the leaderboards. free to try without a key, with keys for higher limits. docs at outship.dev/developers.",
+  },
+  {
+    date: "nov 2026",
     title: "your last 12 months count",
     description:
       "installing the outship app now imports the last year of published releases and merged pull requests from the repos you choose, scored by the same rules and daily caps as live ships, so all-time scores reflect real history. dates come from github's own merge and publish times, which can't be backdated. pushes can't be imported and count from install onwards. imported ships are labelled, and never trigger a claim comment.",

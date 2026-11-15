@@ -50,6 +50,7 @@ const columns: Array<{ heading: string; links: FooterLink[] }> = [
       { label: "index", href: "/builders" },
       { label: "streaks", href: "/streaks" },
       { label: "word counter", href: "https://word.outship.dev", external: true },
+      { label: "API", href: "/developers" },
     ],
   },
 ];
