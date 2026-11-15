@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Landscape screens wide enough for the hero scene to sit behind the centred
+   copy with the tower on the right (tablets held sideways, laptops,
+   desktops). Chosen by shape, not width alone: a portrait tablet is as wide
+   but has room for the scene under the copy instead. */
+@custom-variant wide (@media (min-width: 900px) and (min-aspect-ratio: 4/3));
+
+/* Short screens with room for the full layout (a laptop or a tablet held
+   sideways): the hero tightens up so the tower still shows under its buttons. */
+@custom-variant short (@media (min-width: 640px) and (max-height: 800px));
+
 :root {
   --base-blue: #0000ff;
   --void: #000000;
