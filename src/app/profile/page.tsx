@@ -14,6 +14,7 @@ import {
   IconLogout,
   IconNode,
   IconShip,
+  IconX,
 } from "@/components/icons";
 import { AttestShipButton } from "@/components/attest-ship-button";
 import { AttestationBadge } from "@/components/attestation-badge";
@@ -22,6 +23,7 @@ import { ProfileHeader, TierSteps } from "@/components/profile-parts";
 import { BarSeries, Donut, KpiCard, WeekHourHeatmap, fmt } from "@/components/admin/charts";
 import { change, profileOverview } from "@/lib/profile-overview";
 import { tierFor } from "@/lib/tiers";
+import { profileShareText, shareOnXHref } from "@/lib/share";
 import { ReadmeBadgeBox } from "@/components/readme-badge-box";
 import { ImportedNote } from "@/components/builder-bits";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
@@ -91,7 +93,27 @@ export default async function ProfilePage() {
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <ProfileHeader builder={builder} claimed languages={facts.languages} eyebrow="welcome back" />
-          <div className="flex items-center gap-4 whitespace-nowrap text-sm">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 whitespace-nowrap text-sm">
+            {/* Off while hidden: the shared link would land on "not found". */}
+            {!builder.hidden && (
+              <a
+                href={shareOnXHref(
+                  profileShareText({
+                    login: builder.githubLogin,
+                    tier: tierFor(builder.score).tier.name,
+                    score: builder.score,
+                    weekRank: facts.weekRank,
+                    streak: builder.currentStreak,
+                  }),
+                )}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-void px-4 py-2 font-medium text-white transition hover:opacity-85"
+              >
+                <IconX className="h-3.5 w-3.5" aria-hidden="true" />
+                share on X
+              </a>
+            )}
             <Link
               href={`/@${builder.githubLogin}`}
               className="inline-flex items-center gap-1.5 text-text-muted-1 hover:text-base-blue"
