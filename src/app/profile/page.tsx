@@ -25,6 +25,7 @@ import { tierFor } from "@/lib/tiers";
 import { ReadmeBadgeBox } from "@/components/readme-badge-box";
 import { ImportedNote } from "@/components/builder-bits";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
+import { ProfileSidebar } from "@/components/profile-sidebar";
 
 export const metadata: Metadata = {
   title: "profile — outship",
@@ -74,6 +75,16 @@ export default async function ProfilePage() {
   const recapOn = subscriber?.status === "CONFIRMED";
   const overview = profileOverview(allShips);
   const rank = (value: number | null) => (value ? `#${value}` : "–");
+  // The sidebar's list, in page order. scroll-mt leaves room for the sticky
+  // strip of pills that stands in for the sidebar on narrow screens.
+  const sections = [
+    { id: "overview", label: "overview" },
+    { id: "activity", label: "activity" },
+    { id: "ships", label: "ship feed" },
+    { id: "badge", label: "README badge" },
+    { id: "settings", label: "settings" },
+  ];
+  const sectionClass = "flex scroll-mt-20 flex-col gap-4 lg:scroll-mt-6";
 
   return (
     <SiteShell>
@@ -135,187 +146,202 @@ export default async function ProfilePage() {
           </div>
         )}
 
-        {/* The overview: what a builder checks first. Every number is from
-            their own ships, private ones included (this page is theirs). */}
-        <section aria-label="your overview" className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard
-              highlight
-              label="score"
-              value={fmt(builder.score)}
-              spark={overview.weeklyPoints}
-              note={`${tierFor(builder.score).tier.name} · ${
-                builder.hidden ? "hidden from the boards" : `${rank(facts.weekRank)} this week · ${rank(facts.allTimeRank)} all time`
-              }`}
-            />
-            <KpiCard
-              label="points this week"
-              value={fmt(overview.pointsThisWeek)}
-              deltaValue={change(overview.pointsThisWeek, overview.pointsLastWeek)}
-              note={`vs ${fmt(overview.pointsLastWeek)} last week`}
-              spark={overview.dailyPoints.slice(-14).map((day) => day.value)}
-            />
-            <KpiCard
-              label="ships this month"
-              value={fmt(overview.shipsThisMonth)}
-              deltaValue={change(overview.shipsThisMonth, overview.shipsLastMonth)}
-              note={`vs ${fmt(overview.shipsLastMonth)} last month`}
-              spark={overview.weeklyShips}
-            />
-            <KpiCard
-              label="streak"
-              value={`${builder.currentStreak} day${builder.currentStreak === 1 ? "" : "s"}`}
-              note={`best ${builder.longestStreak} · the last 14 days`}
-              spark={overview.activeDays}
-            />
-          </div>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-            <BarSeries title="points, the last 30 days" buckets={overview.dailyPoints} bucketMs={86_400_000} unit="points" />
-            <Donut
-              title="your ships"
-              unit="ships"
-              rows={[
-                { label: "merged PRs", value: overview.byType.MERGE },
-                { label: "pushes", value: overview.byType.PUSH },
-                { label: "releases", value: overview.byType.RELEASE },
-              ]}
-            />
-          </div>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
-            <TierSteps score={builder.score} />
-            <WeekHourHeatmap grid={overview.weekHour} title="when you ship" />
-          </div>
-        </section>
+        <div className="grid gap-10 lg:grid-cols-[11rem_minmax(0,1fr)]">
+          <ProfileSidebar sections={sections} />
+          <div className="flex min-w-0 flex-col gap-10">
+            {/* The overview: what a builder checks first. Every number is from
+                their own ships, private ones included (this page is theirs). */}
+            <section id="overview" aria-label="your overview" className={sectionClass}>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <KpiCard
+                  highlight
+                  label="score"
+                  value={fmt(builder.score)}
+                  spark={overview.weeklyPoints}
+                  note={`${tierFor(builder.score).tier.name} · ${
+                    builder.hidden ? "hidden from the boards" : `${rank(facts.weekRank)} this week · ${rank(facts.allTimeRank)} all time`
+                  }`}
+                />
+                <KpiCard
+                  label="points this week"
+                  value={fmt(overview.pointsThisWeek)}
+                  deltaValue={change(overview.pointsThisWeek, overview.pointsLastWeek)}
+                  note={`vs ${fmt(overview.pointsLastWeek)} last week`}
+                  spark={overview.dailyPoints.slice(-14).map((day) => day.value)}
+                />
+                <KpiCard
+                  label="ships this month"
+                  value={fmt(overview.shipsThisMonth)}
+                  deltaValue={change(overview.shipsThisMonth, overview.shipsLastMonth)}
+                  note={`vs ${fmt(overview.shipsLastMonth)} last month`}
+                  spark={overview.weeklyShips}
+                />
+                <KpiCard
+                  label="streak"
+                  value={`${builder.currentStreak} day${builder.currentStreak === 1 ? "" : "s"}`}
+                  note={`best ${builder.longestStreak} · the last 14 days`}
+                  spark={overview.activeDays}
+                />
+              </div>
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+                <BarSeries title="points, the last 30 days" buckets={overview.dailyPoints} bucketMs={86_400_000} unit="points" />
+                <Donut
+                  title="your ships"
+                  unit="ships"
+                  rows={[
+                    { label: "merged PRs", value: overview.byType.MERGE },
+                    { label: "pushes", value: overview.byType.PUSH },
+                    { label: "releases", value: overview.byType.RELEASE },
+                  ]}
+                />
+              </div>
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
+                <TierSteps score={builder.score} />
+                <WeekHourHeatmap grid={overview.weekHour} title="when you ship" />
+              </div>
+            </section>
 
-        <div className="flex flex-col gap-4">
-          <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />
-          {heatmap.totals && <HistoryTotals {...heatmap.totals} />}
-        </div>
+            <section id="activity" aria-label="your activity" className={sectionClass}>
+              <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />
+              {heatmap.totals && <HistoryTotals {...heatmap.totals} />}
+            </section>
 
-        <div className="flex flex-col gap-4">
-          <h2 className="text-lg font-medium">ship feed</h2>
-          {recentShips.length === 0 ? (
-            <p className="text-sm text-text-muted-1">
-              {builder.installationId
-                ? "nothing shipped yet — push to the default branch, merge a PR or publish a release on a tracked repo and it'll show up here."
-                : "nothing shipped yet — install the GitHub App above, then push, merge or release."}
-            </p>
-          ) : (
-            <ol className="flex flex-col gap-3">
-              {recentShips.map((ship) => (
-                <li
-                  key={ship.id}
-                  className="flex items-center gap-4 rounded-lg border border-border bg-white p-4"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-cream">
-                    <IconShip className="h-4 w-4 text-void" />
-                  </span>
-                  <div className="flex flex-1 flex-col">
-                    <span className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
-                      <span>
-                        {shipLabel(ship)} ·{" "}
-                        {ship.repo}
-                      </span>
-                      {ship.isPrivate && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-cream px-2 py-0.5 text-xs font-normal text-text-muted-1">
-                          <IconLock className="h-3 w-3" aria-hidden="true" />
-                          private · hidden on your public profile
-                        </span>
-                      )}
-                    </span>
-                    <span className="text-xs text-text-muted-2">
-                      {shipDetail(ship)}
-                      <ImportedNote source={ship.source} />
-                    </span>
-                  </div>
-                  <span className="text-xs text-text-muted-2">
-                    {ship.shippedAt.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                  {ship.attestation ? (
-                    <AttestationBadge
-                      chain={ship.attestation.chain}
-                      easUid={ship.attestation.easUid}
-                      schemaVersion={ship.attestation.schemaVersion}
-                    />
-                  ) : attestationBlocker(ship) ? (
-                    <span
-                      className="shrink-0 text-xs text-text-muted-2"
-                      title={attestationBlocker(ship) ?? undefined}
+            <section id="ships" className={sectionClass}>
+              <h2 className="text-lg font-medium">ship feed</h2>
+              {recentShips.length === 0 ? (
+                <p className="text-sm text-text-muted-1">
+                  {builder.installationId
+                    ? "nothing shipped yet — push to the default branch, merge a PR or publish a release on a tracked repo and it'll show up here."
+                    : "nothing shipped yet — install the GitHub App above, then push, merge or release."}
+                </p>
+              ) : (
+                <ol className="flex flex-col gap-3">
+                  {recentShips.map((ship) => (
+                    <li
+                      key={ship.id}
+                      className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-border bg-white p-4 sm:flex-nowrap"
                     >
-                      not attestable
-                    </span>
-                  ) : (
-                    <AttestShipButton shipId={ship.id} />
-                  )}
-                </li>
-              ))}
-            </ol>
-          )}
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-cream">
+                        <IconShip className="h-4 w-4 text-void" />
+                      </span>
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <span className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
+                          <span>
+                            {shipLabel(ship)} ·{" "}
+                            {ship.repo}
+                          </span>
+                          {ship.isPrivate && (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-cream px-2 py-0.5 text-xs font-normal text-text-muted-1">
+                              <IconLock className="h-3 w-3" aria-hidden="true" />
+                              private · hidden on your public profile
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-xs text-text-muted-2">
+                          {shipDetail(ship)}
+                          <ImportedNote source={ship.source} />
+                        </span>
+                      </div>
+                      {/* On phones the date and the attest action drop to a line of
+                          their own under the text, lined up with it, instead of
+                          squeezing the repo name into a narrow column. */}
+                      <div className="flex w-full items-center justify-between gap-4 pl-13 sm:w-auto sm:shrink-0 sm:pl-0">
+                        <span className="whitespace-nowrap text-xs text-text-muted-2">
+                          {ship.shippedAt.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                        {ship.attestation ? (
+                          <AttestationBadge
+                            chain={ship.attestation.chain}
+                            easUid={ship.attestation.easUid}
+                            schemaVersion={ship.attestation.schemaVersion}
+                          />
+                        ) : attestationBlocker(ship) ? (
+                          <span
+                            className="shrink-0 text-xs text-text-muted-2"
+                            title={attestationBlocker(ship) ?? undefined}
+                          >
+                            not attestable
+                          </span>
+                        ) : (
+                          <AttestShipButton shipId={ship.id} />
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+
+            <section id="badge" aria-label="README badge" className={sectionClass}>
+              <ReadmeBadgeBox login={builder.githubLogin} hidden={builder.hidden} />
+            </section>
+
+            <section id="settings" className={sectionClass}>
+              <h2 className="text-lg font-medium">settings</h2>
+              <SettingForm
+                action="/api/profile/visibility"
+                name="hidden"
+                on={builder.hidden}
+                title="hide my profile"
+                description={
+                  builder.hidden
+                    ? "hidden: your public page returns not found and you're off the leaderboard, index and streaks. your ships still count, and you see everything here."
+                    : "your profile is public at /@" + builder.githubLogin + ". hide it to take it off every public page; your ships keep counting privately."
+                }
+                onLabel="hide"
+                offLabel="show again"
+              />
+
+              {installation && (
+                <SettingForm
+                  action="/api/profile/claim-invites"
+                  name="invites"
+                  on={installation.claimInvitesEnabled}
+                  title="claim invitations in your repos"
+                  description={
+                    installation.claimInvitesEnabled
+                      ? "on: when someone who isn't on outship gets a PR merged in a public repo you installed the app on, the app leaves one short comment inviting them to claim or hide their profile. once per person, ever."
+                      : "off: the app never comments in your repos."
+                  }
+                  onLabel="turn on"
+                  offLabel="turn off"
+                />
+              )}
+
+              {builder.email && (
+                <form
+                  method="post"
+                  action="/api/recap/preference"
+                  className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-medium">weekly ship recap</p>
+                    <p className="mt-1 text-sm text-text-muted-1">
+                      {recapOn
+                        ? `on: every monday to ${builder.email}.`
+                        : `off. who shipped, fresh releases and the longest streaks, every monday to ${builder.email}.`}
+                    </p>
+                  </div>
+                  <input type="hidden" name="recap" value={recapOn ? "off" : "on"} />
+                  <button
+                    type="submit"
+                    className={
+                      recapOn
+                        ? "shrink-0 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition hover:border-void"
+                        : "shrink-0 rounded-md border border-base-blue bg-base-blue px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+                    }
+                  >
+                    {recapOn ? "turn off" : "turn on"}
+                  </button>
+                </form>
+              )}
+            </section>
+          </div>
         </div>
-
-        <ReadmeBadgeBox login={builder.githubLogin} hidden={builder.hidden} />
-
-        <SettingForm
-          action="/api/profile/visibility"
-          name="hidden"
-          on={builder.hidden}
-          title="hide my profile"
-          description={
-            builder.hidden
-              ? "hidden: your public page returns not found and you're off the leaderboard, index and streaks. your ships still count, and you see everything here."
-              : "your profile is public at /@" + builder.githubLogin + ". hide it to take it off every public page; your ships keep counting privately."
-          }
-          onLabel="hide"
-          offLabel="show again"
-        />
-
-        {installation && (
-          <SettingForm
-            action="/api/profile/claim-invites"
-            name="invites"
-            on={installation.claimInvitesEnabled}
-            title="claim invitations in your repos"
-            description={
-              installation.claimInvitesEnabled
-                ? "on: when someone who isn't on outship gets a PR merged in a public repo you installed the app on, the app leaves one short comment inviting them to claim or hide their profile. once per person, ever."
-                : "off: the app never comments in your repos."
-            }
-            onLabel="turn on"
-            offLabel="turn off"
-          />
-        )}
-
-        {builder.email && (
-          <form
-            method="post"
-            action="/api/recap/preference"
-            className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div>
-              <p className="font-medium">weekly ship recap</p>
-              <p className="mt-1 text-sm text-text-muted-1">
-                {recapOn
-                  ? `on: every monday to ${builder.email}.`
-                  : `off. who shipped, fresh releases and the longest streaks, every monday to ${builder.email}.`}
-              </p>
-            </div>
-            <input type="hidden" name="recap" value={recapOn ? "off" : "on"} />
-            <button
-              type="submit"
-              className={
-                recapOn
-                  ? "shrink-0 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition hover:border-void"
-                  : "shrink-0 rounded-md border border-base-blue bg-base-blue px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
-              }
-            >
-              {recapOn ? "turn off" : "turn on"}
-            </button>
-          </form>
-        )}
       </div>
     </SiteShell>
   );
@@ -348,16 +374,16 @@ function SettingForm({
       className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
     >
       <div>
-        <p className="font-medium">{title}</p>
-        <p className="mt-1 text-sm text-text-muted-1">{description}</p>
-      </div>
-      <input type="hidden" name={name} value={on ? "off" : "on"} />
-      <button
-        type="submit"
-        className="shrink-0 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition hover:border-void"
-      >
-        {on ? offLabel : onLabel}
-      </button>
-    </form>
+      <p className="font-medium">{title}</p>
+    <p className="mt-1 text-sm text-text-muted-1">{description}</p>
+  </div>
+  <input type="hidden" name={name} value={on ? "off" : "on"} />
+  <button
+    type="submit"
+    className="shrink-0 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition hover:border-void"
+  >
+    {on ? offLabel : onLabel}
+  </button>
+</form>
   );
 }
