@@ -5,15 +5,24 @@ import {
   BARE_RELEASE_POINTS,
   MAX_DAILY_POINTS,
   MERGE_POINTS,
+  PUSH_POINTS,
   RELEASE_POINTS,
   REVIEWED_MERGE_POINTS,
+  STREAK_CAP,
+  STREAK_POINTS_PER_DAY,
 } from "@/lib/score";
+import { TIERS } from "@/lib/tiers";
 
 export const metadata: Metadata = {
   title: "changelog — outship",
 };
 
 const entries = [
+  {
+    date: "nov 2026",
+    title: "v0.1.5: bigger points, tiers, and a logo in your inbox",
+    description: `points are scaled up for launch, with the same balance between kinds of ship: a release with notes ${RELEASE_POINTS} (a bare tag ${BARE_RELEASE_POINTS}), a merged PR ${MERGE_POINTS} or ${REVIEWED_MERGE_POINTS} when someone else merged it, a push ${PUSH_POINTS}, and ${STREAK_POINTS_PER_DAY} points per streak day for up to ${STREAK_CAP} days. a day can earn up to ${MAX_DAILY_POINTS}. every score was recalculated, so nobody's place changed because of the switch. your all-time score now puts you in a tier, from ${TIERS[0].name} to ${TIERS[TIERS.length - 1].name}, shown on your profile, the all-time board and your README badge. and outship's emails carry the logo.`,
+  },
   {
     date: "nov 2026",
     title: "richer profiles, a live home page and a README badge",
@@ -29,7 +38,9 @@ const entries = [
   {
     date: "nov 2026",
     title: "scoring that rewards real work",
-    description: `a merged PR is now worth ${REVIEWED_MERGE_POINTS} points instead of ${MERGE_POINTS} when someone other than its author merged it, or when it came from outside the repo: work a second person looked at is harder to fake. a release is worth ${RELEASE_POINTS} only with notes or a file attached; a bare tag is worth ${BARE_RELEASE_POINTS}. the most a day can earn is now ${MAX_DAILY_POINTS}, and when a day has more ships than the cap, the ones worth most count. streaks are now worked out from your ships themselves, so a late or repeated webhook can't break one. every builder was rescored under the new rules; releases from before this change keep full points, since there's no record of what they contained.`,
+    // Frozen at the numbers it announced: later releases changed the scale.
+    description:
+      "a merged PR is now worth 3 points instead of 2 when someone other than its author merged it, or when it came from outside the repo: work a second person looked at is harder to fake. a release is worth 5 only with notes or a file attached; a bare tag is worth 2. the most a day can earn is now 26, and when a day has more ships than the cap, the ones worth most count. streaks are now worked out from your ships themselves, so a late or repeated webhook can't break one. every builder was rescored under the new rules; releases from before this change keep full points, since there's no record of what they contained.",
   },
   {
     date: "nov 2026",

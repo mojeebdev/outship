@@ -6,7 +6,7 @@ import { renderBadge, renderNotFoundBadge } from "../badge";
 test("the badge carries the numbers and the source", () => {
   const svg = renderBadge({ login: "mojeebdev", score: 142, streak: 12, rank: 3 });
   assert.match(svg, /^<svg xmlns="http:\/\/www.w3.org\/2000\/svg"/);
-  for (const text of ["mojeebdev", ">142<", ">12d<", ">#3<", "verified on github", "outship.dev"]) {
+  for (const text of ["mojeebdev", ">142<", ">12d<", ">#3<", ">deckhand<", "verified on github", "outship.dev"]) {
     assert.ok(svg.includes(text), `missing ${text}`);
   }
   // The real mark: three bars and the rising point.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LogoMark } from "@/components/icons";
 import { NavMenu, type NavLink } from "@/components/nav-menu";
 import { AccountNavLink } from "@/components/account-nav-link";
+import { OUTSHIP_VERSION } from "@/lib/version";
 
 const LINKS: NavLink[] = [
   { href: "/leaderboard", label: "leaderboard" },
@@ -20,7 +21,7 @@ export function Nav() {
 
         <div className="flex items-center gap-6 text-sm">
           <span className="hidden text-text-muted-1 sm:inline">
-            v0.1 · always shipping
+            v{OUTSHIP_VERSION} · always shipping
           </span>
 
           <nav aria-label="Main" className="hidden items-center gap-6 lg:flex">

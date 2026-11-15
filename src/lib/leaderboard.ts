@@ -2,13 +2,13 @@
 // by /leaderboard, its share cards and /api/leaderboard, so they always agree.
 //
 // A window's score is shipPoints() over the ships in that window (the same
-// daily caps as everywhere), plus min(streak, STREAK_CAP) for all time only:
+// daily caps as everywhere), plus the capped streak bonus for all time only:
 // a streak is a running thing, not something earned inside a week. Only
 // claimed builders take a rank; unclaimed builders are listed, unnumbered;
 // hidden builders aren't loaded at all.
 import type { getDb } from "@/lib/db";
 import { PUBLIC_BUILDER } from "@/lib/builders";
-import { DAILY_CAPS, STREAK_CAP, shipWeight, toUtcDayNumber, type ScorableShip, type ShipType } from "@/lib/score";
+import { DAILY_CAPS, shipWeight, streakBonus, toUtcDayNumber, type ScorableShip, type ShipType } from "@/lib/score";
 
 type Db = Awaited<ReturnType<typeof getDb>>;
 
@@ -129,7 +129,7 @@ export function rankBuilders(
     const own = byBuilder.get(builder.id) ?? [];
     if (!includeStreak && own.length === 0) continue;
     const { points, reachedAt } = pointsWithReachedAt(own);
-    const score = points + (includeStreak ? Math.min(builder.currentStreak, STREAK_CAP) : 0);
+    const score = points + (includeStreak ? streakBonus(builder.currentStreak) : 0);
     if (includeStreak && own.length === 0 && score === 0) continue;
     rows.push({
       githubId: builder.githubId,

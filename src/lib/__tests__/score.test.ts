@@ -14,6 +14,7 @@ import {
   RELEASE_POINTS,
   REVIEWED_MERGE_POINTS,
   STREAK_CAP,
+  STREAK_POINTS_PER_DAY,
   computeScore,
   deriveStreak,
   scoreBuilder,
@@ -42,24 +43,24 @@ test("merges are worth more with a second person involved", () => {
   assert.equal(shipWeight(merge("2026-11-01T10:00:00Z", "REVIEWED")), REVIEWED_MERGE_POINTS);
   assert.equal(shipWeight(merge("2026-11-01T10:00:00Z", "EXTERNAL")), REVIEWED_MERGE_POINTS);
   assert.equal(shipWeight(merge("2026-11-01T10:00:00Z", null)), MERGE_POINTS);
-  assert.equal(MERGE_POINTS, 2);
-  assert.equal(REVIEWED_MERGE_POINTS, 3);
+  assert.equal(MERGE_POINTS, 20);
+  assert.equal(REVIEWED_MERGE_POINTS, 30);
 });
 
 test("a release is worth full points only with notes or an asset", () => {
   assert.equal(shipWeight(release("2026-11-01T10:00:00Z", true)), RELEASE_POINTS);
   assert.equal(shipWeight(release("2026-11-01T10:00:00Z", false)), BARE_RELEASE_POINTS);
-  assert.equal(RELEASE_POINTS, 5);
-  assert.equal(BARE_RELEASE_POINTS, 2);
+  assert.equal(RELEASE_POINTS, 50);
+  assert.equal(BARE_RELEASE_POINTS, 20);
 });
 
 test("releases recorded before notes were checked keep their full weight", () => {
   assert.equal(shipWeight(release("2026-11-01T10:00:00Z", null)), RELEASE_POINTS);
 });
 
-test("a push is one point", () => {
+test("a push is ten points", () => {
   assert.equal(shipWeight(push("2026-11-01T10:00:00Z")), PUSH_POINTS);
-  assert.equal(PUSH_POINTS, 1);
+  assert.equal(PUSH_POINTS, 10);
 });
 
 // ── daily caps ───────────────────────────────────────────────────────────────
@@ -99,7 +100,7 @@ test("past the cap, the ships worth most count, whatever order they arrive in", 
 });
 
 test("the daily maximum is what the caps allow at the top weights", () => {
-  assert.equal(MAX_DAILY_POINTS, 26);
+  assert.equal(MAX_DAILY_POINTS, 260);
   const day = "2026-11-01";
   const ships = [
     ...Array.from({ length: 9 }, (_, i) => release(`${day}T0${i}:00:00Z`)),
@@ -110,8 +111,9 @@ test("the daily maximum is what the caps allow at the top weights", () => {
 });
 
 test("score adds the streak, capped", () => {
-  assert.equal(computeScore({ points: 10, currentStreak: 4 }), 14);
-  assert.equal(computeScore({ points: 10, currentStreak: 400 }), 10 + STREAK_CAP);
+  assert.equal(STREAK_POINTS_PER_DAY, 10);
+  assert.equal(computeScore({ points: 100, currentStreak: 4 }), 100 + 4 * STREAK_POINTS_PER_DAY);
+  assert.equal(computeScore({ points: 100, currentStreak: 400 }), 100 + STREAK_CAP * STREAK_POINTS_PER_DAY);
 });
 
 // ── streaks ──────────────────────────────────────────────────────────────────
@@ -185,7 +187,7 @@ test("scoreBuilder puts points and the capped streak together", () => {
   const stats = scoreBuilder(ships, NOW);
   assert.equal(stats.points, 40 * PUSH_POINTS);
   assert.equal(stats.currentStreak, 40);
-  assert.equal(stats.score, 40 * PUSH_POINTS + STREAK_CAP);
+  assert.equal(stats.score, 40 * PUSH_POINTS + STREAK_CAP * STREAK_POINTS_PER_DAY);
 });
 
 test("expiry agrees with derivation: expiring removes exactly the streak bonus", () => {
@@ -194,6 +196,6 @@ test("expiry agrees with derivation: expiring removes exactly the streak bonus",
   const afterExpiry = scoreBuilder(ships, at("2026-11-13T00:05:00Z"));
   assert.equal(whileAlive.currentStreak, 2);
   assert.equal(afterExpiry.currentStreak, 0);
-  // src/lib/expire-streaks.ts subtracts min(streak, cap) from the stored score.
-  assert.equal(afterExpiry.score, whileAlive.score - Math.min(whileAlive.currentStreak, STREAK_CAP));
+  // src/lib/expire-streaks.ts subtracts STREAK_POINTS_PER_DAY * min(streak, cap) from the stored score.
+  assert.equal(afterExpiry.score, whileAlive.score - STREAK_POINTS_PER_DAY * Math.min(whileAlive.currentStreak, STREAK_CAP));
 });

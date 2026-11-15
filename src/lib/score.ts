@@ -7,18 +7,28 @@
 // when the webhook arrives, so any builder can be rescored from the database
 // alone (scripts/rescore-all.mjs) and gets the same answer every time.
 
+// Points are scaled for bragging: big enough to feel like a climb, while the
+// ratios between kinds of ship stay what they were.
 /** A release with notes or at least one asset: something was actually shipped. */
-export const RELEASE_POINTS = 5;
+export const RELEASE_POINTS = 50;
 /** A release with an empty body and no assets: a bare tag. */
-export const BARE_RELEASE_POINTS = 2;
+export const BARE_RELEASE_POINTS = 20;
 /** A pull request its own author merged, in their own repo. */
-export const MERGE_POINTS = 2;
+export const MERGE_POINTS = 20;
 /** A pull request someone else merged, or an outside contribution. */
-export const REVIEWED_MERGE_POINTS = 3;
+export const REVIEWED_MERGE_POINTS = 30;
 /** A push to the default branch, once a day. */
-export const PUSH_POINTS = 1;
+export const PUSH_POINTS = 10;
 
+/** Bonus per day of the current streak... */
+export const STREAK_POINTS_PER_DAY = 10;
+/** ...counted for at most this many days, so a streak can't outweigh shipping. */
 export const STREAK_CAP = 30;
+
+/** The score bonus a streak of this length is worth. */
+export function streakBonus(currentStreak: number): number {
+  return STREAK_POINTS_PER_DAY * Math.min(Math.max(0, currentStreak), STREAK_CAP);
+}
 
 // How many ships of each type can score per builder per UTC day. Ships past
 // the cap are still recorded and shown; they just don't add points, so a
@@ -80,7 +90,7 @@ export function shipPoints(ships: ScorableShip[]): number {
 }
 
 export function computeScore({ points, currentStreak }: { points: number; currentStreak: number }): number {
-  return points + Math.min(currentStreak, STREAK_CAP);
+  return points + streakBonus(currentStreak);
 }
 
 export type Streak = { currentStreak: number; longestStreak: number; lastShipDate: Date | null };

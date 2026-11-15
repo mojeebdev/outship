@@ -2,6 +2,8 @@
 // mark, the login, all-time score, current streak, rank, and where the
 // numbers come from. Pure string building, so it's tested directly.
 
+import { tierFor } from "./tiers";
+
 export const BADGE_WIDTH = 380;
 export const BADGE_HEIGHT = 96;
 
@@ -56,7 +58,8 @@ export function renderBadge({
   rank: number | null;
 }): string {
   const rankText = rank ? `#${rank}` : "unranked";
-  const title = `${login} on outship: score ${score}, ${streak}-day streak, rank ${rankText}. verified on github.`;
+  const tier = tierFor(score).tier.name;
+  const title = `${login} on outship: ${tier}, score ${score}, ${streak}-day streak, rank ${rankText}. verified on github.`;
   const stat = (x: number, value: string, label: string) =>
     `<text x="${x}" y="60" font-size="17" font-weight="600" fill="${VOID}">${escapeXml(value)}</text>
     <text x="${x}" y="76" font-size="11" fill="${MUTED}">${label}</text>`;
@@ -68,6 +71,7 @@ export function renderBadge({
     ${stat(142, `${streak}d`, "streak")}
     ${stat(222, rankText, "rank")}
     <text x="${BADGE_WIDTH - 18}" y="34" font-size="11" fill="${BLUE}" text-anchor="end">verified on github</text>
+    <text x="${BADGE_WIDTH - 18}" y="60" font-size="13" font-weight="600" fill="${VOID}" text-anchor="end">${escapeXml(tier)}</text>
     <text x="${BADGE_WIDTH - 18}" y="76" font-size="11" fill="${MUTED}" text-anchor="end">outship.dev</text>`,
   );
 }
