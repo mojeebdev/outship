@@ -106,6 +106,16 @@ the weekly ship recap.
 | **Reviewed or outside PR** | merged by someone other than its author, or authored by someone outside the repo (not its owner, a member or a collaborator) | **30** |
 | **Push** | a push lands on the default branch | **10** |
 
+### Your last 12 months count
+
+When you install the App (or add a repo to it), outship imports the last
+year of **published releases** and **merged PRs** from those repos and scores
+them by the same rules, so your all-time score starts from your real history.
+The dates are GitHub's own merge and publish times, which can't be
+backdated. Pushes can't be imported (GitHub keeps no push history) and count
+from install onwards. The import runs in small slices every five minutes, so
+a large org's history takes a little while to arrive.
+
 ### Daily caps
 
 Per builder, per UTC day, at most this many of each type score:
