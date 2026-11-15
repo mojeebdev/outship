@@ -89,6 +89,10 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
         text: `a release with notes or at least one file attached is ${RELEASE_POINTS} points; a bare tag with neither is ${BARE_RELEASE_POINTS}. a merged pull request is ${MERGE_POINTS}, or ${REVIEWED_MERGE_POINTS} when someone other than its author merged it, or when it came from outside the repo. a push to the default branch is ${PUSH_POINTS}, once a day. the extra point for a second pair of eyes is there because work someone else looked at is harder to fake.`,
       },
       {
+        question: "does my past work count?",
+        text: "yes, the last 12 months of it. when you install the outship app, outship imports the published releases and merged pull requests from the repos you chose, going back a year, and scores them by the same rules as live ships. their dates are github's own merge and publish times, which can't be backdated. pushes can't be imported, so they count from the day you install. imported ships are marked as imported on your profile.",
+      },
+      {
         question: "is there a daily limit?",
         text: `yes. per builder, per UTC day, at most ${DAILY_CAPS.RELEASE} releases, ${DAILY_CAPS.MERGE} merged PRs and ${DAILY_CAPS.PUSH} push score, so at most ${MAX_DAILY_POINTS} points a day from ships. when a day has more than that, the ones worth most count. anything past the cap still shows on your profile, it just doesn't add points. splitting work into dozens of PRs or tags doesn't pay.`,
       },
