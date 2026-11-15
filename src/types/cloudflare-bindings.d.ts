@@ -20,7 +20,6 @@ declare global {
     ADMIN_GITHUB_LOGINS?: string;
     // Cloudflare Web Analytics, read for the admin panel (src/lib/cf-analytics.ts).
     CLOUDFLARE_ANALYTICS_TOKEN?: string;
-    CLOUDFLARE_ACCOUNT_ID?: string;
     CF_WEB_ANALYTICS_SITE_TAG?: string;
   }
 }

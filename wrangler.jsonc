@@ -64,6 +64,15 @@
 		// (src/lib/backfill.ts), until every installation's history is in.
 		"crons": ["5 0 * * *", "0 9-11 * * 1", "*/5 * * * *"]
 	},
+	// Plain, non-secret settings. keep_vars leaves any variable set in the
+	// dashboard alone on deploy (secrets are never touched by either).
+	"keep_vars": true,
+	"vars": {
+		// For the admin panel's visitor numbers (src/lib/cf-analytics.ts). An
+		// account id isn't a secret: it's in every dashboard URL. The API token
+		// that reads analytics is the CLOUDFLARE_ANALYTICS_TOKEN secret.
+		"CLOUDFLARE_ACCOUNT_ID": "1c44f0a287a8d8b44aa136f42ae9e64b"
+	},
 	"observability": {
 		"enabled": true
 	}

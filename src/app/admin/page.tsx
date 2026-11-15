@@ -138,8 +138,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           {!visitors.configured ? (
             <div className="rounded-2xl border border-dashed border-border bg-white p-5 text-sm text-text-muted-1">
               cloudflare web analytics isn&apos;t connected to the admin panel yet. set the Worker secret{" "}
-              <code>CLOUDFLARE_ANALYTICS_TOKEN</code> (an API token with Account Analytics: Read) and the variables{" "}
-              <code>CLOUDFLARE_ACCOUNT_ID</code> and <code>CF_WEB_ANALYTICS_SITE_TAG</code>.
+              <code>CLOUDFLARE_ANALYTICS_TOKEN</code> to an API token with Account Analytics: Read. the account id is
+              in wrangler.jsonc, and the site is found from the beacon&apos;s token.
             </div>
           ) : (
             <>
