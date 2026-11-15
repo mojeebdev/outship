@@ -117,6 +117,19 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
+        <Section title="the API">
+          <p>
+            outship&apos;s public API returns the same public information as
+            outship&apos;s public pages: your username, avatar, score, tier,
+            streaks, ranks and ships from public repositories. it never lists
+            or confirms ships from private repositories, and a hidden profile
+            doesn&apos;t appear in it. for API keys we store their name, who
+            they were issued to, a hash of the key, and a daily request count.
+            we use the IP address of requests made without a key for rate
+            limiting, held for up to two days.
+          </p>
+        </Section>
+
         <Section title="email">
           <p>
             we only use email addresses to send outship email, never for

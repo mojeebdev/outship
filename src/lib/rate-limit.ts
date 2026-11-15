@@ -96,10 +96,16 @@ export async function consumeRateLimit(
     }
 
     // Opportunistic cleanup so the table stays tiny without a scheduled job.
+    // Only windows that have ended go: daily counters (":day:" in the key) are
+    // kept for their full day, everything else (minute and hour windows, such
+    // as Word's per-IP ones) for at most two hours.
     if (Math.random() < 0.02) {
       await db
         .$executeRawUnsafe(
-          `DELETE FROM "WordRateLimit" WHERE "windowStart" < ?`,
+          `DELETE FROM "WordRateLimit"
+            WHERE ("key" LIKE '%:day:%' AND "windowStart" < ?)
+               OR ("key" NOT LIKE '%:day:%' AND "windowStart" < ?)`,
+          nowSeconds - 2 * 86_400,
           nowSeconds - 7_200,
         )
         .catch(() => 0);

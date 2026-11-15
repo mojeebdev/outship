@@ -212,3 +212,31 @@ model WordResult {
 
   @@index([createdAt])
 }
+
+// ── API v1 ──────────────────────────────────────────────────────────────────
+
+/// A key for /api/v1. Only the SHA-256 hash is stored; the key is shown once.
+model ApiKey {
+  id            String    @id @default(cuid())
+  name          String
+  /// Who it was issued to.
+  owner         String
+  contact       String?
+  /// The key's first characters, to recognise it by ("os_live_ab12").
+  prefix        String
+  hash          String    @unique
+  ratePerMinute Int       @default(120)
+  createdAt     DateTime  @default(now())
+  lastUsedAt    DateTime?
+  revokedAt     DateTime?
+}
+
+/// Requests per key per UTC day ("anonymous" for keyless requests).
+model ApiUsage {
+  keyId String
+  /// "YYYY-MM-DD", UTC.
+  day   String
+  count Int    @default(0)
+
+  @@id([keyId, day])
+}
