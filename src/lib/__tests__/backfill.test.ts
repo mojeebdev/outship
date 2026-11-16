@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { importedMergeWeight, parseCommitsPage, parsePullsPage, parseReleasesPage } from "../backfill";
+import { importedMergeWeight, ownWork, parseCommitsPage, parsePullsPage, parseReleasesPage } from "../backfill";
 
 const SINCE = new Date("2025-11-15T00:00:00Z");
 const SHA = "a".repeat(40);
@@ -53,7 +53,7 @@ test("merged PRs into the default branch within the year are imported", () => {
     },
   ]);
   assert.equal(page.nextCursor, "CURSOR");
-  assert.deepEqual(page.repo, { private: false, defaultBranch: "main", language: "TypeScript", ownerId: 1 });
+  assert.deepEqual(page.repo, { private: false, defaultBranch: "main", language: "TypeScript", ownerId: 1, fork: false });
 });
 
 test("PRs into other branches, by bots, or merged before the year are skipped", () => {
@@ -202,4 +202,24 @@ test("a GitHub rate limit is told apart from a real refusal", async () => {
   // A 403 that isn't a rate limit is the repo being out of reach: it fails for good.
   assert.equal(isRateLimited(403, headers({ "x-ratelimit-remaining": "4211" }), { message: "Resource not accessible by integration" }), false);
   assert.equal(isRateLimited(200, headers({}), { errors: [{ type: "NOT_FOUND" }] }), false);
+});
+
+test("in a fork, only the fork's owner is credited, not the upstream contributors", () => {
+  const json = commitsPage([commit("b".repeat(40)), commit("c".repeat(40), { author: { user: bob } })]);
+  (json.data.repository as Record<string, unknown>).isFork = true;
+  const page = ownWork(parseCommitsPage(json));
+  assert.equal(page.repo?.fork, true);
+  assert.deepEqual(
+    page.ships.map((ship) => ship.githubLogin),
+    ["alice"],
+  );
+});
+
+test("an organisation's fork credits no one, and a repo that isn't a fork is left alone", () => {
+  const forked = commitsPage([commit("b".repeat(40))]);
+  Object.assign(forked.data.repository, { isFork: true, owner: { __typename: "Organization", login: "acme", databaseId: 99 } });
+  assert.deepEqual(ownWork(parseCommitsPage(forked)).ships, []);
+
+  const own = parseCommitsPage(commitsPage([commit("b".repeat(40)), commit("c".repeat(40), { author: { user: bob } })]));
+  assert.equal(ownWork(own), own);
 });

@@ -44,6 +44,8 @@ export type RepoInfo = {
   defaultBranch: string | null;
   language: string | null;
   ownerId: number | null;
+  /** A fork: its history carries the original project's commits too. */
+  fork: boolean;
 };
 
 export type ImportedShip = {
@@ -74,7 +76,21 @@ function repoInfo(repository: Record<string, unknown> | null | undefined): RepoI
     defaultBranch: (repository.defaultBranchRef as { name?: string } | null)?.name ?? null,
     language: ((repository.primaryLanguage as { name?: string } | null)?.name ?? null)?.slice(0, 50) ?? null,
     ownerId: typeof owner?.databaseId === "number" ? owner.databaseId : null,
+    fork: repository.isFork === true,
   };
+}
+
+/**
+ * A fork's default branch carries the original project's history, so its past
+ * year would credit every upstream contributor (and give each an unclaimed
+ * profile) for work done somewhere else. In a fork, only the fork's owner is
+ * credited: their own commits there still count, nobody else's do. (An
+ * organisation's fork credits no one: there's no single owner to credit.)
+ */
+export function ownWork(page: Page): Page {
+  if (!page.repo?.fork) return page;
+  const ownerId = page.repo.ownerId;
+  return { ...page, ships: page.ships.filter((ship) => ownerId !== null && ship.githubId === ownerId) };
 }
 
 /** The same rule as live merges (mergeWeightClass in webhook-ships.ts). */
@@ -207,7 +223,7 @@ export function parseCommitsPage(json: unknown): Page {
   return { ships, repo, nextCursor: more ? (history.pageInfo?.endCursor ?? null) : null };
 }
 
-const REPO_FIELDS = `isPrivate defaultBranchRef { name } primaryLanguage { name }
+const REPO_FIELDS = `isPrivate isFork defaultBranchRef { name } primaryLanguage { name }
   owner { __typename login ... on User { databaseId } ... on Organization { databaseId } }`;
 const ACTOR = `{ __typename login ... on User { databaseId } }`;
 
@@ -523,6 +539,7 @@ export async function runBackfill(
         });
         page = job.kind === "PULLS" ? parsePullsPage(json, job.since) : parseReleasesPage(json, job.since);
       }
+      page = ownWork(page);
       if (!page.repo) throw new GithubError("repository not found", true);
       const written = await writePage(d1, job.repo, page.repo, page.ships, now);
       for (const id of written.builderIds) touched.add(id);
