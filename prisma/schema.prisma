@@ -20,8 +20,7 @@ enum ShipType {
 enum ShipSource {
   // The live webhook, as it happened.
   WEBHOOK
-  // The one-time history import, since removed: these ships keep their
-  // source so they stay labelled and scored as imported (src/lib/score.ts).
+  // The 12-month import when the App was installed.
   BACKFILL
 }
 
@@ -163,9 +162,34 @@ model Installation {
   // Whether the App may post the one-time claim comment in this install's
   // repos. The installer switches it on /profile.
   claimInvitesEnabled Boolean   @default(true)
+  // When this installation\'s repos were queued for the 12-month backfill.
+  backfillQueuedAt    DateTime?
   createdAt           DateTime  @default(now())
   suspendedAt         DateTime?
   deletedAt           DateTime?
+}
+
+/// One slice-able unit of the 12-month backfill (src/lib/backfill.ts).
+model BackfillJob {
+  id             String    @id @default(cuid())
+  installationId Int
+  /// REPOS (list an installation's repos), RELEASES or PULLS (one repo).
+  kind           String
+  repo           String
+  since          DateTime
+  /// Where the next page starts (a GraphQL cursor, or a REST page number); null = from the newest.
+  cursor         String?
+  /// PENDING, DONE or FAILED.
+  status         String    @default("PENDING")
+  imported       Int       @default(0)
+  attempts       Int       @default(0)
+  error          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+  finishedAt     DateTime?
+
+  @@unique([kind, repo])
+  @@index([status])
 }
 
 enum SubscriberStatus {

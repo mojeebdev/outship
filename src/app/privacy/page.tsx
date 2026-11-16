@@ -65,6 +65,14 @@ export default function PrivacyPage() {
             see, and can change that on github at any time.
           </p>
           <p>
+            when the app is installed, or gains a repository, we also import
+            the last 12 months of that repository&apos;s published releases,
+            merged pull requests and commits to the default branch, with the
+            same details, so your history counts from day one. imported ships
+            are marked as imported, and they never trigger the one-time claim
+            comment.
+          </p>
+          <p>
             ships from public repositories appear on your public profile and
             the leaderboard. ships from private repositories count toward
             your score, but their repository name and tag are never shown

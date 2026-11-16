@@ -7,6 +7,7 @@ import {
   BARE_RELEASE_POINTS,
   DAILY_CAPS,
   MAX_DAILY_POINTS,
+  PAST_COMMITS_PER_DAY,
   MERGE_POINTS,
   PUSH_POINTS,
   RELEASE_POINTS,
@@ -90,7 +91,7 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       },
       {
         question: "does my past work count?",
-        text: "outship counts what you ship from the day you install the app: every release, merged PR and push to the default branch after that scores the moment github reports it. work from before you joined isn't imported, so everyone starts from the same line.",
+        text: `yes, the last 12 months of it. when you install the outship app, outship imports the published releases, merged pull requests and commits to the default branch from the repos you chose, going back a year. releases and merges score by the same rules as live ships; past commits score as pushes, up to ${PAST_COMMITS_PER_DAY} a day. imported ships are marked as imported on your profile, and from the day you install, everything you ship counts as it happens.`,
       },
       {
         question: "is there a daily limit?",

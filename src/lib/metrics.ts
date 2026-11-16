@@ -140,6 +140,7 @@ export type Totals = {
   claimedAfterInvite: number;
   thirtyDayClub: number;
   apiKeys: number;
+  backfill: { pending: number; done: number; failed: number };
 };
 
 export async function totals(d1: D1Database): Promise<Totals> {
@@ -164,7 +165,10 @@ export async function totals(d1: D1Database): Promise<Totals> {
         (SELECT COUNT(*) FROM "Builder" WHERE "claimInvitedAt" IS NOT NULL
             AND "claimedAt" IS NOT NULL AND julianday("claimedAt") >= julianday("claimInvitedAt")) AS claimedAfterInvite,
         (SELECT COUNT(*) FROM "Builder" WHERE "currentStreak" >= 30) AS thirtyDayClub,
-        (SELECT COUNT(*) FROM "ApiKey" WHERE "revokedAt" IS NULL) AS apiKeys`,
+        (SELECT COUNT(*) FROM "ApiKey" WHERE "revokedAt" IS NULL) AS apiKeys,
+        (SELECT COUNT(*) FROM "BackfillJob" WHERE "status" = 'PENDING') AS backfillPending,
+        (SELECT COUNT(*) FROM "BackfillJob" WHERE "status" = 'DONE') AS backfillDone,
+        (SELECT COUNT(*) FROM "BackfillJob" WHERE "status" = 'FAILED') AS backfillFailed`,
     )
     .first<Record<string, unknown>>();
   const r = Object.fromEntries(Object.entries(row ?? {}).map(([key, value]) => [key, num(value)]));
@@ -188,6 +192,7 @@ export async function totals(d1: D1Database): Promise<Totals> {
     claimedAfterInvite: r.claimedAfterInvite,
     thirtyDayClub: r.thirtyDayClub,
     apiKeys: r.apiKeys,
+    backfill: { pending: r.backfillPending, done: r.backfillDone, failed: r.backfillFailed },
   };
 }
 

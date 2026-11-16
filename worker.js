@@ -10,12 +10,14 @@ import nextHandler from "./.open-next/worker.js";
 import { expireStaleStreaks } from "./src/lib/expire-streaks";
 import { sendWeeklyRecap } from "./src/lib/email/weekly-recap";
 import { sendInstallReminders } from "./src/lib/email/install-reminder";
+import { CRON_HEADER, cronToken } from "./src/lib/cron-auth";
 
 // Must match the crons in wrangler.jsonc.
 const DAILY_STREAKS = "5 0 * * *";
 const WEEKLY_RECAP = "0 9-11 * * 1";
 // Every 10 minutes, so the install reminder lands 30 to 40 minutes after sign-in.
 const INSTALL_REMINDER = "*/10 * * * *";
+const BACKFILL = "*/5 * * * *";
 
 // MTA-STS (RFC 8461) for mail.outship.dev, whose mail is hosted by Zoho.
 // Sending servers fetch this over HTTPS and then refuse to deliver to any MX
@@ -63,8 +65,20 @@ const worker = {
     return nextHandler.fetch(request, env, ctx);
   },
 
-  async scheduled(controller, env) {
-    if (controller.cron === DAILY_STREAKS) {
+  async scheduled(controller, env, ctx) {
+    if (controller.cron === BACKFILL) {
+      // Runs through the Next route so it shares the app's database client
+      // and helpers. An in-process call: the request never leaves the Worker.
+      const response = await nextHandler.fetch(
+        new Request("https://outship.dev/api/internal/backfill", {
+          method: "POST",
+          headers: { [CRON_HEADER]: await cronToken(env.SESSION_SECRET) },
+        }),
+        env,
+        ctx,
+      );
+      console.log(`backfill: ${response.status} ${await response.text()}`);
+    } else if (controller.cron === DAILY_STREAKS) {
       const reset = await expireStaleStreaks(env.DB);
       console.log(`expire-streaks: reset ${reset} builder(s)`);
     } else if (controller.cron === WEEKLY_RECAP) {

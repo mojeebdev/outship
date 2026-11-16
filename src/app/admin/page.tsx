@@ -221,6 +221,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               ["recap subscribers", all.recapConfirmed],
               ["30-day club", all.thirtyDayClub],
               ["API keys", all.apiKeys],
+              ["backfill jobs", all.backfill.pending + all.backfill.done + all.backfill.failed],
             ].map(([label, value]) => (
               <div key={label as string} className="rounded-2xl border border-border bg-white px-4 py-3">
                 <dt className="text-xs text-text-muted-1">{label}</dt>
@@ -228,6 +229,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               </div>
             ))}
           </dl>
+          <p className="text-xs text-text-muted-2">
+            backfill: {fmt(all.backfill.pending)} pending, {fmt(all.backfill.done)} done, {fmt(all.backfill.failed)} failed
+          </p>
         </section>
 
         <section id="api" className="flex flex-col gap-4">

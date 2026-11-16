@@ -52,8 +52,9 @@ export function InstallAppPrompt({ installUrl }: { installUrl: string }) {
             one step left: install the github app
           </h2>
           <p className="text-sm text-text-muted-1">
-            outship only counts what the app can see. pick the repos you want tracked, and every push to your
-            default branch, merged PR and release becomes a ship. private repos count too, and stay hidden.
+            outship only counts what the app can see. pick the repos you want tracked: your last 12 months of
+            releases, merged PRs and commits come in, and every new push, merge and release scores as it
+            happens. private repos count too, and stay hidden.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row-reverse sm:justify-start">
