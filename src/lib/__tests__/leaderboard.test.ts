@@ -94,6 +94,23 @@ test("windows list only builders who shipped in them", () => {
   assert.equal(rankBuilders([builder("idle")], [], { includeStreak: false }).length, 0);
 });
 
+test("all time lists every signed-in builder, at 0 and ranked last, matching their profile's rank", () => {
+  const builders = [builder("shipper"), builder("joined"), builder("ghost", { claimedAt: null })];
+  const rows = rankBuilders(builders, [ship("shipper", "2026-11-14T01:00:00Z")], { includeStreak: true });
+  assert.deepEqual(
+    rows.map((row) => [row.githubLogin, row.rank, row.score]),
+    [
+      ["shipper", 1, MERGE_POINTS],
+      ["joined", 2, 0],
+    ],
+  );
+});
+
+test("the week and month boards still list only builders who shipped in them", () => {
+  const rows = rankBuilders([builder("shipper"), builder("joined")], [ship("shipper", "2026-11-14T01:00:00Z")], { includeStreak: false });
+  assert.deepEqual(rows.map((row) => row.githubLogin), ["shipper"]);
+});
+
 test("top languages are by ship count", () => {
   const ships = [
     ship("a", "2026-11-14T01:00:00Z", "PUSH", "Rust"),

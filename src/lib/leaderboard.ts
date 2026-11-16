@@ -109,7 +109,8 @@ function topSum(sortedDesc: number[], cap: number): number {
 /**
  * The ordered board. Ties go to whoever reached the score first, then to
  * login. `includeStreak` adds the capped streak bonus (all time, no language
- * filter); windows without it list only builders who shipped in them.
+ * filter) and lists every claimed builder, even at 0; windows without it list
+ * only builders who shipped in them.
  */
 export function rankBuilders(
   builders: LeaderboardBuilder[],
@@ -129,7 +130,11 @@ export function rankBuilders(
     if (!includeStreak && own.length === 0) continue;
     const { points, reachedAt } = pointsWithReachedAt(own);
     const score = points + (includeStreak ? streakBonus(builder.currentStreak) : 0);
-    if (includeStreak && own.length === 0 && score === 0) continue;
+    // All time lists every signed-in builder, at 0 if nothing has counted
+    // yet (say, the GitHub App isn't installed), so the board agrees with the
+    // all-time rank on their profile (rankIn). An unclaimed builder only
+    // exists because of a ship, so one with nothing left isn't listed.
+    if (includeStreak && own.length === 0 && score === 0 && builder.claimedAt === null) continue;
     rows.push({
       githubId: builder.githubId,
       githubLogin: builder.githubLogin,
