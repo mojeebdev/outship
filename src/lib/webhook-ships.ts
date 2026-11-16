@@ -1,6 +1,7 @@
 // Turns a GitHub webhook payload into the ship it represents, if any. Pure:
 // no database, no network, so every rule here is covered by tests
 // (src/lib/__tests__/webhook-ships.test.ts).
+import { isBotLogin } from "@/lib/bots";
 import type { WeightClass } from "@/lib/score";
 
 type ShipType = "RELEASE" | "MERGE" | "PUSH";
@@ -42,7 +43,8 @@ export type WebhookShip = {
 };
 
 
-const isBot = (user: GithubUser) => user.type === "Bot";
+// A bot app, or a bot or AI agent with a user account (src/lib/bots.ts).
+const isBot = (user: GithubUser) => user.type === "Bot" || isBotLogin(user.login);
 
 const creditUser = (user: GithubUser): Credit => ({
   kind: "user",

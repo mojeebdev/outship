@@ -120,14 +120,14 @@ export function installReminderEmail({ login }: { login: string }): Email {
     subject: "one step left: connect your repos to outship",
     html: layout(
       `<p style="margin:0 0 14px">hey @${handle}, you signed in to outship, but the github app isn't installed yet, so nothing you ship is counted.</p>
-<p style="margin:0 0 14px">it takes a minute: pick the repos you want tracked. from then on, every push to your default branch, merged PR and published release becomes a ship on your profile, your streak and the leaderboard. private repos count too, and stay hidden on your public page.</p>
+<p style="margin:0 0 14px">it takes a minute: pick the repos you want tracked. your last 12 months of releases, merged PRs and commits come in straight away, and from then on every push to your default branch, merged PR and published release becomes a ship on your profile, your streak and the leaderboard. private repos count too, and stay hidden on your public page.</p>
 <p style="margin:0 0 22px">${button(GITHUB_APP_INSTALL_URL, "install the github app")}</p>
 <p style="margin:0;color:${MUTED};font-size:13px">this is the only reminder you'll get. already installed it? you're all set: see your profile at outship.dev/profile.</p>`,
       STANDARD_FOOTER,
     ),
     text: `hey @${login}, you signed in to outship, but the github app isn't installed yet, so nothing you ship is counted.
 
-it takes a minute: pick the repos you want tracked. from then on, every push to your default branch, merged PR and published release becomes a ship on your profile, your streak and the leaderboard. private repos count too, and stay hidden on your public page.
+it takes a minute: pick the repos you want tracked. your last 12 months of releases, merged PRs and commits come in straight away, and from then on every push to your default branch, merged PR and published release becomes a ship on your profile, your streak and the leaderboard. private repos count too, and stay hidden on your public page.
 
 install the github app:
 ${GITHUB_APP_INSTALL_URL}

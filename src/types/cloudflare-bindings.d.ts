@@ -13,6 +13,9 @@ declare global {
     // Base JSON-RPC endpoint for verifying attestations; falls back to Base's
     // public endpoint when unset.
     BASE_RPC_URL?: string;
+    // GitHub requests per 5-minute backfill run (default 12, safe on the
+    // Workers free plan). Raise it on a paid plan to import history faster.
+    BACKFILL_REQUEST_BUDGET?: string;
     // GitHub logins allowed into /admin, comma-separated (default: mojeebdev).
     ADMIN_GITHUB_LOGINS?: string;
     // Cloudflare Web Analytics, read for the admin panel (src/lib/cf-analytics.ts).

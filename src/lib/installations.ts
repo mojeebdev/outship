@@ -7,11 +7,12 @@ import type { getDb } from "@/lib/db";
 
 type Db = Awaited<ReturnType<typeof getDb>>;
 
-type Account = { login: string; type?: string };
+type Account = { login: string; type?: string; id?: number };
 type Payload = {
   action?: string;
   installation?: { id?: number; account?: Account | null };
   repository?: { owner?: Account };
+  sender?: { id?: number };
 };
 
 export function installationFromPayload(payload: Payload): { id: number; account: Account } | null {
@@ -48,4 +49,32 @@ export async function syncInstallation(db: Db, event: string, payload: Payload):
     update: { accountLogin: account.login, accountType, ...lifecycle },
     create: { id, accountLogin: account.login, accountType, ...lifecycle },
   });
+
+  if (event === "installation") await linkBuilders(db, payload, id, account);
+}
+
+/**
+ * Keeps Builder.installationId in step with installs. Sign-in reads it from
+ * GitHub, but the usual order is sign in, then install: without this the
+ * builder kept looking uninstalled (banner, pop-up, reminder email, admin
+ * count) until their next sign-in. Builders who don't exist yet are linked
+ * when they first sign in.
+ */
+async function linkBuilders(db: Db, payload: Payload, id: number, account: Account): Promise<void> {
+  const action = payload.action;
+  if (action === "deleted") {
+    await db.builder.updateMany({ where: { installationId: id }, data: { installationId: null } });
+    return;
+  }
+  if (action !== "created" && action !== "unsuspend" && action !== "new_permissions_accepted") return;
+  // A personal install belongs to that account's builder.
+  if (account.type !== "Organization" && typeof account.id === "number") {
+    await db.builder.updateMany({ where: { githubId: account.id }, data: { installationId: id } });
+  }
+  // Whoever installed it (say, on their org) counts as installed too, unless
+  // they already have an install of their own; sign-in picks the same way.
+  const sender = payload.sender?.id;
+  if (typeof sender === "number" && sender !== account.id) {
+    await db.builder.updateMany({ where: { githubId: sender, installationId: null }, data: { installationId: id } });
+  }
 }

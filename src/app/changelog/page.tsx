@@ -1,3 +1,4 @@
+import { PAST_COMMITS_PER_DAY } from "@/lib/score";
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/site-shell";
 import { IconShip } from "@/components/icons";
@@ -20,12 +21,6 @@ export const metadata: Metadata = {
 const entries = [
   {
     date: "nov 2026",
-    title: "your ships count from the day you join",
-    description:
-      "everything you ship after installing the outship app scores the moment github reports it: releases, merged PRs and pushes to the default branch. work from before you joined isn't imported, so everyone starts from the same line.",
-  },
-  {
-    date: "nov 2026",
     title: "outship in numbers",
     description:
       "outship.dev/stats shows the public numbers, live: verified ships, builders, repos, onchain receipts, the last 30 days against the 30 before, ships per week for a year and the languages shipped. page views are now counted with cloudflare's cookieless web analytics; the privacy policy says exactly what that records.",
@@ -35,6 +30,12 @@ const entries = [
     title: "the outship API",
     description:
       "a public API for verified shipping records: a builder's score, tier, streaks and ranks, their public ships with onchain receipts, a one-call check of whether someone shipped something, and the leaderboards. free to try without a key, with keys for higher limits. docs at outship.dev/developers.",
+  },
+  {
+    date: "nov 2026",
+    title: "your last 12 months count",
+    description:
+      `installing the outship app imports the last year of published releases, merged pull requests and commits to the default branch from the repos you choose, so your all-time score reflects real history. releases and merges score by the same rules and daily caps as live ships; past commits score as pushes, up to ${PAST_COMMITS_PER_DAY} a day. dates come from github's own merge, publish and commit times. imported ships are labelled, and never trigger a claim comment.`,
   },
   {
     date: "nov 2026",
