@@ -9,10 +9,13 @@
 import nextHandler from "./.open-next/worker.js";
 import { expireStaleStreaks } from "./src/lib/expire-streaks";
 import { sendWeeklyRecap } from "./src/lib/email/weekly-recap";
+import { sendInstallReminders } from "./src/lib/email/install-reminder";
 
 // Must match the crons in wrangler.jsonc.
 const DAILY_STREAKS = "5 0 * * *";
 const WEEKLY_RECAP = "0 9-11 * * 1";
+// Every 10 minutes, so the install reminder lands 30 to 40 minutes after sign-in.
+const INSTALL_REMINDER = "*/10 * * * *";
 
 // MTA-STS (RFC 8461) for mail.outship.dev, whose mail is hosted by Zoho.
 // Sending servers fetch this over HTTPS and then refuse to deliver to any MX
@@ -67,6 +70,11 @@ const worker = {
     } else if (controller.cron === WEEKLY_RECAP) {
       const result = await sendWeeklyRecap(env.DB, env.EMAIL);
       console.log("weekly-recap:", JSON.stringify(result));
+    } else if (controller.cron === INSTALL_REMINDER) {
+      const result = await sendInstallReminders(env.DB, env.EMAIL);
+      if (result.sent || result.failed || result.stoppedOn) {
+        console.log("install-reminder:", JSON.stringify(result));
+      }
     } else {
       console.warn(`scheduled: no job for cron "${controller.cron}"`);
     }

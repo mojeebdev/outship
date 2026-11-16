@@ -36,50 +36,53 @@ enum WeightClass {
 }
 
 model Builder {
-  id                   String            @id @default(cuid())
-  githubId             Int               @unique
-  githubLogin          String            @unique
-  installationId       Int?
+  id                    String            @id @default(cuid())
+  githubId              Int               @unique
+  githubLogin           String            @unique
+  installationId        Int?
   // Primary verified email from GitHub (needs the App's "Email addresses"
   // permission). Used for the welcome and account email only.
-  email                String?
-  welcomedAt           DateTime?
-  walletAddress        String?
-  currentStreak        Int               @default(0)
-  longestStreak        Int               @default(0)
-  lastShipDate         DateTime?
-  score                Int               @default(0)
+  email                 String?
+  welcomedAt            DateTime?
+  // The one-time "install the GitHub App" reminder (src/lib/email/
+  // install-reminder.ts). Set before sending, so at most once per builder.
+  installReminderSentAt DateTime?
+  walletAddress         String?
+  currentStreak         Int               @default(0)
+  longestStreak         Int               @default(0)
+  lastShipDate          DateTime?
+  score                 Int               @default(0)
   // Bumped on every score/streak write; see recomputeBuilder.
-  statsVersion         Int               @default(0)
+  statsVersion          Int               @default(0)
   // First OAuth sign-in. Null means an unclaimed profile: created by the
   // webhook because someone shipped in a repo with the App installed.
-  claimedAt            DateTime?
+  claimedAt             DateTime?
   // Off every public page (the profile 404s); ships still count privately.
-  hidden               Boolean           @default(false)
+  hidden                Boolean           @default(false)
   // The one-time claim comment on a merged PR. Set before posting, so at
   // most once per person, ever.
-  claimInvitedAt       DateTime?
+  claimInvitedAt        DateTime?
   // Public GitHub profile fields, from GET /user at sign-in.
-  name                 String?
-  bio                  String?
-  location             String?
-  blog                 String?
-  twitterUsername      String?
+  name                  String?
+  bio                   String?
+  location              String?
+  blog                  String?
+  twitterUsername       String?
   // GitHub contribution history for the last 365 days, from GraphQL at
   // sign-in. Context on profiles only: never part of score, streak or rank.
-  historyContributions Int?
-  historyCommits       Int?
-  historyPullRequests  Int?
-  historyReviews       Int?
+  historyContributions  Int?
+  historyCommits        Int?
+  historyPullRequests   Int?
+  historyReviews        Int?
   // Contributions to private repos GitHub only gives as a count.
-  historyRestricted    Int?
-  historySyncedAt      DateTime?
-  lastSignedInAt       DateTime?
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-  ships                Ship[]
-  contributionDays     ContributionDay[]
-  signIns              SignInEvent[]
+  historyRestricted     Int?
+  historySyncedAt       DateTime?
+  lastSignedInAt        DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  ships                 Ship[]
+  contributionDays      ContributionDay[]
+  signIns               SignInEvent[]
 
   @@index([score])
 }

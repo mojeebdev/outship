@@ -1,7 +1,8 @@
 // Sender identities. The EMAIL binding in wrangler.jsonc may only send as
-// these two (allowed_sender_addresses); replies go to the Zoho support inbox.
+// these (allowed_sender_addresses); replies go to the Zoho support inbox.
 export const FROM_WELCOME = { email: "welcome@mail.outship.dev", name: "outship" };
 export const FROM_RECAP = { email: "recap@mail.outship.dev", name: "outship recap" };
+export const FROM_REMINDER = { email: "reminder@mail.outship.dev", name: "outship reminder" };
 export const REPLY_TO = { email: "support@mail.outship.dev", name: "outship support" };
 
 export const SITE_URL = "https://outship.dev";
@@ -21,6 +22,18 @@ export function newToken(): string {
 }
 
 export type SendOutcome = { ok: true } | { ok: false; code: string };
+
+// Failures that will hit every recipient, so a batch sender stops and leaves
+// the rest for its next run.
+export const STOP_CODES = new Set([
+  "E_NO_BINDING",
+  "E_RATE_LIMIT_EXCEEDED",
+  "E_DAILY_LIMIT_EXCEEDED",
+  "E_SENDER_NOT_VERIFIED",
+  "E_SENDER_DOMAIN_NOT_AVAILABLE",
+  "E_ACCOUNT_SUSPENDED",
+  "E_INTERNAL_SERVER_ERROR",
+]);
 
 /**
  * Sends one email and never throws: a failed welcome must not break sign-in.

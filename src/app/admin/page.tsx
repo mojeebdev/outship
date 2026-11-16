@@ -164,7 +164,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           )}
         </section>
 
-        <section className="grid gap-4 lg:grid-cols-3">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Ring
             title="claim conversion"
             value={rate(all.claimedAfterInvite, all.invited)}
@@ -172,6 +172,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             detail="after the one-time PR comment"
           />
           <Ring title="claimed profiles" value={rate(all.claimed, all.builders)} label={`${fmt(all.claimed)} of ${fmt(all.builders)} builders signed in`} detail={`${fmt(all.unclaimed)} unclaimed, ${fmt(all.hidden)} hidden`} />
+          {/* Signed in but no App: their profile never counts a ship. The
+              reminder email and the /profile pop-up both chase this number. */}
+          <Ring
+            title="app installed"
+            value={rate(all.claimed - all.joinedNotInstalled, all.claimed)}
+            label={`${fmt(all.claimed - all.joinedNotInstalled)} of ${fmt(all.claimed)} signed-in builders installed the app`}
+            detail={`${fmt(all.joinedNotInstalled)} yet to install · ${fmt(all.installReminded)} reminded by email`}
+          />
           <Ring
             title="verified receipts"
             value={rate(all.verifiedAttestations, all.attestations)}
@@ -203,6 +211,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             {[
               ["builders", all.builders],
               ["claimed", all.claimed],
+              ["joined, no app", all.joinedNotInstalled],
               ["ships", all.ships],
               ["public ships", all.publicShips],
               ["imported ships", all.importedShips],

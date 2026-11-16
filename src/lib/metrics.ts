@@ -122,6 +122,10 @@ export type Totals = {
   builders: number;
   claimed: number;
   unclaimed: number;
+  /** Signed in, but the GitHub App isn't installed: nothing they ship counts. */
+  joinedNotInstalled: number;
+  /** Builders sent the one-time install reminder (src/lib/email/install-reminder.ts). */
+  installReminded: number;
   hidden: number;
   ships: number;
   publicShips: number;
@@ -145,6 +149,8 @@ export async function totals(d1: D1Database): Promise<Totals> {
         (SELECT COUNT(*) FROM "Builder") AS builders,
         (SELECT COUNT(*) FROM "Builder" WHERE "claimedAt" IS NOT NULL) AS claimed,
         (SELECT COUNT(*) FROM "Builder" WHERE "hidden" = 1) AS hidden,
+        (SELECT COUNT(*) FROM "Builder" WHERE "claimedAt" IS NOT NULL AND "installationId" IS NULL) AS joinedNotInstalled,
+        (SELECT COUNT(*) FROM "Builder" WHERE "installReminderSentAt" IS NOT NULL) AS installReminded,
         (SELECT COUNT(*) FROM "Ship") AS ships,
         (SELECT COUNT(*) FROM "Ship" WHERE "isPrivate" = 0) AS publicShips,
         (SELECT COUNT(*) FROM "Ship" WHERE "source" = 'BACKFILL') AS importedShips,
@@ -166,6 +172,8 @@ export async function totals(d1: D1Database): Promise<Totals> {
     builders: r.builders,
     claimed: r.claimed,
     unclaimed: r.builders - r.claimed,
+    joinedNotInstalled: r.joinedNotInstalled,
+    installReminded: r.installReminded,
     hidden: r.hidden,
     ships: r.ships,
     publicShips: r.publicShips,
