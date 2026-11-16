@@ -136,6 +136,98 @@ this is the only reminder you'll get. already installed it? you're all set: ${SI
   };
 }
 
+export type HistoryReady = {
+  login: string;
+  name: string | null;
+  score: number;
+  imported: number;
+  /** Joined while the import was switched off: say sorry for the wait. */
+  apology: boolean;
+  /** A ready-made "share on X" link for their profile. */
+  shareHref: string;
+};
+
+/**
+ * Sent once from Mojeeb, when a builder's last 12 months have been imported:
+ * their points, how many past ships came in, and a nudge to share and invite.
+ */
+export function historyReadyEmail(data: HistoryReady): Email {
+  const first = data.name?.trim().split(/\s+/)[0] || `@${data.login}`;
+  const points = data.score.toLocaleString("en-US");
+  const ships = `${data.imported.toLocaleString("en-US")} ship${data.imported === 1 ? "" : "s"}`;
+  const profile = `${SITE_URL}/@${data.login}`;
+  const invite = `${SITE_URL}/profile#invite`;
+  const opening = data.apology
+    ? "i owe you an apology. while cleaning up some code, i accidentally switched off the part of outship that imports your last 12 months of github work, so your all-time points showed 0 when you joined. that's on me, and i'm sorry. it's fixed now, and your history is in."
+    : "outship just finished importing your last 12 months of github work. your history is in.";
+  return {
+    subject: "your last 12 months are on outship 🚢",
+    html: layout(
+      `<p style="margin:0 0 14px">hey ${escapeHtml(first)},</p>
+<p style="margin:0 0 18px">${escapeHtml(opening)}</p>
+<p style="margin:0 0 4px;font-size:28px;font-weight:600;color:${VOID}">${escapeHtml(points)} points</p>
+<p style="margin:0 0 22px;color:${MUTED}">${escapeHtml(ships)} from the last 12 months</p>
+<p style="margin:0 0 22px">${button(profile, "see your profile")}</p>
+<p style="margin:0 0 14px">proud of it? <a href="${escapeHtml(data.shareHref)}" style="color:${BLUE}">share it on X</a>, and <a href="${escapeHtml(invite)}" style="color:${BLUE}">invite the builders you know</a>. every one who joins makes the board more fun to climb.</p>
+<p style="margin:0 0 4px">thanks for being one of the first. it means a lot.</p>
+<p style="margin:14px 0 0">Mojeeb<br><span style="color:${MUTED}">founder, outship<br>BlindspotLab</span></p>`,
+      STANDARD_FOOTER,
+    ),
+    text: `hey ${first},
+
+${opening}
+
+${points} points
+${ships} from the last 12 months
+
+see your profile: ${profile}
+
+proud of it? share it on X: ${data.shareHref}
+and invite the builders you know: ${invite}
+every one who joins makes the board more fun to climb.
+
+thanks for being one of the first. it means a lot.
+
+Mojeeb
+founder, outship
+BlindspotLab`,
+  };
+}
+
+/**
+ * A builder's invite to a friend, from invite@ as "{inviter} via outship".
+ * Fixed wording: the inviter can't add text. Every one carries a link that
+ * stops all outship email to the address.
+ */
+export function inviteEmail({ inviterLogin, inviterDisplay, token }: { inviterLogin: string; inviterDisplay: string; token: string }): Email {
+  const join = `${SITE_URL}/api/auth/github/login?ref=${encodeURIComponent(inviterLogin)}`;
+  const profile = `${SITE_URL}/@${inviterLogin}`;
+  const optOut = `${SITE_URL}/invite/opt-out?token=${encodeURIComponent(token)}`;
+  const who = escapeHtml(inviterDisplay);
+  const handle = escapeHtml(inviterLogin);
+  return {
+    subject: `${inviterDisplay} invited you to outship`,
+    html: layout(
+      `<p style="margin:0 0 14px">${who} (<a href="${escapeHtml(profile)}" style="color:${BLUE}">@${handle}</a>) thinks you should be on outship.</p>
+<p style="margin:0 0 14px">outship turns what you actually ship into proof: pushes, merged PRs and releases, verified by github, scored and ranked, with receipts you can put onchain on base. your last 12 months count from day one.</p>
+<p style="margin:0 0 22px">${button(join, "join with github")}</p>
+<p style="margin:0;color:${MUTED};font-size:13px">ideas are free. shipping isn't.</p>`,
+      `you got this because @${handle} invited you; outship won't send you another invite. <a href="${escapeHtml(optOut)}" style="color:${MUTED}">never email me again</a>.`,
+    ),
+    text: `${inviterDisplay} (@${inviterLogin}) thinks you should be on outship.
+
+outship turns what you actually ship into proof: pushes, merged PRs and releases, verified by github, scored and ranked, with receipts you can put onchain on base. your last 12 months count from day one.
+
+join with github: ${join}
+their profile: ${profile}
+
+ideas are free. shipping isn't.
+
+you got this because @${inviterLogin} invited you; outship won't send you another invite.
+never email me again: ${optOut}`,
+  };
+}
+
 export type RecapData = {
   weekLabel: string;
   totalShips: number;

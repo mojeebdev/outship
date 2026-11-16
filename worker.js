@@ -10,6 +10,8 @@ import nextHandler from "./.open-next/worker.js";
 import { expireStaleStreaks } from "./src/lib/expire-streaks";
 import { sendWeeklyRecap } from "./src/lib/email/weekly-recap";
 import { sendInstallReminders } from "./src/lib/email/install-reminder";
+import { sendHistoryReadyEmails } from "./src/lib/email/history-ready";
+import { adminLogins } from "./src/lib/admin-logins";
 import { CRON_HEADER, cronToken } from "./src/lib/cron-auth";
 
 // Must match the crons in wrangler.jsonc.
@@ -88,6 +90,14 @@ const worker = {
       const result = await sendInstallReminders(env.DB, env.EMAIL);
       if (result.sent || result.failed || result.stoppedOn) {
         console.log("install-reminder:", JSON.stringify(result));
+      }
+      // Once a builder's 12-month import is done: one email from Mojeeb.
+      // Admins (outship's own account) are skipped.
+      const history = await sendHistoryReadyEmails(env.DB, env.EMAIL, {
+        skipLogins: adminLogins(env.ADMIN_GITHUB_LOGINS),
+      });
+      if (history.sent || history.failed || history.stoppedOn) {
+        console.log("history-ready:", JSON.stringify(history));
       }
     } else {
       console.warn(`scheduled: no job for cron "${controller.cron}"`);

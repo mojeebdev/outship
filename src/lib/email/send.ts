@@ -3,6 +3,10 @@
 export const FROM_WELCOME = { email: "welcome@mail.outship.dev", name: "outship" };
 export const FROM_RECAP = { email: "recap@mail.outship.dev", name: "outship recap" };
 export const FROM_REMINDER = { email: "reminder@mail.outship.dev", name: "outship reminder" };
+/** Personal mail from outship's founder; replies go to the same inbox. */
+export const FROM_FOUNDER = { email: "mojeeb@mail.outship.dev", name: "Mojeeb from outship" };
+/** Friend invites. The name is set per invite: "{inviter} via outship". */
+export const INVITE_ADDRESS = "invite@mail.outship.dev";
 export const REPLY_TO = { email: "support@mail.outship.dev", name: "outship support" };
 
 export const SITE_URL = "https://outship.dev";
@@ -47,6 +51,8 @@ export async function sendEmail(
     from: { email: string; name: string };
     email: Email;
     headers?: Record<string, string>;
+    /** Where replies go; support@ unless set. */
+    replyTo?: { email: string; name: string };
   },
 ): Promise<SendOutcome> {
   if (!binding) {
@@ -57,7 +63,7 @@ export async function sendEmail(
     await binding.send({
       to: message.to,
       from: message.from,
-      replyTo: REPLY_TO,
+      replyTo: message.replyTo ?? REPLY_TO,
       subject: message.email.subject,
       html: message.email.html,
       text: message.email.text,

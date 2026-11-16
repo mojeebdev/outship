@@ -46,6 +46,12 @@ model Builder {
   // The one-time "install the GitHub App" reminder (src/lib/email/
   // install-reminder.ts). Set before sending, so at most once per builder.
   installReminderSentAt DateTime?
+  // The one "your last 12 months are in" email (src/lib/email/
+  // history-ready.ts). Set before sending, so at most once per builder.
+  historyEmailedAt      DateTime?
+  // Who invited them (a Builder id), from an invite's ?ref= join link.
+  referredById          String?
+  invites               Invite[]
   walletAddress         String?
   currentStreak         Int               @default(0)
   longestStreak         Int               @default(0)
@@ -288,4 +294,19 @@ model ApiUsage {
   count Int    @default(0)
 
   @@id([keyId, day])
+}
+
+/// A builder's email invite to a friend (src/lib/invites.ts). One per address,
+/// ever. token is the friend's "never email me again" link.
+model Invite {
+  id         String    @id @default(cuid())
+  inviter    Builder   @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  inviterId  String
+  email      String    @unique
+  token      String    @unique
+  createdAt  DateTime  @default(now())
+  sentAt     DateTime?
+  optedOutAt DateTime?
+
+  @@index([inviterId])
 }

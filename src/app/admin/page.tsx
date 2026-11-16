@@ -212,6 +212,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               ["builders", all.builders],
               ["claimed", all.claimed],
               ["joined, no app", all.joinedNotInstalled],
+              ["invites sent", all.invitesSent],
+              ["joined via invite", all.joinedViaInvite],
               ["ships", all.ships],
               ["public ships", all.publicShips],
               ["imported ships", all.importedShips],
