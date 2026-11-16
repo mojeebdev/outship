@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { authErrorPage } from "@/lib/auth/error-page";
+import { REF_COOKIE, validRef } from "@/lib/invites";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,13 @@ export async function GET(request: Request) {
     "Set-Cookie",
     `${OAUTH_STATE_COOKIE}=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`,
   );
+
+  // An invite's join link: remember who invited them through the sign-in, so
+  // the callback can record it (Builder.referredById) for a new builder.
+  const ref = validRef(new URL(request.url).searchParams.get("ref"));
+  if (ref) {
+    headers.append("Set-Cookie", `${REF_COOKIE}=${ref}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`);
+  }
 
   return new Response(null, { status: 302, headers });
 }

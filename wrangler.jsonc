@@ -51,7 +51,9 @@
 			"allowed_sender_addresses": [
 				"welcome@mail.outship.dev",
 				"recap@mail.outship.dev",
-				"reminder@mail.outship.dev"
+				"reminder@mail.outship.dev",
+				"mojeeb@mail.outship.dev",
+				"invite@mail.outship.dev"
 			]
 		}
 	],

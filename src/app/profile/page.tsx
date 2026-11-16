@@ -29,6 +29,9 @@ import { BuilderAvatar, ImportedNote } from "@/components/builder-bits";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
 import { ProfileSidebar } from "@/components/profile-sidebar";
 import { InstallAppPrompt } from "@/components/install-app-prompt";
+import { InviteFriends } from "@/components/invite-friends";
+import { INVITES_PER_BUILDER, listInvites } from "@/lib/invites";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export const metadata: Metadata = {
   title: "profile — outship",
@@ -59,6 +62,12 @@ export default async function ProfilePage() {
   }
 
   const db = await getDb();
+  const { env } = await getCloudflareContext({ async: true });
+  const [invites, invitesUsedRow] = await Promise.all([
+    listInvites(env.DB, builder.id),
+    env.DB.prepare(`SELECT COUNT(*) AS n FROM "Invite" WHERE "inviterId" = ?1`).bind(builder.id).first<{ n: number }>(),
+  ]);
+  const invitesUsed = Number(invitesUsedRow?.n ?? 0);
   const [facts, allShips, recentShips, subscriber, installation, heatmap] = await Promise.all([
     loadProfileFacts(db, builder, { publicOnly: false }),
     db.ship.findMany({
@@ -85,6 +94,7 @@ export default async function ProfilePage() {
     { id: "activity", label: "activity" },
     { id: "ships", label: "ship feed" },
     { id: "badge", label: "README badge" },
+    { id: "invite", label: "invite friends" },
     { id: "settings", label: "settings" },
   ];
   const sectionClass = "flex scroll-mt-20 flex-col gap-4 lg:scroll-mt-6";
@@ -315,6 +325,10 @@ export default async function ProfilePage() {
 
             <section id="badge" aria-label="README badge" className={sectionClass}>
               <ReadmeBadgeBox login={builder.githubLogin} hidden={builder.hidden} />
+            </section>
+
+            <section id="invite" aria-label="invite friends" className={sectionClass}>
+              <InviteFriends initial={invites} remaining={Math.max(0, INVITES_PER_BUILDER - invitesUsed)} limit={INVITES_PER_BUILDER} />
             </section>
 
             <section id="settings" className={sectionClass}>

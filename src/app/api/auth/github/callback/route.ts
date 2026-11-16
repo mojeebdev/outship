@@ -5,6 +5,7 @@ import { createSessionCookieValue, readCookie, sessionCookieHeader } from "@/lib
 import { fetchPrimaryEmail, fetchUserInstallationId } from "@/lib/github-app";
 import { FROM_WELCOME, sendEmail } from "@/lib/email/send";
 import { builderWelcomeEmail } from "@/lib/email/templates";
+import { REF_COOKIE, validRef } from "@/lib/invites";
 import { importContributionHistory, shouldSyncHistory } from "@/lib/history";
 
 export const dynamic = "force-dynamic";
@@ -132,6 +133,10 @@ async function signIn(request: Request) {
 
   const db = await getDb();
   const profile = profileFields(user);
+  // Whether this is their first sign-in, before the upsert below claims it:
+  // only then does an invite's ref count.
+  const existing = await db.builder.findUnique({ where: { githubId: user.id }, select: { claimedAt: true } });
+  const firstSignIn = !existing?.claimedAt;
   let builder = await db.builder.upsert({
     where: { githubId: user.id },
     // undefined (GitHub didn't answer) leaves the stored value as it was.
@@ -151,6 +156,15 @@ async function signIn(request: Request) {
   if (!builder.claimedAt) {
     await db.builder.updateMany({ where: { id: builder.id, claimedAt: null }, data: { claimedAt: new Date() } });
     builder = { ...builder, claimedAt: new Date() };
+  }
+
+  // Joined through a friend's invite: record who, once, never themselves.
+  const ref = validRef(readCookie(request.headers.get("cookie"), REF_COOKIE));
+  if (firstSignIn && ref && ref.toLowerCase() !== builder.githubLogin.toLowerCase()) {
+    const inviter = await db.builder.findUnique({ where: { githubLogin: ref }, select: { id: true } });
+    if (inviter) {
+      await db.builder.updateMany({ where: { id: builder.id, referredById: null }, data: { referredById: inviter.id } });
+    }
   }
 
   // For the admin KPIs: who signed in, and when. Nothing else.
@@ -198,6 +212,10 @@ async function signIn(request: Request) {
   headers.append(
     "Set-Cookie",
     `${OAUTH_STATE_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
+  );
+  headers.append(
+    "Set-Cookie",
+    `${REF_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
   );
 
   return new Response(null, { status: 302, headers });

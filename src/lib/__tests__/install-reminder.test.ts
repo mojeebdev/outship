@@ -5,36 +5,17 @@
  */
 
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
-import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 import { sendInstallReminders } from "../email/install-reminder";
 import { installReminderEmail } from "../email/templates";
+import { d1, fakeEmail, migratedDb } from "./sqlite-d1";
 
-const MIGRATIONS = join(process.cwd(), "migrations");
 const NOW = new Date("2026-11-16T12:00:00.000Z");
 const minutesAgo = (minutes: number) => new Date(NOW.getTime() - minutes * 60_000).toISOString();
 
-function d1(db: DatabaseSync): D1Database {
-  const prepare = (sql: string) => {
-    const statement = db.prepare(sql);
-    const bound = (args: unknown[]) => ({
-      bind: (...more: unknown[]) => bound([...args, ...more]),
-      all: async () => ({ results: statement.all(...(args as never[])) }),
-      run: async () => ({ meta: { changes: Number(statement.run(...(args as never[])).changes) } }),
-    });
-    return bound([]);
-  };
-  return { prepare } as unknown as D1Database;
-}
-
 function setup() {
-  const db = new DatabaseSync(":memory:");
-  for (const file of readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort()) {
-    db.exec(readFileSync(join(MIGRATIONS, file), "utf8"));
-  }
+  const db = migratedDb();
   let n = 0;
   const builder = (fields: { email?: string | null; claimedAt?: string | null; installationId?: number | null; reminded?: string | null }) => {
     n += 1;
@@ -50,23 +31,15 @@ function setup() {
   return { db, builder, sentAt };
 }
 
-function fakeEmail(fail?: string) {
-  const sent: { to: string; from: string; subject: string }[] = [];
-  const binding = {
-    async send(message: { to: string; from: { email: string }; subject: string }) {
-      if (fail) throw Object.assign(new Error(fail), { code: fail });
-      sent.push({ to: message.to, from: message.from.email, subject: message.subject });
-    },
-  } as unknown as SendEmail;
-  return { binding, sent };
-}
-
 test("reminds a builder 30+ minutes after sign-in when the App isn't installed", async () => {
   const { db, builder, sentAt } = setup();
   const id = builder({ claimedAt: minutesAgo(31) });
   const { binding, sent } = fakeEmail();
   assert.deepEqual(await sendInstallReminders(d1(db), binding, NOW), { sent: 1, failed: 0 });
-  assert.deepEqual(sent, [{ to: "b1@example.com", from: "reminder@mail.outship.dev", subject: "one step left: connect your repos to outship" }]);
+  assert.deepEqual(
+    sent.map(({ to, from, subject }) => ({ to, from, subject })),
+    [{ to: "b1@example.com", from: "reminder@mail.outship.dev", subject: "one step left: connect your repos to outship" }],
+  );
   assert.equal(sentAt(id), NOW.toISOString());
 });
 

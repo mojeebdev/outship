@@ -126,6 +126,9 @@ export type Totals = {
   joinedNotInstalled: number;
   /** Builders sent the one-time install reminder (src/lib/email/install-reminder.ts). */
   installReminded: number;
+  /** Friend invites sent, and builders who joined through one (src/lib/invites.ts). */
+  invitesSent: number;
+  joinedViaInvite: number;
   hidden: number;
   ships: number;
   publicShips: number;
@@ -152,6 +155,8 @@ export async function totals(d1: D1Database): Promise<Totals> {
         (SELECT COUNT(*) FROM "Builder" WHERE "hidden" = 1) AS hidden,
         (SELECT COUNT(*) FROM "Builder" WHERE "claimedAt" IS NOT NULL AND "installationId" IS NULL) AS joinedNotInstalled,
         (SELECT COUNT(*) FROM "Builder" WHERE "installReminderSentAt" IS NOT NULL) AS installReminded,
+        (SELECT COUNT(*) FROM "Invite" WHERE "sentAt" IS NOT NULL) AS invitesSent,
+        (SELECT COUNT(*) FROM "Builder" WHERE "referredById" IS NOT NULL) AS joinedViaInvite,
         (SELECT COUNT(*) FROM "Ship") AS ships,
         (SELECT COUNT(*) FROM "Ship" WHERE "isPrivate" = 0) AS publicShips,
         (SELECT COUNT(*) FROM "Ship" WHERE "source" = 'BACKFILL') AS importedShips,
@@ -178,6 +183,8 @@ export async function totals(d1: D1Database): Promise<Totals> {
     unclaimed: r.builders - r.claimed,
     joinedNotInstalled: r.joinedNotInstalled,
     installReminded: r.installReminded,
+    invitesSent: r.invitesSent,
+    joinedViaInvite: r.joinedViaInvite,
     hidden: r.hidden,
     ships: r.ships,
     publicShips: r.publicShips,
