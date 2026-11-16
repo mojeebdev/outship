@@ -9,9 +9,12 @@ import {
   PERIOD_PATHS,
   PAGE_SIZE,
   RISING_MIN_SHIPS,
+  SHOWS,
   loadLeaderboard,
   loadRising,
+  parseShow,
   type Period,
+  type Show,
 } from "@/lib/leaderboard";
 import { tierFor } from "@/lib/tiers";
 import { MERGE_POINTS, PUSH_POINTS, RELEASE_POINTS, REVIEWED_MERGE_POINTS, STREAK_CAP, STREAK_POINTS_PER_DAY } from "@/lib/score";
@@ -20,8 +23,9 @@ export type LeaderboardSearchParams = Promise<Record<string, string | string[] |
 
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
-function href(period: Period, { language, page }: { language?: string | null; page?: number }) {
+function href(period: Period, { language, page, show }: { language?: string | null; page?: number; show?: Show }) {
   const query = new URLSearchParams();
+  if (show && show !== "all") query.set("show", show);
   if (language) query.set("language", language);
   if (page && page > 1) query.set("page", String(page));
   const search = query.toString();
@@ -48,6 +52,7 @@ export async function LeaderboardView({
       period,
       language: first(params.language) ?? null,
       page: Number(first(params.page) ?? 1) || 1,
+      show: parseShow(first(params.show)),
     }),
     loadRising(db),
   ]);
@@ -68,7 +73,7 @@ export async function LeaderboardView({
         {PERIODS.map((option) => (
           <Link
             key={option}
-            href={href(option, { language: board.language })}
+            href={href(option, { language: board.language, show: board.show })}
             aria-current={option === period ? "page" : undefined}
             className={`flex-1 rounded-md px-3 py-2 text-center font-medium transition ${
               option === period ? "bg-base-blue text-white" : "text-text-muted-1 hover:text-base-blue"
@@ -113,10 +118,34 @@ export async function LeaderboardView({
         </section>
       )}
 
+      {/* All first; claimed and unclaimed as filters. Ranks don't change:
+          they're among claimed builders whatever the filter. */}
+      {board.counts.all > 0 && (
+        <nav aria-label="filter builders" className="flex flex-wrap gap-2 text-sm">
+          {SHOWS.map((option) => (
+            <Link
+              key={option}
+              href={href(period, { language: board.language, show: option })}
+              aria-current={option === board.show ? "page" : undefined}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 font-medium transition ${
+                option === board.show
+                  ? "border-void bg-void text-white"
+                  : "border-border bg-white text-text-muted-1 hover:border-void hover:text-void"
+              }`}
+            >
+              {option}
+              <span className={`text-xs ${option === board.show ? "text-white/70" : "text-text-muted-2"}`}>
+                {board.counts[option]}
+              </span>
+            </Link>
+          ))}
+        </nav>
+      )}
+
       {board.languages.length > 0 && (
         <nav aria-label="language" className="flex flex-wrap gap-2 text-xs">
           <Link
-            href={href(period, {})}
+            href={href(period, { show: board.show })}
             aria-current={board.language === null ? "page" : undefined}
             className={`rounded-full border px-3 py-1 transition ${
               board.language === null ? "border-base-blue bg-blue-tint text-base-blue" : "border-border text-text-muted-1 hover:border-base-blue"
@@ -127,7 +156,7 @@ export async function LeaderboardView({
           {board.languages.map((language) => (
             <Link
               key={language}
-              href={href(period, { language })}
+              href={href(period, { language, show: board.show })}
               aria-current={board.language === language ? "page" : undefined}
               className={`rounded-full border px-3 py-1 transition ${
                 board.language === language
@@ -141,7 +170,13 @@ export async function LeaderboardView({
         </nav>
       )}
 
-      {board.rows.length === 0 ? (
+      {board.rows.length === 0 && board.show !== "all" && board.counts.all > 0 ? (
+        <p className="rounded-lg border border-border bg-white p-8 text-center text-text-muted-1">
+          {board.show === "claimed"
+            ? `no signed-in builders on this board ${PERIOD_LABELS[period]} yet.`
+            : `no unclaimed builders on this board ${PERIOD_LABELS[period]}: everyone here has signed in.`}
+        </p>
+      ) : board.rows.length === 0 ? (
         <p className="rounded-lg border border-border bg-white p-8 text-center text-text-muted-1">
           {period === "all" && !board.language ? (
             <>
@@ -195,7 +230,7 @@ export async function LeaderboardView({
       {board.pageCount > 1 && (
         <nav aria-label="pages" className="flex items-center justify-between text-sm">
           {board.page > 1 ? (
-            <Link href={href(period, { language: board.language, page: board.page - 1 })} className="text-base-blue hover:underline">
+            <Link href={href(period, { language: board.language, page: board.page - 1, show: board.show })} className="text-base-blue hover:underline">
               ← previous {PAGE_SIZE}
             </Link>
           ) : (
@@ -205,7 +240,7 @@ export async function LeaderboardView({
             page {board.page} of {board.pageCount} · {board.total} builders
           </span>
           {board.page < board.pageCount ? (
-            <Link href={href(period, { language: board.language, page: board.page + 1 })} className="text-base-blue hover:underline">
+            <Link href={href(period, { language: board.language, page: board.page + 1, show: board.show })} className="text-base-blue hover:underline">
               next {PAGE_SIZE} →
             </Link>
           ) : (

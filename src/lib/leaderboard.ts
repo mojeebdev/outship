@@ -46,6 +46,23 @@ export function periodStart(period: Period, now: Date): Date | null {
   return null;
 }
 
+/**
+ * Who a board lists: everyone, or only claimed (signed in, ranked) or
+ * unclaimed (shipped in a repo with the App, never signed in) builders.
+ * Filtering never renumbers: a claimed builder keeps their rank among all
+ * claimed builders, and unclaimed builders are never numbered.
+ */
+export const SHOWS = ["all", "claimed", "unclaimed"] as const;
+export type Show = (typeof SHOWS)[number];
+
+export function parseShow(value: unknown): Show {
+  return value === "claimed" || value === "unclaimed" ? value : "all";
+}
+
+export function filterRows<T extends { claimed: boolean }>(rows: T[], show: Show): T[] {
+  return show === "all" ? rows : rows.filter((row) => row.claimed === (show === "claimed"));
+}
+
 export function parsePeriod(value: unknown): Period {
   return PERIODS.includes(value as Period) ? (value as Period) : "week";
 }
@@ -236,6 +253,9 @@ async function loadShips(db: Db, since: Date | null): Promise<LeaderboardShip[]>
 
 export type Leaderboard = {
   period: Period;
+  show: Show;
+  /** How many builders each filter lists on this board (before paging). */
+  counts: Record<Show, number>;
   language: string | null;
   languages: string[];
   page: number;
@@ -246,7 +266,7 @@ export type Leaderboard = {
 
 export async function loadLeaderboard(
   db: Db,
-  { period, language, page }: { period: Period; language?: string | null; page?: number },
+  { period, language, page, show = "all" }: { period: Period; language?: string | null; page?: number; show?: Show },
   now = new Date(),
 ): Promise<Leaderboard> {
   const [builders, windowShips] = await Promise.all([
@@ -257,12 +277,20 @@ export async function loadLeaderboard(
   const chosen = language && languages.includes(language) ? language : null;
   const ships = chosen ? windowShips.filter((ship) => ship.language === chosen) : windowShips;
   // A language board is about ships in that language; a streak isn't.
-  const all = rankBuilders(builders, ships, { includeStreak: period === "all" && !chosen });
+  const ranked = rankBuilders(builders, ships, { includeStreak: period === "all" && !chosen });
+  const counts: Record<Show, number> = {
+    all: ranked.length,
+    claimed: filterRows(ranked, "claimed").length,
+    unclaimed: filterRows(ranked, "unclaimed").length,
+  };
+  const all = filterRows(ranked, show);
 
   const pageCount = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
   const current = Math.min(Math.max(1, Math.floor(page ?? 1)), pageCount);
   return {
     period,
+    show,
+    counts,
     language: chosen,
     languages,
     page: current,

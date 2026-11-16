@@ -5,6 +5,8 @@ import {
   PERIODS,
   parsePeriod,
   pointsWithReachedAt,
+  filterRows,
+  parseShow,
   rankBuilders,
   risingBuilders,
   startOfMonth,
@@ -143,4 +145,15 @@ test("rising: biggest gain over last week, with at least three ships this week",
     risingBuilders(builders, ships, NOW).map((row) => [row.githubLogin, row.gain]),
     [["riser", 3 * MERGE_POINTS]],
   );
+});
+
+test("the claimed and unclaimed filters keep everyone's rank", () => {
+  const builders = [builder("a"), builder("b", { claimedAt: null }), builder("c")];
+  const ships = [ship("a", "2026-11-14T01:00:00Z"), ship("b", "2026-11-13T01:00:00Z"), ship("c", "2026-11-12T01:00:00Z", "PUSH")];
+  const rows = rankBuilders(builders, ships, { includeStreak: false });
+  assert.deepEqual(filterRows(rows, "all").map((r) => r.githubLogin), ["b", "a", "c"]);
+  assert.deepEqual(filterRows(rows, "claimed").map((r) => [r.githubLogin, r.rank]), [["a", 1], ["c", 2]]);
+  assert.deepEqual(filterRows(rows, "unclaimed").map((r) => [r.githubLogin, r.rank]), [["b", null]]);
+  assert.equal(parseShow("claimed"), "claimed");
+  assert.equal(parseShow("everyone"), "all");
 });
