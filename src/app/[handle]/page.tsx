@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/site-shell";
 import { shipDetail, shipLabel } from "@/lib/ships";
 import { getDb } from "@/lib/db";
-import { IconLock, IconShip } from "@/components/icons";
+import { IconLock, IconShip, IconX } from "@/components/icons";
+import { claimNudgeHref } from "@/lib/crew";
 import { AttestationBadge } from "@/components/attestation-badge";
 import { ConnectGithubButton } from "@/components/connect-github-button";
 import { builderForHandle, isClaimed } from "@/lib/builders";
@@ -90,6 +91,17 @@ export default async function BuilderProfilePage({
                 <ConnectGithubButton>claim with github</ConnectGithubButton>
               </div>
             </div>
+            {/* Visitors who know them can pass it on: outship never contacts
+                an unclaimed builder itself. */}
+            <a
+              href={claimNudgeHref(builder.githubLogin)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-base-blue hover:underline"
+            >
+              <IconX className="h-3.5 w-3.5" aria-hidden="true" />
+              know {builder.githubLogin}? tell them on X
+            </a>
             <p className="text-xs text-text-muted-2">
               rather not be here? sign in and switch on &ldquo;hide my
               profile&rdquo;, or email{" "}

@@ -30,6 +30,8 @@ import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-he
 import { ProfileSidebar } from "@/components/profile-sidebar";
 import { InstallAppPrompt } from "@/components/install-app-prompt";
 import { InviteFriends } from "@/components/invite-friends";
+import { CrewPanel } from "@/components/crew-panel";
+import { crewFor } from "@/lib/crew";
 import { INVITES_PER_BUILDER, listInvites } from "@/lib/invites";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
@@ -63,9 +65,10 @@ export default async function ProfilePage() {
 
   const db = await getDb();
   const { env } = await getCloudflareContext({ async: true });
-  const [invites, invitesUsedRow] = await Promise.all([
+  const [invites, invitesUsedRow, crew] = await Promise.all([
     listInvites(env.DB, builder.id),
     env.DB.prepare(`SELECT COUNT(*) AS n FROM "Invite" WHERE "inviterId" = ?1`).bind(builder.id).first<{ n: number }>(),
+    crewFor(env.DB, builder),
   ]);
   const invitesUsed = Number(invitesUsedRow?.n ?? 0);
   const [facts, allShips, recentShips, subscriber, installation, heatmap] = await Promise.all([
@@ -328,6 +331,7 @@ export default async function ProfilePage() {
             </section>
 
             <section id="invite" aria-label="invite friends" className={sectionClass}>
+              <CrewPanel crew={crew} />
               <InviteFriends initial={invites} remaining={Math.max(0, INVITES_PER_BUILDER - invitesUsed)} limit={INVITES_PER_BUILDER} />
             </section>
 
