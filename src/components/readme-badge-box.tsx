@@ -26,17 +26,15 @@ export function ReadmeBadgeBox({ login, hidden }: { login: string; hidden: boole
           <CopyButton text={text} label={`copy ${label}`} />
         </div>
       ))}
-      {/* For builders who'd rather not edit a README by hand: paste this into
-          a coding agent and it adds the badge line, and nothing else. */}
-      <div className="flex flex-col gap-2 border-t border-border pt-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-sm font-medium">or let your agent do it</p>
-            <p className="text-xs text-text-muted-2">paste this into claude, cursor, copilot or any coding agent.</p>
-          </div>
-          <CopyButton text={prompt} label="copy prompt" />
+      {/* For builders who'd rather not edit a README by hand: the button
+          copies a prompt for a coding agent, which adds the badge line and
+          nothing else. The prompt itself stays off the page to keep it short. */}
+      <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-medium">or let your agent do it</p>
+          <p className="text-xs text-text-muted-2">copy a prompt for claude, cursor, copilot or any coding agent.</p>
         </div>
-        <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded bg-cream px-3 py-2 text-xs leading-relaxed">{prompt}</pre>
+        <CopyButton text={prompt} label="copy prompt" />
       </div>
     </div>
   );
