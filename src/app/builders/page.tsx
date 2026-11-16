@@ -13,9 +13,23 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function IndexPage() {
+// All first; claimed (signed in) and unclaimed (created because they shipped
+// in a repo with the App, never signed in) as filters, with their counts.
+const FILTERS = [
+  { key: "all", label: "all" },
+  { key: "claimed", label: "claimed" },
+  { key: "unclaimed", label: "unclaimed" },
+] as const;
+type Filter = (typeof FILTERS)[number]["key"];
+
+function parseFilter(value: unknown): Filter {
+  return value === "claimed" || value === "unclaimed" ? value : "all";
+}
+
+export default async function IndexPage({ searchParams }: { searchParams: Promise<{ show?: string | string[] }> }) {
+  const show = parseFilter((await searchParams).show);
   const db = await getDb();
-  const builders = await db.builder.findMany({
+  const everyone = await db.builder.findMany({
     where: PUBLIC_BUILDER,
     orderBy: { githubLogin: "asc" },
     select: {
@@ -26,6 +40,13 @@ export default async function IndexPage() {
       _count: { select: { ships: true } },
     },
   });
+  const counts: Record<Filter, number> = {
+    all: everyone.length,
+    claimed: everyone.filter((builder) => builder.claimedAt).length,
+    unclaimed: everyone.filter((builder) => !builder.claimedAt).length,
+  };
+  const builders =
+    show === "all" ? everyone : everyone.filter((builder) => (show === "claimed") === Boolean(builder.claimedAt));
 
   return (
     <SiteShell>
@@ -37,7 +58,29 @@ export default async function IndexPage() {
           </p>
         </div>
 
-        {builders.length === 0 ? (
+        {everyone.length > 0 && (
+          <nav aria-label="filter builders" className="flex gap-1 rounded-lg border border-border bg-white p-1 text-sm">
+            {FILTERS.map(({ key, label }) => (
+              <Link
+                key={key}
+                href={key === "all" ? "/builders" : `/builders?show=${key}`}
+                aria-current={key === show ? "page" : undefined}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 font-medium transition ${
+                  key === show ? "bg-base-blue text-white" : "text-text-muted-1 hover:text-base-blue"
+                }`}
+              >
+                {label}
+                <span className={`text-xs ${key === show ? "text-white/70" : "text-text-muted-2"}`}>{counts[key]}</span>
+              </Link>
+            ))}
+          </nav>
+        )}
+
+        {everyone.length > 0 && builders.length === 0 ? (
+          <p className="rounded-lg border border-border bg-white p-8 text-center text-text-muted-1">
+            {show === "claimed" ? "nobody has signed in yet." : "no unclaimed profiles right now: everyone here has signed in."}
+          </p>
+        ) : builders.length === 0 ? (
           <p className="rounded-lg border border-border bg-white p-8 text-center text-text-muted-1">
             the directory opens once the first cohort connects github —{" "}
             <ConnectGithubButton variant="link">be the first</ConnectGithubButton>
