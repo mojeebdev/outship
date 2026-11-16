@@ -50,7 +50,8 @@
 			"name": "EMAIL",
 			"allowed_sender_addresses": [
 				"welcome@mail.outship.dev",
-				"recap@mail.outship.dev"
+				"recap@mail.outship.dev",
+				"reminder@mail.outship.dev"
 			]
 		}
 	],
@@ -60,7 +61,7 @@
 		// Mondays 09:00-11:00 UTC hourly: the weekly recap
 		// (src/lib/email/weekly-recap.ts). Runs three times so a send that
 		// stops partway resumes; anyone already sent this week is skipped.
-		"crons": ["5 0 * * *", "0 9-11 * * 1"]
+		"crons": ["5 0 * * *", "0 9-11 * * 1", "*/10 * * * *"]
 	},
 	// Plain, non-secret settings. keep_vars leaves any variable set in the
 	// dashboard alone on deploy (secrets are never touched by either).

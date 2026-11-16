@@ -28,6 +28,7 @@ import { ReadmeBadgeBox } from "@/components/readme-badge-box";
 import { BuilderAvatar, ImportedNote } from "@/components/builder-bits";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
 import { ProfileSidebar } from "@/components/profile-sidebar";
+import { InstallAppPrompt } from "@/components/install-app-prompt";
 
 export const metadata: Metadata = {
   title: "profile — outship",
@@ -152,6 +153,8 @@ export default async function ProfilePage() {
             </Link>
           </div>
         </div>
+
+        {!builder.installationId && <InstallAppPrompt installUrl={GITHUB_APP_INSTALL_URL} />}
 
         {!builder.installationId && (
           <div className="flex flex-col gap-4 rounded-lg border border-base-blue bg-white p-5 sm:flex-row sm:items-center sm:justify-between">

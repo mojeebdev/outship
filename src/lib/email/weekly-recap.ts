@@ -1,20 +1,11 @@
 import { shipPoints, type WeightClass } from "@/lib/score";
-import { FROM_RECAP, sendEmail, unsubscribeHeaders } from "./send";
+import { FROM_RECAP, STOP_CODES, sendEmail, unsubscribeHeaders } from "./send";
 import { weeklyRecapEmail, type RecapData } from "./templates";
 
 const BATCH = 50;
 
-// Failures that will hit every recipient: stop, and let the next hourly run
-// (see wrangler.jsonc) pick up where this one left off.
-const STOP_CODES = new Set([
-  "E_NO_BINDING",
-  "E_RATE_LIMIT_EXCEEDED",
-  "E_DAILY_LIMIT_EXCEEDED",
-  "E_SENDER_NOT_VERIFIED",
-  "E_SENDER_DOMAIN_NOT_AVAILABLE",
-  "E_ACCOUNT_SUSPENDED",
-  "E_INTERNAL_SERVER_ERROR",
-]);
+// On a STOP_CODES failure (one that hits every recipient) the run stops, and
+// the next hourly run (see wrangler.jsonc) picks up where it left off.
 
 /** ISO-8601 week label, e.g. "2026-W47". Weeks start on Monday. */
 export function isoWeekLabel(date: Date): string {
