@@ -4,6 +4,7 @@ import { FeedSkeleton } from "@/components/skeletons";
 import { Hero } from "@/components/hero";
 import { LiveShipFeed } from "@/components/live-ship-feed";
 import { ShipsGrid } from "@/components/ships-grid";
+import { Testimonials } from "@/components/testimonials";
 import { ManifestoTeaser } from "@/components/manifesto-teaser";
 import { FaqTeaser } from "@/components/faq-teaser";
 
@@ -20,6 +21,7 @@ export default function Home() {
         <LiveShipFeed />
       </Suspense>
       <ShipsGrid />
+      <Testimonials />
       <FaqTeaser />
       <ManifestoTeaser />
     </SiteShell>

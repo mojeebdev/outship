@@ -45,3 +45,26 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
+
+/* The home page's testimonials, once there are enough to scroll: the track
+   holds two copies of the row, so sliding it left by half loops seamlessly.
+   It stops under a pointer or keyboard focus, so a card can be read and its
+   link used, and doesn't move at all for visitors who asked for less motion
+   (the row scrolls by hand instead). */
+@keyframes testimonial-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.testimonial-track {
+  animation: testimonial-scroll var(--testimonial-duration, 60s) linear infinite;
+}
+.testimonial-track:hover,
+.testimonial-track:focus-within {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .testimonial-track {
+    animation: none;
+  }
+}
