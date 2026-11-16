@@ -19,7 +19,7 @@ const DAILY_STREAKS = "5 0 * * *";
 const WEEKLY_RECAP = "0 9-11 * * 1";
 // Every 10 minutes, so the install reminder lands 30 to 40 minutes after sign-in.
 const INSTALL_REMINDER = "*/10 * * * *";
-const BACKFILL = "*/5 * * * *";
+const BACKFILL = "*/2 * * * *";
 
 // MTA-STS (RFC 8461) for mail.outship.dev, whose mail is hosted by Zoho.
 // Sending servers fetch this over HTTPS and then refuse to deliver to any MX

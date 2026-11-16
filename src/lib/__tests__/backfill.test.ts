@@ -190,3 +190,16 @@ test("an empty repo has no history, and that's one finished page", () => {
   assert.ok(page.repo);
   assert.equal(page.nextCursor, null);
 });
+
+test("a GitHub rate limit is told apart from a real refusal", async () => {
+  const { isRateLimited } = await import("../backfill");
+  const headers = (entries: Record<string, string>) => new Headers(entries);
+  assert.equal(isRateLimited(429, headers({})), true);
+  assert.equal(isRateLimited(403, headers({ "x-ratelimit-remaining": "0" })), true);
+  assert.equal(isRateLimited(403, headers({ "retry-after": "60" })), true);
+  assert.equal(isRateLimited(403, headers({}), { message: "You have exceeded a secondary rate limit." }), true);
+  assert.equal(isRateLimited(200, headers({}), { errors: [{ type: "RATE_LIMITED", message: "API rate limit exceeded" }] }), true);
+  // A 403 that isn't a rate limit is the repo being out of reach: it fails for good.
+  assert.equal(isRateLimited(403, headers({ "x-ratelimit-remaining": "4211" }), { message: "Resource not accessible by integration" }), false);
+  assert.equal(isRateLimited(200, headers({}), { errors: [{ type: "NOT_FOUND" }] }), false);
+});

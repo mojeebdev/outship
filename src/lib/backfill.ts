@@ -258,14 +258,37 @@ export type BackfillSummary = {
   // Why nothing ran, when nothing could. The cron logs the summary, so a
   // misconfigured Worker says so instead of looking like an idle queue.
   skipped?: string;
+  /** GitHub asked us to slow down; the rest waits for the next run. */
+  rateLimited?: boolean;
 };
 
 class GithubError extends Error {
   readonly permanent: boolean;
-  constructor(message: string, permanent: boolean) {
+  /** GitHub asked us to slow down: pause the run, and don't count it against the job. */
+  readonly rateLimited: boolean;
+  constructor(message: string, permanent: boolean, rateLimited = false) {
     super(message);
     this.permanent = permanent;
+    this.rateLimited = rateLimited;
   }
+}
+
+/**
+ * Whether GitHub's answer is a rate limit rather than a real refusal. GitHub
+ * sends 429, or 403 with x-ratelimit-remaining: 0 or a retry-after header for
+ * the primary and secondary limits; GraphQL can also answer 200 with a
+ * RATE_LIMITED error. A rate limit isn't the job's fault: it must pause, not
+ * fail (a 403 otherwise means the repo can't be seen, and fails for good).
+ */
+export function isRateLimited(
+  status: number,
+  headers: { get(name: string): string | null },
+  body?: { errors?: { type?: string; message?: string }[]; message?: string } | null,
+): boolean {
+  if (status === 429) return true;
+  if (status === 403 && (headers.get("x-ratelimit-remaining") === "0" || headers.get("retry-after") !== null)) return true;
+  if (/rate limit/i.test(body?.message ?? "")) return true;
+  return (body?.errors ?? []).some((error) => error.type === "RATE_LIMITED" || /rate limit/i.test(error.message ?? ""));
 }
 
 async function githubJson(
@@ -276,10 +299,15 @@ async function githubJson(
 ): Promise<unknown> {
   const response = await installationFetch(installationId, credentials, path, init);
   if (!response) throw new GithubError("no installation token (App not configured, or the install is gone)", true);
+  const json = (await response.json().catch(() => null)) as
+    | { errors?: { type?: string; message?: string }[]; message?: string }
+    | null;
+  if (isRateLimited(response.status, response.headers, json)) {
+    throw new GithubError(`GitHub rate limit (${response.status}); resuming next run`, false, true);
+  }
   // 401/403/404: the install was removed or can't see this repo; retrying won't help.
   if ([401, 403, 404].includes(response.status)) throw new GithubError(`GitHub answered ${response.status}`, true);
-  if (!response.ok) throw new GithubError(`GitHub answered ${response.status}`, false);
-  const json = (await response.json()) as { errors?: { type?: string; message?: string }[] };
+  if (!response.ok || !json) throw new GithubError(`GitHub answered ${response.status}`, false);
   if (json.errors?.length) {
     const notFound = json.errors.some((error) => error.type === "NOT_FOUND");
     throw new GithubError(json.errors.map((error) => error.message).join("; "), notFound);
@@ -509,6 +537,12 @@ export async function runBackfill(
         },
       });
     } catch (error) {
+      if (error instanceof GithubError && error.rateLimited) {
+        // Not the job's fault: note it, keep its attempts, and stop the run.
+        await db.backfillJob.update({ where: { id: job.id }, data: { error: error.message } });
+        summary.rateLimited = true;
+        break;
+      }
       const permanent = error instanceof GithubError && error.permanent;
       const attempts = job.attempts + 1;
       const failed = permanent || attempts >= MAX_ATTEMPTS;
