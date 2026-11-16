@@ -49,6 +49,9 @@ model Builder {
   // The one "your last 12 months are in" email (src/lib/email/
   // history-ready.ts). Set before sending, so at most once per builder.
   historyEmailedAt      DateTime?
+  // The one note to a builder who uninstalled the App (src/lib/email/
+  // uninstall-note.ts). Set before sending, so at most once.
+  uninstallEmailedAt    DateTime?
   // Who invited them (a Builder id), from an invite's ?ref= join link.
   referredById          String?
   invites               Invite[]

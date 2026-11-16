@@ -228,6 +228,35 @@ never email me again: ${optOut}`,
   };
 }
 
+/**
+ * Sent once from Mojeeb, about 30 minutes after a builder uninstalls the
+ * GitHub App: what went wrong, a reply invite, and the way back.
+ */
+export function uninstallNoteEmail({ login, name }: { login: string; name: string | null }): Email {
+  const first = name?.trim().split(/\s+/)[0] || `@${login}`;
+  return {
+    subject: "was something off with outship?",
+    html: layout(
+      `<p style="margin:0 0 14px">hey ${escapeHtml(first)},</p>
+<p style="margin:0 0 14px">i saw you removed the outship app from github. no hard feelings. i'd just love to know why: was something confusing, or not working the way you expected? hit reply and tell me. i read every one.</p>
+<p style="margin:0 0 22px">if you'd like to give it another go, it takes a minute, and your last 12 months of releases, merged PRs and commits come in as soon as you install.</p>
+<p style="margin:0 0 22px">${button(GITHUB_APP_INSTALL_URL, "install the github app")}</p>
+<p style="margin:14px 0 0">Mojeeb<br><span style="color:${MUTED}">founder, outship<br>BlindspotLab</span></p>`,
+      STANDARD_FOOTER,
+    ),
+    text: `hey ${first},
+
+i saw you removed the outship app from github. no hard feelings. i'd just love to know why: was something confusing, or not working the way you expected? hit reply and tell me. i read every one.
+
+if you'd like to give it another go, it takes a minute, and your last 12 months of releases, merged PRs and commits come in as soon as you install:
+${GITHUB_APP_INSTALL_URL}
+
+Mojeeb
+founder, outship
+BlindspotLab`,
+  };
+}
+
 export type RecapData = {
   weekLabel: string;
   totalShips: number;

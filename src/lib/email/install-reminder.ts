@@ -40,6 +40,9 @@ export async function sendInstallReminders(
           AND "email" IS NOT NULL
           AND "claimedAt" IS NOT NULL
           AND "installReminderSentAt" IS NULL
+          -- Never installed at all: someone who installed and then removed
+          -- it gets the uninstall note instead (uninstall-note.ts).
+          AND NOT EXISTS (SELECT 1 FROM "Installation" i WHERE lower(i."accountLogin") = lower("Builder"."githubLogin"))
           AND julianday("claimedAt") <= julianday(?1)
           AND julianday("claimedAt") > julianday(?2)
         ORDER BY "claimedAt"

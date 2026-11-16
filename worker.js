@@ -11,6 +11,7 @@ import { expireStaleStreaks } from "./src/lib/expire-streaks";
 import { sendWeeklyRecap } from "./src/lib/email/weekly-recap";
 import { sendInstallReminders } from "./src/lib/email/install-reminder";
 import { sendHistoryReadyEmails } from "./src/lib/email/history-ready";
+import { sendUninstallNotes } from "./src/lib/email/uninstall-note";
 import { adminLogins } from "./src/lib/admin-logins";
 import { CRON_HEADER, cronToken } from "./src/lib/cron-auth";
 
@@ -98,6 +99,13 @@ const worker = {
       });
       if (history.sent || history.failed || history.stoppedOn) {
         console.log("history-ready:", JSON.stringify(history));
+      }
+      // Uninstalled the App 30+ minutes ago and didn't come back: one note.
+      const uninstall = await sendUninstallNotes(env.DB, env.EMAIL, {
+        skipLogins: adminLogins(env.ADMIN_GITHUB_LOGINS),
+      });
+      if (uninstall.sent || uninstall.failed || uninstall.stoppedOn) {
+        console.log("uninstall-note:", JSON.stringify(uninstall));
       }
     } else {
       console.warn(`scheduled: no job for cron "${controller.cron}"`);
