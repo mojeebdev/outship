@@ -51,7 +51,7 @@ export function Testimonials({ items = TESTIMONIALS }: { items?: Testimonial[] }
           <h2 id="testimonials-heading" className="text-3xl font-medium">
             what builders are saying
           </h2>
-          <p className="text-text-muted-1">real posts from builders on x, in their own words.</p>
+          <p className="text-text-muted-1">kind words from builders, in their own words.</p>
         </div>
 
         {scrolling ? (
