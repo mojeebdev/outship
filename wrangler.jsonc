@@ -63,9 +63,10 @@
 		// Mondays 09:00-11:00 UTC hourly: the weekly recap
 		// (src/lib/email/weekly-recap.ts). Runs three times so a send that
 		// stops partway resumes; anyone already sent this week is skipped.
-		// */5: one slice of the 12-month backfill (src/lib/backfill.ts), until
-		// every installation's history is in. */10: the install reminder.
-		"crons": ["5 0 * * *", "0 9-11 * * 1", "*/5 * * * *", "*/10 * * * *"]
+		// */2: one slice of the 12-month backfill (src/lib/backfill.ts), until
+		// every installation's history is in; an idle run costs a couple of
+		// queries. */10: the install reminder and the history-ready email.
+		"crons": ["5 0 * * *", "0 9-11 * * 1", "*/2 * * * *", "*/10 * * * *"]
 	},
 	// Plain, non-secret settings. keep_vars leaves any variable set in the
 	// dashboard alone on deploy (secrets are never touched by either).
@@ -75,12 +76,14 @@
 		// account id isn't a secret: it's in every dashboard URL. The API token
 		// that reads analytics is the CLOUDFLARE_ANALYTICS_TOKEN secret.
 		"CLOUDFLARE_ACCOUNT_ID": "1c44f0a287a8d8b44aa136f42ae9e64b",
-		// GitHub requests per 5-minute backfill run (src/lib/backfill.ts). The
+		// GitHub requests per 2-minute backfill run (src/lib/backfill.ts). The
 		// code's default of 12 suits the free plan's 50 subrequests. On the paid
 		// plan's 1,000, each page costs about 6 (the GitHub call plus the D1
 		// reads and writes that store it), so 120 pages (~720) leaves headroom:
-		// a run that hits the limit fails partway. That's 1,440 GitHub requests
-		// an hour, inside GitHub's 5,000 per installation.
+		// a run that hits the limit fails partway. Faster imports come from
+		// running more often, not from bigger runs: 3,600 GitHub requests an
+		// hour, under GitHub's 5,000 per installation, and a rate limit only
+		// pauses the import until the next run.
 		"BACKFILL_REQUEST_BUDGET": "120"
 	},
 	"observability": {
