@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "privacy — outship",
 };
 
-const UPDATED = "november 15, 2026";
+const UPDATED = "november 17, 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -98,6 +98,15 @@ export default function PrivacyPage() {
             and how to claim or hide it. it happens at most once per person,
             ever, and repository owners can switch it off. we never use commit
             email addresses to contact anyone.
+          </p>
+          <p>
+            what the outship github app is allowed to do, as github&apos;s
+            install screen shows it: read-only access to repository contents
+            (github puts commits and releases under that one permission; we
+            only ask for releases, pull requests and commits, never files or
+            diffs, and store none of your code), and read and write access to
+            pull requests. that write access is used for one thing, the
+            comment above. the app can&apos;t change your code.
           </p>
           <p>
             to take a profile down, sign in with github and switch on

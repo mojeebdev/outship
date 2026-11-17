@@ -139,7 +139,7 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
       {
         question: "does outship read my code?",
         featured: true,
-        text: "no. outship never asks github for your files, code or diffs. for the repos where the app is installed it records only that a ship happened: a published release, a pull request merged into the default branch or a push to it, with the repo name, the release tag or pull request number, the commit id, the time and whether the repo is private. you choose which repos the app can see, even just one, and can change that or uninstall it on github any time. github groups commits, releases and files under one “contents” permission, so its install screen shows that; outship's code only asks for releases, pull requests and commits, and nothing from your code is stored. the privacy policy lists exactly what we keep.",
+        text: "no. outship never asks github for your files, code or diffs. for the repos where the app is installed it records only that a ship happened: a published release, a pull request merged into the default branch or a push to it, with the repo name, the release tag or pull request number, the commit id, the time and whether the repo is private. you choose which repos the app can see, even just one, and can change that or uninstall it on github any time. github groups commits, releases and files under one “contents” permission, so its install screen shows that; outship's code only asks for releases, pull requests and commits, and nothing from your code is stored. the app's access to your files is read-only, so it can't change your code; its one write permission is on pull requests, used only for the one-time comment that tells a builder their profile exists. the privacy policy lists exactly what we keep.",
         answer: (
           <>
             no. outship never asks github for your files, code or diffs. for
@@ -152,7 +152,11 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
             github groups commits, releases and files under one
             &ldquo;contents&rdquo; permission, so its install screen shows
             that; outship&apos;s code only asks for releases, pull requests
-            and commits, and nothing from your code is stored. the{" "}
+            and commits, and nothing from your code is stored. the
+            app&apos;s access to your files is read-only, so it can&apos;t
+            change your code; its one write permission is on pull requests,
+            used only for the one-time comment that tells a builder their
+            profile exists. the{" "}
             <Link href="/privacy" className={link}>
               privacy policy
             </Link>{" "}
