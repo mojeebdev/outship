@@ -137,6 +137,28 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
     heading: "privacy",
     faqs: [
       {
+        question: "does outship read my code?",
+        featured: true,
+        text: "no. outship never asks github for your files, code or diffs. for the repos where the app is installed it records only that a ship happened: a published release, a pull request merged into the default branch or a push to it, with the repo name, the release tag or pull request number, the commit id, the time and whether the repo is private. you choose which repos the app can see, even just one, and can change that or uninstall it on github any time. github's install screen lists exactly what the app is allowed to access, and the privacy policy lists exactly what we keep.",
+        answer: (
+          <>
+            no. outship never asks github for your files, code or diffs. for
+            the repos where the app is installed it records only that a ship
+            happened: a published release, a pull request merged into the
+            default branch or a push to it, with the repo name, the release
+            tag or pull request number, the commit id, the time and whether
+            the repo is private. you choose which repos the app can see, even
+            just one, and can change that or uninstall it on github any time.
+            github&apos;s install screen lists exactly what the app is allowed
+            to access, and the{" "}
+            <Link href="/privacy" className={link}>
+              privacy policy
+            </Link>{" "}
+            lists exactly what we keep.
+          </>
+        ),
+      },
+      {
         question: "do private repos count?",
         featured: true,
         text: "yes. ships from private repos add to your score and streak, but their repo name and tag never appear on public pages, share cards or the recap. only you see them, on your own profile, and they can't be attested onchain.",
@@ -157,6 +179,10 @@ export const FAQ_GROUPS: { heading: string; faqs: Faq[] }[] = [
             has the full list.
           </>
         ),
+      },
+      {
+        question: "why do i have to sign in with github to claim my profile?",
+        text: "because your profile, streak and rank are yours, and only signing in proves it. a profile link or username proves nothing: anyone could type yours. signing in also protects onchain receipts: you can only attest your own ships, and your wallet is tied to your profile, which matters because nothing onchain can be undone. you don't need to sign in to look at a builder's public profile.",
       },
       {
         question: "why is there a profile for me i never made?",
