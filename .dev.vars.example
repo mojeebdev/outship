@@ -9,3 +9,5 @@ GITHUB_APP_CLIENT_SECRET=
 SESSION_SECRET=
 OUTSHIP_ATTESTER_PRIVATE_KEY=
 BASE_RPC_URL=
+# Optional: set to the deployed OUTSHIP token address to preview /token locally.
+OUTSHIP_TOKEN_ADDRESS=
