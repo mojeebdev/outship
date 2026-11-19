@@ -13,6 +13,9 @@ declare global {
     // Base JSON-RPC endpoint for verifying attestations; falls back to Base's
     // public endpoint when unset.
     BASE_RPC_URL?: string;
+    // Public OUTSHIP token contract address. Add the o1 Exchange deployment
+    // address here after launch; /token reads it at request time.
+    OUTSHIP_TOKEN_ADDRESS?: string;
     // GitHub requests per 5-minute backfill run (default 12, safe on the
     // Workers free plan). Raise it on a paid plan to import history faster.
     BACKFILL_REQUEST_BUDGET?: string;
