@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { isTokenLive } from "../token";
+import { getTokenAddress } from "../token";
 
 const SCORING_FILES = [
   "../score.ts",
@@ -31,7 +31,15 @@ test("scoring, ranking, streaks and visibility never touch the token or balances
   }
 });
 
-test("without NEXT_PUBLIC_TOKEN_ADDRESS the token isn't live", () => {
-  // The test environment never sets it.
-  assert.equal(isTokenLive(), false);
+test("an unset or malformed contract address is not published", () => {
+  assert.equal(getTokenAddress(undefined), "");
+  assert.equal(getTokenAddress(""), "");
+  assert.equal(getTokenAddress("not-an-address"), "");
+});
+
+test("a valid contract address is returned checksummed", () => {
+  assert.equal(
+    getTokenAddress("0x000000000000000000000000000000000000dead"),
+    "0x000000000000000000000000000000000000dEaD",
+  );
 });

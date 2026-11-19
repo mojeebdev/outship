@@ -72,6 +72,8 @@
 	// dashboard alone on deploy (secrets are never touched by either).
 	"keep_vars": true,
 	"vars": {
+		// Official OUTSHIP token on Base, launched via o1 Exchange.
+		"OUTSHIP_TOKEN_ADDRESS": "0xb28b07a03f0bcab161032fed9d318be38a06aa01",
 		// For the admin panel's visitor numbers (src/lib/cf-analytics.ts). An
 		// account id isn't a secret: it's in every dashboard URL. The API token
 		// that reads analytics is the CLOUDFLARE_ANALYTICS_TOKEN secret.

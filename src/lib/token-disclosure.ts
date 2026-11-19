@@ -1,37 +1,19 @@
-// Every word of the token disclosure, in one place, so it's reviewed (and
-// corrected) as one thing. Lowercase and plain like the rest of the site.
-//
-// TODO(token): fill in every TODO below from the launch's actual onchain
-// parameters before setting NEXT_PUBLIC_TOKEN_ADDRESS. The page renders these
-// values as written, so a placeholder left here would be published.
-
-export const TOKEN_NAME = "TODO: token name";
-export const TOKEN_SYMBOL = "TODO: symbol";
-
-/** The fee recipients set at launch and each one's share of trading fees. */
-export const FEE_RECIPIENTS = [
-  {
-    label: "development of outship",
-    share: "TODO: %",
-    address: "TODO: 0x… recipient address",
-  },
-  {
-    label: "shipper rewards wallet",
-    share: "TODO: %",
-    address: "TODO: 0x… recipient address",
-  },
-] as const;
-
-export const TEAM_ALLOCATION = "TODO: % of supply";
-export const TEAM_VESTING = "TODO: vesting schedule, e.g. a cliff then linear unlock, and the vault address";
+// Public-facing OUTSHIP token disclosure. Keep claims factual and do not
+// imply equity, revenue rights, guaranteed utility or investment returns.
+export const TOKEN_NAME = "Outship";
+export const TOKEN_SYMBOL = "OUTSHIP";
 
 export const DISCLOSURE = {
-  what: `${TOKEN_NAME} (${TOKEN_SYMBOL}) is a token on base, launched through clanker. it's a separate thing from outship's scores, ranks and attestations.`,
-  fees: "trading fees from the token's liquidity pool go to the recipients set at launch: development of outship, and a wallet for rewarding shippers.",
-  fixed: "the fee split is fixed onchain by the launch contract. outship can't change it, and anyone can check it on basescan.",
-  team: `the team holds ${TEAM_ALLOCATION}, vesting as follows: ${TEAM_VESTING}.`,
+  what:
+    "OUTSHIP is the community token associated with Outship, a developer reputation network built around proof of work shipped. Outship helps people make GitHub-verified releases, merged pull requests, contributions and shipping streaks easier to discover, with onchain attestations on Base.",
+  community:
+    "The token is intended to give the Outship community a shared identity around building and shipping. Any future token-related community features or incentives will be announced separately with their rules and funding clearly explained. Holding OUTSHIP does not guarantee access, rewards or services.",
+  product:
+    "OUTSHIP is separate from the Outship product and from BlindspotLab Limited. The token does not represent shares, equity, beneficial ownership or intellectual property rights in either. The Outship product remains governed by its own terms and development roadmap.",
+  trading:
+    "OUTSHIP is launched through o1 Exchange on Base with a USDC trading pair. Trading, liquidity, fees and other market mechanics are governed by the launch configuration and the relevant onchain contracts. Review the live contract and launch details independently before interacting. Market price can be volatile and liquidity can change.",
   notInvestment:
-    "this isn't an investment product. there's no promise of returns, no promise of value, and no promise outship will buy, support or list it anywhere. tokens can lose all their value. don't buy what you can't afford to lose.",
+    "OUTSHIP is a speculative community token, not an investment product. It gives no right to profits, dividends, revenue, repayment or guaranteed returns. No price, liquidity, exchange listing, future utility or buyback is promised. You may lose the entire amount you spend. Do your own research and never spend money you cannot afford to lose.",
   noScore:
-    "the token never affects score or rank. holding it, buying it or paying with it changes nothing about anyone's score, rank, streak or visibility on outship. only ships github verifies do.",
+    "The token never affects score or rank. Holding, buying or selling OUTSHIP changes nothing about anyone's score, rank, streak or visibility on Outship. Only activity verified by GitHub contributes to builder reputation.",
 } as const;
