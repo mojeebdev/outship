@@ -46,15 +46,26 @@ export default function TokenPage() {
                 </code>
                 <CopyButton text={tokenAddress} label="copy address" />
               </div>
-              <a
-                href={basescanTokenUrl(tokenAddress)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={link}
-              >
-                verify on basescan
-                <IconArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </a>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <a
+                  href="https://launch.o1.exchange/token/0xb28b07a03f0bcab161032fed9d318be38a06aa01?chain=8453"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={link}
+                >
+                  buy on o1 Exchange
+                  <IconArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+                <a
+                  href={basescanTokenUrl(tokenAddress)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={link}
+                >
+                  verify on basescan
+                  <IconArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </a>
+              </div>
             </>
           ) : (
             <p className="text-sm text-text-muted-1">
