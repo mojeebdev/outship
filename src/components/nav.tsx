@@ -8,6 +8,7 @@ const LINKS: NavLink[] = [
   { href: "/leaderboard", label: "leaderboard" },
   { href: "/builders", label: "index" },
   { href: "/streaks", label: "streaks" },
+  { href: "/token", label: "token" },
 ];
 
 // White pills that float over whatever is behind them: the status on the
