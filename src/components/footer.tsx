@@ -2,7 +2,6 @@ import Link from "next/link";
 import { IconGithub, IconX, LogoMark } from "@/components/icons";
 import { EmailCaptureForm } from "@/components/email-capture-form";
 import { AccountNavLink } from "@/components/account-nav-link";
-import { isTokenLive } from "@/lib/token";
 
 type FooterLink = {
   label: string;
@@ -30,8 +29,7 @@ const columns: Array<{ heading: string; links: FooterLink[]; account?: boolean }
       { label: "manifesto", href: "/manifesto" },
       { label: "changelog", href: "/changelog" },
       { label: "faq", href: "/faq" },
-      // Only once the token exists: NEXT_PUBLIC_TOKEN_ADDRESS is set at build.
-      ...(isTokenLive() ? [{ label: "token", href: "/token" }] : []),
+      { label: "token", href: "/token" },
     ],
   },
   {
