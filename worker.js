@@ -8,6 +8,7 @@
 // src/lib/expire-streaks.ts; this file only wires it up.
 import nextHandler from "./.open-next/worker.js";
 import { expireStaleStreaks } from "./src/lib/expire-streaks";
+import { awardDailyShipmarks, awardWeeklyShipmarks, utcDay, utcMonday } from "./src/lib/shipmarks";
 import { sendWeeklyRecap } from "./src/lib/email/weekly-recap";
 import { sendInstallReminders } from "./src/lib/email/install-reminder";
 import { sendHistoryReadyEmails } from "./src/lib/email/history-ready";
@@ -83,8 +84,13 @@ const worker = {
       console.log(`backfill: ${response.status} ${await response.text()}`);
     } else if (controller.cron === DAILY_STREAKS) {
       const reset = await expireStaleStreaks(env.DB);
-      console.log(`expire-streaks: reset ${reset} builder(s)`);
+      const yesterday = new Date(Date.now() - 86_400_000);
+      const dailyAwards = await awardDailyShipmarks(env.DB, utcDay(yesterday));
+      console.log(`expire-streaks: reset ${reset} builder(s); daily Shipmarks: ${dailyAwards}`);
     } else if (controller.cron === WEEKLY_RECAP) {
+      const previousWeek = new Date(utcMonday(new Date()).getTime() - 7 * 86_400_000);
+      const weeklyAwards = await awardWeeklyShipmarks(env.DB, utcDay(previousWeek));
+      console.log(`weekly Shipmarks: ${weeklyAwards}`);
       const result = await sendWeeklyRecap(env.DB, env.EMAIL);
       console.log("weekly-recap:", JSON.stringify(result));
     } else if (controller.cron === INSTALL_REMINDER) {

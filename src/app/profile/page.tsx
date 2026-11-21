@@ -89,6 +89,15 @@ export default async function ProfilePage() {
   ]);
   const recapOn = subscriber?.status === "CONFIRMED";
   const overview = profileOverview(allShips);
+  await env.DB.prepare(
+    'INSERT OR IGNORE INTO "Shipmark" ("id","builderId","code","period","earnedAt","snapshot","source") ' +
+    'SELECT lower(hex(randomblob(16))),b."id",\'welcome-aboard\',substr(b."createdAt",1,10),b."createdAt", ' +
+    'json_object(\'joinedAt\',b."createdAt",\'ships\',(SELECT COUNT(*) FROM "Ship" s WHERE s."builderId"=b."id"),' +
+    '\'commits\',COALESCE(b."historyCommits",0),\'merges\',(SELECT COUNT(*) FROM "Ship" s WHERE s."builderId"=b."id" AND s."shipType"=\'MERGE\')),\'BACKFILL\' ' +
+    'FROM "Builder" b WHERE b."id"=?1'
+  ).bind(builder.id).run();
+  const shipmarkRows = await env.DB.prepare('SELECT "id","code","period","earnedAt","snapshot" FROM "Shipmark" WHERE "builderId" = ?1 ORDER BY "earnedAt" DESC LIMIT 80').bind(builder.id).all<Shipmark>();
+  const shipmarks = (shipmarkRows.results ?? []).map((mark) => ({ ...mark, earnedAt: String(mark.earnedAt), snapshot: String(mark.snapshot) }));
   const rank = (value: number | null) => (value ? `#${value}` : "–");
   // The sidebar's list, in page order. scroll-mt leaves room for the sticky
   // strip of pills that stands in for the sidebar on narrow screens.

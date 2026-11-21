@@ -58,7 +58,7 @@
 		}
 	],
 	"triggers": {
-		// 00:05 UTC daily: end streaks for builders who missed yesterday
+		// 00:05 UTC daily: end stale streaks and award the previous UTC day Shipmarks
 		// (src/lib/expire-streaks.ts).
 		// Mondays 09:00-11:00 UTC hourly: the weekly recap
 		// (src/lib/email/weekly-recap.ts). Runs three times so a send that
