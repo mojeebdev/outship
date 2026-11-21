@@ -31,6 +31,7 @@ import { ProfileSidebar } from "@/components/profile-sidebar";
 import { InstallAppPrompt } from "@/components/install-app-prompt";
 import { InviteFriends } from "@/components/invite-friends";
 import { CrewPanel } from "@/components/crew-panel";
+import { ShipmarkCollection, type Shipmark } from "@/components/shipmark-collection";
 import { crewFor } from "@/lib/crew";
 import { INVITES_PER_BUILDER, listInvites } from "@/lib/invites";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
@@ -104,6 +105,7 @@ export default async function ProfilePage() {
   const sections = [
     { id: "overview", label: "overview" },
     { id: "activity", label: "activity" },
+    { id: "shipmarks", label: "Shipmarks" },
     { id: "ships", label: "ship feed" },
     { id: "badge", label: "README badge" },
     { id: "invite", label: "invite friends" },
@@ -264,6 +266,8 @@ export default async function ProfilePage() {
               <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />
               {heatmap.totals && <HistoryTotals {...heatmap.totals} />}
             </section>
+
+            <ShipmarkCollection marks={shipmarks} />
 
             <section id="ships" className={sectionClass}>
               <h2 className="text-lg font-medium">ship feed</h2>

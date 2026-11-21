@@ -75,7 +75,7 @@ export async function backfillShipmarks(db: D1Database) {
     " COUNT(DISTINCT strftime('%Y-%m-%d',shippedAt)) AS activeDays FROM Ship GROUP BY builderId,week)" +
     " INSERT OR IGNORE INTO Shipmark (id,builderId,code,period,earnedAt,snapshot,source)" +
     " SELECT lower(hex(randomblob(16))),builderId,'weekly-streak',week,datetime(week,'+7 days')," +
-    " json_object('ships',ships,'commits',commits,'merges',merges,'activeDays',activeDays),'BACKFILL' FROM weekly"
+    " json_object('ships',ships,'commits',commits,'merges',merges,'activeDays',activeDays),'BACKFILL' FROM weekly WHERE activeDays >= 5"
   ).run();
   const monthly = await db.prepare(
     "WITH monthly AS (SELECT builderId,strftime('%Y-%m',shippedAt) AS month,COUNT(*) AS ships," +
