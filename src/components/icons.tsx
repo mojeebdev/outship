@@ -76,6 +76,67 @@ export function IconGrid(props: IconProps) {
   );
 }
 
+/** i-activity — activity over time. */
+export function IconActivity(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="square" {...props}>
+      <path d="M2 10h3l2-6 4 12 2-6h5" />
+    </svg>
+  );
+}
+
+/** i-builders — people in the builder community. */
+export function IconBuilders(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" {...props}>
+      <circle cx="8" cy="6" r="3" />
+      <path d="M2.5 17v-1.5A4.5 4.5 0 0 1 7 11h2a4.5 4.5 0 0 1 4.5 4.5V17M14 4a3 3 0 0 1 0 5.8M15 12h.5a3 3 0 0 1 3 3V17" />
+    </svg>
+  );
+}
+
+/** i-platform — connected services and operations. */
+export function IconPlatform(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="square" {...props}>
+      <rect x="2" y="2" width="6" height="6" />
+      <rect x="12" y="2" width="6" height="6" />
+      <rect x="2" y="12" width="6" height="6" />
+      <rect x="12" y="12" width="6" height="6" />
+    </svg>
+  );
+}
+
+/** i-globe — visitors and reach. */
+export function IconGlobe(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}>
+      <circle cx="10" cy="10" r="8" />
+      <path d="M2.5 7h15M2.5 13h15M10 2c2 2.2 3 4.9 3 8s-1 5.8-3 8c-2-2.2-3-4.9-3-8s1-5.8 3-8Z" />
+    </svg>
+  );
+}
+
+/** i-award — earned achievement. */
+export function IconAward(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" {...props}>
+      <circle cx="10" cy="7" r="5" />
+      <path d="m7 11-1 7 4-2 4 2-1-7M10 4.5v5M7.5 7h5" />
+    </svg>
+  );
+}
+
+/** i-settings — account preferences. */
+export function IconSettings(props: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" {...props}>
+      <path d="m8 2-.5 2a6 6 0 0 0-1.5.9L4 4l-2 3 1.5 1.5a6 6 0 0 0 0 1.8L2 12l2 3 2-.9a6 6 0 0 0 1.5.9l.5 2h4l.5-2a6 6 0 0 0 1.5-.9l2 .9 2-3-1.5-1.7a6 6 0 0 0 0-1.8L18 7l-2-3-2 .9a6 6 0 0 0-1.5-.9L12 2H8Z" />
+      <circle cx="10" cy="9.5" r="2.5" />
+    </svg>
+  );
+}
+
 /** i-arrow-right — forward / submit. */
 export function IconArrowRight(props: IconProps) {
   return (

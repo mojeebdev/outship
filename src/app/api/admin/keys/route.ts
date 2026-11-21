@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   const owner = field("owner");
   const contact = field("contact") || null;
   const rate = Math.min(10_000, Math.max(1, Math.floor(Number(field("rate")) || 120)));
-  if (!name || !owner) return Response.redirect(new URL("/admin#api", request.url), 303);
+  if (!name || !owner) return Response.redirect(new URL("/admin/platform", request.url), 303);
 
   const { key, prefix, hash } = await generateApiKey();
   await (await getDb()).apiKey.create({ data: { name, owner, contact, prefix, hash, ratePerMinute: rate } });
@@ -32,7 +32,7 @@ p{line-height:1.55;color:#444}a{color:#0000ff}</style></head><body><main>
 <p>${escapeHtml(name)} · ${rate} requests a minute</p>
 <code>${escapeHtml(key)}</code>
 <p><strong>copy it now: this is the only time it's shown.</strong> outship keeps only its hash. send it to them over a private channel.</p>
-<p><a href="/admin#api">back to the admin panel</a></p></main></body></html>`;
+<p><a href="/admin/platform">back to platform operations</a></p></main></body></html>`;
   return new Response(html, {
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" },
   });

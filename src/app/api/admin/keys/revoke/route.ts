@@ -12,5 +12,5 @@ export async function POST(request: Request) {
   if (id) {
     await (await getDb()).apiKey.updateMany({ where: { id, revokedAt: null }, data: { revokedAt: new Date() } });
   }
-  return Response.redirect(new URL("/admin#api", request.url), 303);
+  return Response.redirect(new URL("/admin/platform", request.url), 303);
 }

@@ -53,3 +53,10 @@ next-env.d.ts
 
 # cached copy of the ETCSL page (npm run verify:benchmark)
 scripts/.cache/
+
+# Local-only design review material; previews were used for approval and are
+# intentionally not part of public commits.
+/docs/previews/
+/docs/assets/shipmark-inspiration.png
+/docs/assets/shipmark-inspiration.svg
+*audit.md

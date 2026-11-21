@@ -44,12 +44,12 @@ export function CrewPanel({ crew }: { crew: CrewMember[] }) {
                 <IconX className="h-3 w-3" aria-hidden="true" />
                 tell them on X
               </a>
-              <a
-                href="#invite-email"
+              <Link
+                href="/profile/community"
                 className="rounded-full border border-border px-3 py-1.5 text-xs font-medium transition hover:border-void"
               >
                 invite by email
-              </a>
+              </Link>
             </div>
           </li>
         ))}

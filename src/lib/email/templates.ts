@@ -156,12 +156,12 @@ export function historyReadyEmail(data: HistoryReady): Email {
   const points = data.score.toLocaleString("en-US");
   const ships = `${data.imported.toLocaleString("en-US")} ship${data.imported === 1 ? "" : "s"}`;
   const profile = `${SITE_URL}/@${data.login}`;
-  const invite = `${SITE_URL}/profile#invite`;
+  const invite = `${SITE_URL}/profile/community`;
   const opening = data.apology
     ? "i owe you an apology. while cleaning up some code, i accidentally switched off the part of outship that imports your last 12 months of github work, so your all-time points showed 0 when you joined. that's on me, and i'm sorry. it's fixed now, and your history is in."
     : "outship just finished importing your last 12 months of github work. your history is in.";
   return {
-    subject: "your last 12 months are on outship 🚢",
+    subject: "your last 12 months are on outship",
     html: layout(
       `<p style="margin:0 0 14px">hey ${escapeHtml(first)},</p>
 <p style="margin:0 0 18px">${escapeHtml(opening)}</p>

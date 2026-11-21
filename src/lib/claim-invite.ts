@@ -10,7 +10,7 @@ const SITE_HOST = new URL(SITE_URL).host;
 export function claimInviteComment(login: string, shipCount: number): string {
   const ships = `${shipCount} ship${shipCount === 1 ? "" : "s"}`;
   return (
-    `🚢 @${login}, this merge counted as a ship on outship — the GitHub-verified shipping leaderboard. ` +
+    `@${login}, this merge counted as a ship on outship — the GitHub-verified shipping leaderboard. ` +
     `you have ${ships} waiting at ${SITE_HOST}/@${login}. claim your profile to keep your streak, or hide it. ` +
     `(one-time note · repo owners can turn these off at ${SITE_HOST}/profile)`
   );

@@ -42,7 +42,7 @@ export async function crewFor(db: D1Database, builder: { id: string; githubLogin
  */
 export function claimNudgeHref(login: string): string {
   return shareOnXHref(
-    `${login}, your github work is already on outship 👀 claim your profile and keep your streak:`,
+    `${login}, your github work is already on outship. claim your profile and keep your streak:`,
     `${SITE_URL}/@${login}`,
   );
 }
