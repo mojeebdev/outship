@@ -58,7 +58,7 @@
 		}
 	],
 	"triggers": {
-		// 00:05 UTC daily: end streaks for builders who missed yesterday
+		// 00:05 UTC daily: end stale streaks and award the previous UTC day Shipmarks
 		// (src/lib/expire-streaks.ts).
 		// Mondays 09:00-11:00 UTC hourly: the weekly recap
 		// (src/lib/email/weekly-recap.ts). Runs three times so a send that
@@ -66,7 +66,7 @@
 		// */2: one slice of the 12-month backfill (src/lib/backfill.ts), until
 		// every installation's history is in; an idle run costs a couple of
 		// queries. */10: the install reminder and the history-ready email.
-		"crons": ["5 0 * * *", "0 9-11 * * 1", "*/2 * * * *", "*/10 * * * *"]
+		"crons": ["5 0 * * *", "10 0 1 * *", "0 9-11 * * 1", "*/2 * * * *", "*/10 * * * *"]
 	},
 	// Plain, non-secret settings. keep_vars leaves any variable set in the
 	// dashboard alone on deploy (secrets are never touched by either).

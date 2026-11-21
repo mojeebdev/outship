@@ -31,6 +31,7 @@ import { ProfileSidebar } from "@/components/profile-sidebar";
 import { InstallAppPrompt } from "@/components/install-app-prompt";
 import { InviteFriends } from "@/components/invite-friends";
 import { CrewPanel } from "@/components/crew-panel";
+import { ShipmarkCollection, type Shipmark } from "@/components/shipmark-collection";
 import { crewFor } from "@/lib/crew";
 import { INVITES_PER_BUILDER, listInvites } from "@/lib/invites";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
@@ -89,12 +90,22 @@ export default async function ProfilePage() {
   ]);
   const recapOn = subscriber?.status === "CONFIRMED";
   const overview = profileOverview(allShips);
+  await env.DB.prepare(
+    'INSERT OR IGNORE INTO "Shipmark" ("id","builderId","code","period","earnedAt","snapshot","source") ' +
+    'SELECT lower(hex(randomblob(16))),b."id",\'welcome-aboard\',substr(b."createdAt",1,10),b."createdAt", ' +
+    'json_object(\'joinedAt\',b."createdAt",\'ships\',(SELECT COUNT(*) FROM "Ship" s WHERE s."builderId"=b."id" AND s."shippedAt"<=b."createdAt"),' +
+    '\'commits\',(SELECT COUNT(DISTINCT s."commitSha") FROM "Ship" s WHERE s."builderId"=b."id" AND s."shippedAt"<=b."createdAt"),\'merges\',(SELECT COUNT(*) FROM "Ship" s WHERE s."builderId"=b."id" AND s."shipType"=\'MERGE\' AND s."shippedAt"<=b."createdAt")),\'BACKFILL\' ' +
+    'FROM "Builder" b WHERE b."id"=?1'
+  ).bind(builder.id).run();
+  const shipmarkRows = await env.DB.prepare('SELECT "id","code","period","earnedAt","snapshot" FROM "Shipmark" WHERE "builderId" = ?1 ORDER BY "earnedAt" DESC LIMIT 80').bind(builder.id).all<Shipmark>();
+  const shipmarks = (shipmarkRows.results ?? []).map((mark) => ({ ...mark, earnedAt: String(mark.earnedAt), snapshot: String(mark.snapshot) }));
   const rank = (value: number | null) => (value ? `#${value}` : "–");
   // The sidebar's list, in page order. scroll-mt leaves room for the sticky
   // strip of pills that stands in for the sidebar on narrow screens.
   const sections = [
     { id: "overview", label: "overview" },
     { id: "activity", label: "activity" },
+    { id: "shipmarks", label: "Shipmarks" },
     { id: "ships", label: "ship feed" },
     { id: "badge", label: "README badge" },
     { id: "invite", label: "invite friends" },
@@ -255,6 +266,8 @@ export default async function ProfilePage() {
               <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />
               {heatmap.totals && <HistoryTotals {...heatmap.totals} />}
             </section>
+
+            <ShipmarkCollection marks={shipmarks} />
 
             <section id="ships" className={sectionClass}>
               <h2 className="text-lg font-medium">ship feed</h2>
