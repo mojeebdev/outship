@@ -18,7 +18,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Reuse the current Outship design tokens and custom SVG icon set. Avoid emoji as decorative UI icons. Shipmarks use the approved Forged Signal Marks direction.
 - Keep profile privacy rules, existing settings actions, ship attestation behavior, and metrics definitions intact when changing these routes.
 - The Shipmarks index is category-first; category pages use ordinary path segments and paginated records. Stored Shipmark snapshots can include private repository totals, so never render them on public profiles. Public Shipmarks need a separate calculation based only on public-repository activity and explicit product approval.
-- Public profiles now show public-only Shipmarks at `/@handle/shipmarks`, grouped under `/@handle/shipmarks/{firsts,daily,weekly,monthly,streaks}`. Recompute them from `Ship` rows filtered with `isPrivate = 0`; never read stored `Shipmark` snapshots for public pages. Keep the public-safe calculation and privacy-policy description aligned when award rules change.
+- Public profiles now show public-only Shipmarks at `/@handle/shipmarks`, grouped under `/@handle/shipmarks/{firsts,daily,weekly,monthly,streaks}`. Recompute activity marks from `Ship` rows filtered with `isPrivate = 0`; never read stored activity snapshots for public pages. The Founding Builder mark is the exception: it uses only `claimedAt` inside the approved Nov 15–22, 2026 UTC launch window. Keep the privacy-policy description aligned when award rules change.
 - Shipmark SVG motifs share a 34-unit maximum painted edge inside the 100-unit viewBox. Update the measured bounds in `shipmark-collection.tsx` whenever a glyph path changes so the symbols stay optically balanced within the shield.
 - Cloudflare Web Analytics must stay unloaded until a visitor opts in. Keep accept/reject equally easy, expose the persistent privacy-choice control on both Outship and Word footers, and update `/privacy` when browser storage or analytics behavior changes.
 - Admin traffic must not present zero metrics when Cloudflare returns an error. Explain the production Worker configuration needed to identify the Web Analytics site, without exposing its API token.
@@ -26,7 +26,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ### Shipmark email and backfill status
 
 - Production Shipmark backfill was run successfully: 1,839 Shipmarks were created. The backfill script is available as `npm run backfill:shipmarks`; check its dry-run output before applying another remote run.
-- No badge/backfill email has been sent. Do not send one until Mojeeb explicitly approves the email content and send action.
+- The Founding Builder email copy and send action are approved. Use the existing Cloudflare `EMAIL` binding from `shipmarks@mail.outship.dev`. The one-time mark/email are gated until after 2026-11-22 23:59:59 UTC; rerun the cohort query after that cutoff before any manual send. The scheduled send selects only `FOUNDING_COHORT` marks and never emails historical `BACKFILL` marks.
 
 ### Public repository hygiene
 

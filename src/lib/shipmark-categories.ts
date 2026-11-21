@@ -13,10 +13,10 @@ export const SHIPMARK_CATEGORIES: ShipmarkCategory[] = [
   {
     slug: "firsts",
     title: "firsts",
-    description: "The milestones that mark the start of your Outship record.",
+    description: "Your first steps on Outship, from joining the launch to your first verified ship.",
     cta: "See your firsts",
-    matches: (code) => code === "welcome-aboard" || code === "first-ship",
-    sql: `"code" IN ('welcome-aboard', 'first-ship')`,
+    matches: (code) => code === "welcome-aboard" || code === "founding-builder" || code === "first-ship",
+    sql: `"code" IN ('welcome-aboard', 'founding-builder', 'first-ship')`,
   },
   {
     slug: "daily",

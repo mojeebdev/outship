@@ -3,6 +3,7 @@
 export const FROM_WELCOME = { email: "welcome@mail.outship.dev", name: "outship" };
 export const FROM_RECAP = { email: "recap@mail.outship.dev", name: "outship recap" };
 export const FROM_REMINDER = { email: "reminder@mail.outship.dev", name: "outship reminder" };
+export const FROM_SHIPMARKS = { email: "shipmarks@mail.outship.dev", name: "outship shipmarks" };
 /** Personal mail from outship's founder; replies go to the same inbox. */
 export const FROM_FOUNDER = { email: "mojeeb@mail.outship.dev", name: "Mojeeb from outship" };
 /** Friend invites. The name is set per invite: "{inviter} via outship". */

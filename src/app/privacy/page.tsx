@@ -79,10 +79,11 @@ export default function PrivacyPage() {
             publicly; only you see them, on your own dashboard.
           </p>
           <p>
-            public profiles also show Shipmarks calculated only from ships in
-            public repositories. private-repository ships and stored Shipmark
-            snapshots are not used to calculate or display those public
-            achievements.
+            public profiles show Shipmarks calculated from public-repository
+            ships, plus a Founding Builder mark for accounts claimed during
+            Outship&apos;s first public launch week (Nov 15–22, 2026 UTC). That mark
+            uses the account claim time; private-repository ships and stored
+            Shipmark snapshots are not used to calculate public activity marks.
           </p>
         </Section>
 

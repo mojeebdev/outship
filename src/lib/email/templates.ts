@@ -110,6 +110,48 @@ want the weekly ship recap? switch it on from your profile: ${SITE_URL}/profile`
   };
 }
 
+/** The one-time thank-you sent with the Founding Builder Shipmark. */
+export function foundingBuilderEmail(): Email {
+  const copy = `Hey Builder,
+
+Before Outship becomes everything we're working towards, we want to take a moment to appreciate the people who believed in us from the beginning.
+
+You joined us during our first public launch week.
+
+That means something to us.
+
+We're building Outship for people who believe in creating, experimenting, shipping and putting their ideas into the world.
+
+We know that building isn't always easy. Sometimes you ship without seeing the results immediately. Sometimes the progress is slow. But every contribution matters.
+
+As a small token of our appreciation, we've introduced Shipmarks, a new achievement system that celebrates your journey, consistency and milestones on Outship.
+
+We've also created your Founding Builder badge.
+
+You'll always have a place in the story of how Outship started.
+
+Thank you for believing in what we're building.
+
+Here's to everything you'll ship next.
+
+With appreciation,
+
+Mojeeb and the Outship Team
+
+Founder, Outship
+A BlindspotLab product
+
+Keep shipping. ⚓`;
+  const paragraphs = copy.split("\n\n").map((paragraph) =>
+    `<p style="margin:0 0 14px">${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`,
+  ).join("");
+  return {
+    subject: "your Founding Builder Shipmark is here",
+    html: layout(paragraphs, STANDARD_FOOTER),
+    text: copy,
+  };
+}
+
 /**
  * Sent once from reminder@, about 30 minutes after a builder signs in, when
  * the GitHub App still isn't installed: without it nothing they ship counts.

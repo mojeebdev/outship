@@ -4,6 +4,12 @@
  */
 const DAY = 86400000;
 
+// First public launch week. The daily 00:05 UTC job waits until this full
+// window has closed before creating marks or sending the one-time email.
+export const FOUNDING_WINDOW_START = "2026-11-15T00:00:00.000Z";
+export const FOUNDING_WINDOW_END = "2026-11-23T00:00:00.000Z";
+export const FOUNDING_WINDOW_LABEL = "Nov 15–22, 2026 UTC";
+
 export function utcDay(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
@@ -11,6 +17,21 @@ export function utcDay(date: Date): string {
 export function utcMonday(date: Date): Date {
   const midnight = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
   return new Date(midnight - ((date.getUTCDay() + 6) % 7) * DAY);
+}
+
+/** Award the limited Founding Builder mark after the launch-week cutoff. */
+export async function awardFoundingBuilderShipmarks(db: D1Database, now = new Date()): Promise<number> {
+  if (now.getTime() < Date.parse(FOUNDING_WINDOW_END)) return 0;
+
+  const result = await db.prepare(
+    "INSERT OR IGNORE INTO Shipmark (id,builderId,code,period,earnedAt,snapshot,source)" +
+    " SELECT lower(hex(randomblob(16))),b.id,'founding-builder','lifetime',b.claimedAt," +
+    " json_object('joinedAt',b.claimedAt,'launchWindow',?3),'FOUNDING_COHORT'" +
+    " FROM Builder b WHERE b.claimedAt IS NOT NULL" +
+    " AND julianday(b.claimedAt)>=julianday(?1) AND julianday(b.claimedAt)<julianday(?2)"
+  ).bind(FOUNDING_WINDOW_START, FOUNDING_WINDOW_END, FOUNDING_WINDOW_LABEL).run();
+
+  return result.meta.changes ?? 0;
 }
 
 /** Ensure signed-in builders have the welcome record, including older accounts. */

@@ -1,4 +1,4 @@
-import { utcDay, utcMonday } from "@/lib/shipmarks";
+import { FOUNDING_WINDOW_END, FOUNDING_WINDOW_LABEL, FOUNDING_WINDOW_START, utcDay, utcMonday } from "@/lib/shipmarks";
 import type { Shipmark } from "@/components/shipmark-collection";
 
 const DAY_MS = 86_400_000;
@@ -41,6 +41,9 @@ export async function publicShipmarks(
       GROUP BY day
       ORDER BY day ASC`,
   ).bind(builderId).all<PublicShipDay>();
+  const builder = await db.prepare(
+    `SELECT "claimedAt" FROM "Builder" WHERE "id" = ?1`,
+  ).bind(builderId).first<{ claimedAt: string | null }>();
 
   const days = (rows.results ?? []).map((row) => ({
     day: row.day,
@@ -49,9 +52,29 @@ export async function publicShipmarks(
     commits: Number(row.commits),
     merges: Number(row.merges),
   })).filter((row) => row.day && row.day <= today && row.firstShipAt && Number.isFinite(Date.parse(`${row.day}T00:00:00.000Z`)));
-  if (days.length === 0) return [];
-
   const marks: Shipmark[] = [];
+  const claimedAt = builder?.claimedAt;
+  if (
+    now.getTime() >= Date.parse(FOUNDING_WINDOW_END) &&
+    claimedAt &&
+    Date.parse(claimedAt) >= Date.parse(FOUNDING_WINDOW_START) &&
+    Date.parse(claimedAt) < Date.parse(FOUNDING_WINDOW_END)
+  ) {
+    marks.push({
+      id: "public-founding-builder",
+      code: "founding-builder",
+      period: "lifetime",
+      earnedAt: claimedAt,
+      snapshot: JSON.stringify({
+        joinedAt: claimedAt,
+        launchWindow: FOUNDING_WINDOW_LABEL,
+        scope: "Outship public launch",
+      }),
+    });
+  }
+
+  if (days.length === 0) return marks;
+
   const first = days[0];
   marks.push({
     id: "public-first-ship",

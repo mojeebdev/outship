@@ -8,7 +8,8 @@
 // src/lib/expire-streaks.ts; this file only wires it up.
 import nextHandler from "./.open-next/worker.js";
 import { expireStaleStreaks } from "./src/lib/expire-streaks";
-import { awardDailyShipmarks, awardWeeklyShipmarks, awardMonthlyShipmarks, awardStreakMilestones, awardFirstShipmarks, utcDay, utcMonday } from "./src/lib/shipmarks";
+import { awardDailyShipmarks, awardWeeklyShipmarks, awardMonthlyShipmarks, awardStreakMilestones, awardFirstShipmarks, awardFoundingBuilderShipmarks, utcDay, utcMonday } from "./src/lib/shipmarks";
+import { sendFoundingBuilderEmails } from "./src/lib/email/founding-builder";
 import { sendWeeklyRecap } from "./src/lib/email/weekly-recap";
 import { sendInstallReminders } from "./src/lib/email/install-reminder";
 import { sendHistoryReadyEmails } from "./src/lib/email/history-ready";
@@ -84,12 +85,18 @@ const worker = {
       );
       console.log(`backfill: ${response.status} ${await response.text()}`);
     } else if (controller.cron === DAILY_STREAKS) {
+      const now = new Date();
       const reset = await expireStaleStreaks(env.DB);
-      const yesterday = new Date(Date.now() - 86_400_000);
+      const yesterday = new Date(now.getTime() - 86_400_000);
       const dailyAwards = await awardDailyShipmarks(env.DB, utcDay(yesterday));
       const firstShipAwards = await awardFirstShipmarks(env.DB);
       const milestoneAwards = await awardStreakMilestones(env.DB);
+      const foundingAwards = await awardFoundingBuilderShipmarks(env.DB, now);
+      const foundingEmails = await sendFoundingBuilderEmails(env.DB, env.EMAIL, now);
       console.log(`expire-streaks: reset ${reset} builder(s); daily Shipmarks: ${dailyAwards}; first ships: ${firstShipAwards}; streak milestones: ${milestoneAwards}`);
+      if (foundingAwards || foundingEmails.sent || foundingEmails.failed || foundingEmails.stoppedOn) {
+        console.log("founding-builder:", JSON.stringify({ awarded: foundingAwards, ...foundingEmails }));
+      }
     } else if (controller.cron === MONTHLY_CHALLENGE) {
       const previousMonth = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - 1, 1));
       const monthAwards = await awardMonthlyShipmarks(env.DB, previousMonth.toISOString().slice(0, 7));

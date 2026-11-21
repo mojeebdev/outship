@@ -4,11 +4,12 @@ import { useId, useState } from "react";
 
 export type Shipmark = { id: string; code: string; period: string; earnedAt: string; snapshot: string };
 
-type BadgeKind = "anchor" | "ship" | "signal" | "flame" | "orbit" | "three" | "seven" | "fourteen" | "thirty" | "hundred";
+type BadgeKind = "anchor" | "ship" | "signal" | "flame" | "orbit" | "origin" | "three" | "seven" | "fourteen" | "thirty" | "hundred";
 type BadgeStyle = { title: string; subtitle: string; kind: BadgeKind; metal: "silver" | "blue" | "gold" };
 
 const styles: Record<string, BadgeStyle> = {
   "welcome-aboard": { title: "Welcome Aboard", subtitle: "Your Outship journey starts here", kind: "anchor", metal: "silver" },
+  "founding-builder": { title: "Founding Builder", subtitle: "Here for Outship's first public week", kind: "origin", metal: "gold" },
   "first-ship": { title: "First Ship", subtitle: "Your first verified ship", kind: "ship", metal: "blue" },
   "daily-ship": { title: "Daily Shipmark", subtitle: "You showed up and shipped", kind: "signal", metal: "blue" },
   "weekly-streak": { title: "Weekly Streak", subtitle: "A week of making progress", kind: "flame", metal: "gold" },
@@ -35,6 +36,7 @@ const glyphInkBounds: Record<BadgeKind, readonly [width: number, height: number]
   signal: [46, 44],
   flame: [33, 45],
   orbit: [53, 38],
+  origin: [45, 45],
   three: [40, 40],
   seven: [41, 45],
   fourteen: [45, 45],
@@ -73,6 +75,7 @@ function BadgeGlyph({ kind, finish }: { kind: BadgeKind; finish: (typeof metal)[
         {kind === "signal" && <><path d="M31 66V54h9v12M46 66V43h9v23M61 66V31h9v35" /><path d="M29 72h43" stroke={finish.accent} /></>}
         {kind === "flame" && <path d="M51 28c3 11 14 14 14 27a15 15 0 0 1-30 0c0-8 5-13 10-20 0 8 4 10 5 11 4-6 4-11 1-18Z" />}
         {kind === "orbit" && <><circle cx="50" cy="51" r="16" /><ellipse cx="50" cy="51" rx="28" ry="11" transform="rotate(-32 50 51)" /><path d="m50 41 3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1 3-7Z" fill={finish.accent} stroke="none" /></>}
+        {kind === "origin" && <><path d="M50 29v8M50 63v8M29 50h8M63 50h8M35 35l6 6M59 59l6 6M65 35l-6 6M41 59l-6 6" stroke={finish.accent} /><circle cx="50" cy="50" r="9" fill={finish.accent} /><path d="m50 44 2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4Z" fill={finish.shine} stroke="none" /></>}
         {kind === "three" && <><path d="M33 65V55h7v10M47 65V45h7v20M61 65V35h7v30" /><path d="M32 72h37" stroke={finish.accent} /></>}
         {kind === "seven" && <><path d="M35 38h30L46 65" /><path d="M50 29v4M50 67v4M31 52h4M65 52h4" stroke={finish.accent} /></>}
         {kind === "fourteen" && <><circle cx="50" cy="51" r="20" /><path d="M50 31v20l15 11" /><path d="M34 34 29 29M66 34l5-5" stroke={finish.accent} /></>}
