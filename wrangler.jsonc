@@ -66,7 +66,7 @@
 		// */2: one slice of the 12-month backfill (src/lib/backfill.ts), until
 		// every installation's history is in; an idle run costs a couple of
 		// queries. */10: the install reminder and the history-ready email.
-		"crons": ["5 0 * * *", "0 9-11 * * 1", "*/2 * * * *", "*/10 * * * *"]
+		"crons": ["5 0 * * *", "10 0 1 * *", "0 9-11 * * 1", "*/2 * * * *", "*/10 * * * *"]
 	},
 	// Plain, non-secret settings. keep_vars leaves any variable set in the
 	// dashboard alone on deploy (secrets are never touched by either).

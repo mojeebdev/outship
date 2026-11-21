@@ -100,3 +100,32 @@ export async function backfillShipmarks(db: D1Database) {
     milestones: milestones.meta.changes ?? 0
   };
 }
+
+export async function awardMonthlyShipmarks(db: D1Database, month: string): Promise<number> {
+  const start = new Date(month + "-01T00:00:00.000Z");
+  const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
+  const result = await db.prepare(
+    "WITH monthly AS (SELECT builderId,COUNT(*) AS ships,COUNT(DISTINCT strftime('%Y-%m-%d',shippedAt)) AS activeDays FROM Ship WHERE shippedAt >= ?1 AND shippedAt < ?2 GROUP BY builderId)" +
+    " INSERT OR IGNORE INTO Shipmark (id,builderId,code,period,earnedAt,snapshot,source)" +
+    " SELECT lower(hex(randomblob(16))),builderId,'monthly-challenge',?3,?4,json_object('ships',ships,'activeDays',activeDays,'challenge','20 ships'),'SCHEDULED' FROM monthly WHERE ships >= 20"
+  ).bind(start.toISOString(), end.toISOString(), month, new Date().toISOString()).run();
+  return result.meta.changes ?? 0;
+}
+
+export async function awardStreakMilestones(db: D1Database): Promise<number> {
+  const result = await db.prepare(
+    "INSERT OR IGNORE INTO Shipmark (id,builderId,code,period,earnedAt,snapshot,source)" +
+    " SELECT lower(hex(randomblob(16))),b.id,'streak-' || m.days,'lifetime-' || m.days,COALESCE(b.lastShipDate,b.createdAt)," +
+    " json_object('days',m.days,'longestStreak',b.longestStreak),'SCHEDULED' FROM Builder b" +
+    " JOIN (SELECT 3 AS days UNION ALL SELECT 7 UNION ALL SELECT 14 UNION ALL SELECT 30 UNION ALL SELECT 100) m ON b.longestStreak >= m.days"
+  ).run();
+  return result.meta.changes ?? 0;
+}
+
+export async function awardFirstShipmarks(db: D1Database): Promise<number> {
+  const result = await db.prepare(
+    "INSERT OR IGNORE INTO Shipmark (id,builderId,code,period,earnedAt,snapshot,source)" +
+    " SELECT lower(hex(randomblob(16))),builderId,'first-ship','lifetime',MIN(shippedAt),json_object('firstShipAt',MIN(shippedAt)),'SCHEDULED' FROM Ship GROUP BY builderId"
+  ).run();
+  return result.meta.changes ?? 0;
+}

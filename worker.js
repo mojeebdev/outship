@@ -8,7 +8,7 @@
 // src/lib/expire-streaks.ts; this file only wires it up.
 import nextHandler from "./.open-next/worker.js";
 import { expireStaleStreaks } from "./src/lib/expire-streaks";
-import { awardDailyShipmarks, awardWeeklyShipmarks, utcDay, utcMonday } from "./src/lib/shipmarks";
+import { awardDailyShipmarks, awardWeeklyShipmarks, awardMonthlyShipmarks, awardStreakMilestones, awardFirstShipmarks, utcDay, utcMonday } from "./src/lib/shipmarks";
 import { sendWeeklyRecap } from "./src/lib/email/weekly-recap";
 import { sendInstallReminders } from "./src/lib/email/install-reminder";
 import { sendHistoryReadyEmails } from "./src/lib/email/history-ready";
@@ -19,6 +19,7 @@ import { CRON_HEADER, cronToken } from "./src/lib/cron-auth";
 // Must match the crons in wrangler.jsonc.
 const DAILY_STREAKS = "5 0 * * *";
 const WEEKLY_RECAP = "0 9-11 * * 1";
+const MONTHLY_CHALLENGE = "10 0 1 * *";
 // Every 10 minutes, so the install reminder lands 30 to 40 minutes after sign-in.
 const INSTALL_REMINDER = "*/10 * * * *";
 const BACKFILL = "*/2 * * * *";
@@ -86,7 +87,13 @@ const worker = {
       const reset = await expireStaleStreaks(env.DB);
       const yesterday = new Date(Date.now() - 86_400_000);
       const dailyAwards = await awardDailyShipmarks(env.DB, utcDay(yesterday));
-      console.log(`expire-streaks: reset ${reset} builder(s); daily Shipmarks: ${dailyAwards}`);
+      const firstShipAwards = await awardFirstShipmarks(env.DB);
+      const milestoneAwards = await awardStreakMilestones(env.DB);
+      console.log(`expire-streaks: reset ${reset} builder(s); daily Shipmarks: ${dailyAwards}; first ships: ${firstShipAwards}; streak milestones: ${milestoneAwards}`);
+    } else if (controller.cron === MONTHLY_CHALLENGE) {
+      const previousMonth = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - 1, 1));
+      const monthAwards = await awardMonthlyShipmarks(env.DB, previousMonth.toISOString().slice(0, 7));
+      console.log(`monthly Shipmarks: ${monthAwards}`);
     } else if (controller.cron === WEEKLY_RECAP) {
       const previousWeek = new Date(utcMonday(new Date()).getTime() - 7 * 86_400_000);
       const weeklyAwards = await awardWeeklyShipmarks(env.DB, utcDay(previousWeek));
