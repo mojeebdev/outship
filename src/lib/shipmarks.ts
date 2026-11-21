@@ -41,7 +41,7 @@ export async function awardWeeklyShipmarks(db: D1Database, week: string): Promis
     " FROM Ship s WHERE s.shippedAt >= ?1 AND s.shippedAt < ?2 GROUP BY s.builderId" +
     ") INSERT OR IGNORE INTO Shipmark (id,builderId,code,period,earnedAt,snapshot,source)" +
     " SELECT lower(hex(randomblob(16))),builderId,'weekly-streak',?3,?4," +
-    " json_object('ships',ships,'commits',commits,'merges',merges,'activeDays',activeDays),'SCHEDULED' FROM weekly"
+    " json_object('ships',ships,'commits',commits,'merges',merges,'activeDays',activeDays),'SCHEDULED' FROM weekly WHERE activeDays >= 5"
   ).bind(start.toISOString(), end.toISOString(), week, new Date().toISOString()).run();
   return result.meta.changes ?? 0;
 }
