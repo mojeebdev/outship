@@ -13,10 +13,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ### Admin and profile workspaces
 
 - Admin destinations are `/admin`, `/admin/builders`, `/admin/shipping`, `/admin/platform`, and `/admin/traffic`.
-- Profile destinations are `/profile`, `/profile/activity`, `/profile/shipmarks`, `/profile/ships`, `/profile/badge`, `/profile/community`, and `/profile/settings`.
+- Profile destinations are `/profile`, `/profile/activity`, `/profile/shipmarks`, `/profile/shipmarks/firsts`, `/profile/shipmarks/daily`, `/profile/shipmarks/weekly`, `/profile/shipmarks/monthly`, `/profile/shipmarks/streaks`, `/profile/ships`, `/profile/badge`, `/profile/community`, and `/profile/settings`.
 - Keep dashboard navigation on these paths rather than hash-based section links. The shared admin layout must continue to call `requireAdmin()`; admin API and export handlers keep their own checks.
 - Reuse the current Outship design tokens and custom SVG icon set. Avoid emoji as decorative UI icons. Shipmarks use the approved Forged Signal Marks direction.
 - Keep profile privacy rules, existing settings actions, ship attestation behavior, and metrics definitions intact when changing these routes.
+- The Shipmarks index is category-first; category pages use ordinary path segments and paginated records. Stored Shipmark snapshots can include private repository totals, so never render them on public profiles. Public Shipmarks need a separate calculation based only on public-repository activity and explicit product approval.
+- Shipmark SVG motifs share a 34-unit maximum painted edge inside the 100-unit viewBox. Update the measured bounds in `shipmark-collection.tsx` whenever a glyph path changes so the symbols stay optically balanced within the shield.
+- Cloudflare Web Analytics must stay unloaded until a visitor opts in. Keep accept/reject equally easy, expose the persistent privacy-choice control on both Outship and Word footers, and update `/privacy` when browser storage or analytics behavior changes.
+- Admin traffic must not present zero metrics when Cloudflare returns an error. Explain the production Worker configuration needed to identify the Web Analytics site, without exposing its API token.
 
 ### Shipmark email and backfill status
 

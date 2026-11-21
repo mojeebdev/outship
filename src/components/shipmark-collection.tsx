@@ -26,8 +26,27 @@ const metal = {
   gold: { face: "#f3e5bf", edge: "#c3a76d", dark: "#3b2e19", accent: "#a88137", shine: "#fff9e9" },
 } as const;
 
+// Painted bounds in the 100-unit viewBox, including the 3-unit outline stroke.
+// Fitting every symbol to the same 34-unit ink box keeps its visual weight
+// deliberate inside the shield's roughly 54-unit inner field.
+const glyphInkBounds: Record<BadgeKind, readonly [width: number, height: number]> = {
+  anchor: [45, 50],
+  ship: [42, 45],
+  signal: [46, 44],
+  flame: [33, 45],
+  orbit: [53, 38],
+  three: [40, 40],
+  seven: [41, 45],
+  fourteen: [45, 45],
+  thirty: [42, 46],
+  hundred: [41, 33],
+};
+const MAX_GLYPH_EDGE = 34;
+
 function BadgeGlyph({ kind, finish }: { kind: BadgeKind; finish: (typeof metal)[keyof typeof metal] }) {
   const gradientId = `shipmark-face-${useId().replaceAll(":", "")}`;
+  const [width, height] = glyphInkBounds[kind];
+  const scale = MAX_GLYPH_EDGE / Math.max(width, height);
   return (
     <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden="true">
       <defs>
@@ -41,16 +60,23 @@ function BadgeGlyph({ kind, finish }: { kind: BadgeKind; finish: (typeof metal)[
       <path d="M50 8 85 22v27c0 21-15 35-35 43-20-8-35-22-35-43V22L50 8Z" fill={`url(#${gradientId})`} />
       <path d="M50 16 77 27v21c0 16-11 27-27 34-16-7-27-18-27-34V27l27-11Z" fill={finish.dark} />
       <path d="M50 19 74 29v19c0 14-9 23-24 30-15-7-24-16-24-30V29l24-10Z" fill="none" stroke={finish.edge} strokeWidth="1.5" />
-      <g fill="none" stroke={finish.shine} strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5">
+      <g
+        transform={`translate(50 50) scale(${scale}) translate(-50 -50)`}
+        fill="none"
+        stroke={finish.shine}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="3"
+      >
         {kind === "anchor" && <><path d="M50 34v31M42 42h16M35 56c2 10 8 15 15 15s13-5 15-15M35 56l-6 1 6 7M65 56l6 1-6 7" /><circle cx="50" cy="29" r="5" /></>}
         {kind === "ship" && <><path d="M50 29v31M50 31 70 57H32l10-12M31 63h39l-6 8H38l-7-8Z" /><path d="M57 33v12" stroke={finish.accent} /></>}
         {kind === "signal" && <><path d="M31 66V54h9v12M46 66V43h9v23M61 66V31h9v35" /><path d="M29 72h43" stroke={finish.accent} /></>}
         {kind === "flame" && <path d="M51 28c3 11 14 14 14 27a15 15 0 0 1-30 0c0-8 5-13 10-20 0 8 4 10 5 11 4-6 4-11 1-18Z" />}
         {kind === "orbit" && <><circle cx="50" cy="51" r="16" /><ellipse cx="50" cy="51" rx="28" ry="11" transform="rotate(-32 50 51)" /><path d="m50 41 3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1 3-7Z" fill={finish.accent} stroke="none" /></>}
         {kind === "three" && <><path d="M33 65V55h7v10M47 65V45h7v20M61 65V35h7v30" /><path d="M32 72h37" stroke={finish.accent} /></>}
-        {kind === "seven" && <><path d="M34 37h33L47 68" /><path d="M50 25v6M50 70v6M28 51h6M66 51h6" stroke={finish.accent} /></>}
+        {kind === "seven" && <><path d="M35 38h30L46 65" /><path d="M50 29v4M50 67v4M31 52h4M65 52h4" stroke={finish.accent} /></>}
         {kind === "fourteen" && <><circle cx="50" cy="51" r="20" /><path d="M50 31v20l15 11" /><path d="M34 34 29 29M66 34l5-5" stroke={finish.accent} /></>}
-        {kind === "thirty" && <><path d="M33 40c3-9 15-9 16 0 1 6-5 9-11 11 7-1 13 2 12 9-1 10-14 11-18 3M56 60l14-25M57 62h15" /><path d="M27 68c-5-4-8-9-10-15M73 68c5-4 8-9 10-15" stroke={finish.accent} /></>}
+        {kind === "thirty" && <><path d="M33 40c3-9 15-9 16 0 1 6-5 9-11 11 7-1 13 2 12 9-1 10-14 11-18 3M56 60l14-25M57 62h15" /><path d="M34 73h32" stroke={finish.accent} /></>}
         {kind === "hundred" && <><path d="M32 43h8v20M50 53a9 10 0 1 0 18 0 9 10 0 1 0-18 0Z" /><path d="M48 33h22" stroke={finish.accent} /></>}
       </g>
       <circle cx="50" cy="18" r="2" fill={finish.shine} />
@@ -92,11 +118,11 @@ function Card({ mark }: { mark: Shipmark }) {
   );
 }
 
-export function ShipmarkCollection({ marks }: { marks: Shipmark[] }) {
+export function ShipmarkCollection({ marks, total = marks.length }: { marks: Shipmark[]; total?: number }) {
   return (
     <section aria-label="Shipmarks" className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-2"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-base-blue">Outship achievements</p><h2 className="text-xl font-medium">earned marks</h2></div><p className="text-xs text-text-muted-2">{marks.length} earned</p></div>
-      {marks.length === 0 ? <p className="rounded-xl border border-dashed border-border p-5 text-sm text-text-muted-1">Your first Shipmark is waiting. Ship something and it will appear here.</p> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{marks.map((mark) => <Card key={mark.id} mark={mark} />)}</div>}
+      <div className="flex flex-wrap items-end justify-between gap-2"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-base-blue">Outship achievements</p><h2 className="text-xl font-medium">earned Shipmarks</h2></div><p className="text-xs tabular-nums text-text-muted-2">{total > marks.length ? `showing ${marks.length} of ${total}` : `${total} earned`}</p></div>
+      {marks.length === 0 ? <p className="rounded-xl border border-dashed border-border p-5 text-sm text-text-muted-1">Your first Shipmark in this category is waiting. Keep shipping and it will appear here.</p> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{marks.map((mark) => <Card key={mark.id} mark={mark} />)}</div>}
     </section>
   );
 }

@@ -139,14 +139,25 @@
   color: var(--word-ink-3);
 }
 
-.word-footer a {
+.word-footer a,
+.word-privacy-choices {
   color: var(--word-ink-3);
   text-decoration: none;
 }
 
-.word-footer a:hover {
+.word-footer a:hover,
+.word-privacy-choices:hover {
   color: var(--word-accent-strong);
   text-decoration: underline;
+}
+
+.word-privacy-choices {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
 }
 
 /* ── Hero ────────────────────────────────────────────────────────────────── */

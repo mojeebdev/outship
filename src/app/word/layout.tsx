@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { WORD_CANONICAL_ORIGIN } from "@/lib/word/constants";
 import { getWordBasePath, wordHref } from "@/lib/word/paths";
+import { PrivacyChoicesLink } from "@/components/privacy-choices-link";
 
 import "./word.css";
 
@@ -91,6 +92,8 @@ export default async function WordLayout({ children }: LayoutProps<"/word">) {
           </a>
           {" · "}
           <a href="https://outship.dev">outship.dev</a>
+          {" · "}
+          <PrivacyChoicesLink className="word-privacy-choices" />
         </span>
       </footer>
     </div>

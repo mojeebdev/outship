@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "privacy — outship",
 };
 
-const UPDATED = "november 17, 2026";
+const UPDATED = "november 21, 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -30,8 +30,8 @@ export default function PrivacyPage() {
           this covers outship (outship.dev) and word (word.outship.dev), both
           run by BlindspotLab Limited. short version: we keep what&apos;s
           needed to show what you shipped, nothing is sold, there are no ad
-          trackers or tracking cookies, and anything you put onchain is
-          public and permanent.
+          trackers, optional page analytics stays off until you allow it, and
+          anything you put onchain is public and permanent.
         </p>
 
         <Section title="when you sign in with github">
@@ -177,30 +177,36 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="cookies">
+        <Section title="cookies and browser storage">
           <p>
             only what sign-in needs: a signed session cookie that lasts 30
             days, a cookie with no data in it that tells the menu you&apos;re
             signed in, and a short-lived cookie that protects the github
-            sign-in step for 10 minutes. no analytics, advertising or tracking
-            cookies.
+            sign-in step for 10 minutes. session storage remembers if you
+            dismissed the install prompt until the tab closes. optional
+            analytics uses no cookies. we save your analytics choice in local
+            storage on this browser for up to 180 days so your choice is
+            remembered. that preference is not used to track you.
           </p>
         </Section>
 
         <Section title="analytics">
           <p>
-            we count page views with cloudflare web analytics. it sets no
-            cookies, doesn&apos;t fingerprint your browser and doesn&apos;t
-            follow you across sites: it records which page loaded, the
-            referring site, your rough location (country) and device type, in
-            aggregate. we also record when builders sign in, to count active
-            builders. nothing from either is sold or used for ads.
+            optional cloudflare web analytics is off unless you choose to
+            allow it. if enabled, it sets no cookies, doesn&apos;t fingerprint
+            your browser and doesn&apos;t follow you across sites: it records
+            which page loaded, the referring site, your rough location
+            (country) and device type. you can reject it or change your choice
+            at any time using &ldquo;privacy choices&rdquo; in the footer. if
+            you turn it off after allowing it, the current page reloads so the
+            beacon stops. we also record when builders sign in, to count
+            active builders. nothing from either is sold or used for ads.
           </p>
         </Section>
 
         <Section title="who else handles data">
           <ul className="flex list-disc flex-col gap-1 pl-5">
-            <li>cloudflare: hosting, our database, sending email, and cookieless page-view counts</li>
+            <li>cloudflare: hosting, our database, sending email, and optional cookieless page-view counts if you allow analytics</li>
             <li>github: sign-in, and the ship data its app sends us</li>
             <li>base and the ethereum attestation service: attestations you choose to make</li>
             <li>zoho: our support inbox</li>

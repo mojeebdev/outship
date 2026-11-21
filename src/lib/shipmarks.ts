@@ -13,6 +13,18 @@ export function utcMonday(date: Date): Date {
   return new Date(midnight - ((date.getUTCDay() + 6) % 7) * DAY);
 }
 
+/** Ensure signed-in builders have the welcome record, including older accounts. */
+export async function ensureWelcomeShipmark(db: D1Database, builderId: string): Promise<void> {
+  await db.prepare(
+    'INSERT OR IGNORE INTO "Shipmark" ("id","builderId","code","period","earnedAt","snapshot","source") ' +
+    'SELECT lower(hex(randomblob(16))),b."id",\'welcome-aboard\',substr(b."createdAt",1,10),b."createdAt", ' +
+    'json_object(\'joinedAt\',b."createdAt",\'ships\',(SELECT COUNT(*) FROM "Ship" s WHERE s."builderId"=b."id" AND s."shippedAt"<=b."createdAt"),' +
+    '\'commits\',(SELECT COUNT(DISTINCT s."commitSha") FROM "Ship" s WHERE s."builderId"=b."id" AND s."shippedAt"<=b."createdAt"),' +
+    '\'merges\',(SELECT COUNT(*) FROM "Ship" s WHERE s."builderId"=b."id" AND s."shipType"=\'MERGE\' AND s."shippedAt"<=b."createdAt")),\'BACKFILL\' ' +
+    'FROM "Builder" b WHERE b."id"=?1',
+  ).bind(builderId).run();
+}
+
 export async function awardDailyShipmarks(db: D1Database, day: string): Promise<number> {
   const start = new Date(day + "T00:00:00.000Z");
   const end = new Date(start.getTime() + DAY);

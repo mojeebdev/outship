@@ -2,6 +2,7 @@ import Link from "next/link";
 import { IconGithub, IconX, LogoMark } from "@/components/icons";
 import { EmailCaptureForm } from "@/components/email-capture-form";
 import { AccountNavLink } from "@/components/account-nav-link";
+import { PrivacyChoicesLink } from "@/components/privacy-choices-link";
 
 type FooterLink = {
   label: string;
@@ -114,6 +115,7 @@ export function Footer() {
           </svg>
           powered by base
         </a>
+        <PrivacyChoicesLink className="w-fit text-left text-xs text-white/65 underline decoration-white/30 underline-offset-2 transition hover:text-white" />
         <span className="text-xs text-white/50 sm:ml-auto">
           © 2026 BlindspotLab Limited · made in lagos
         </span>

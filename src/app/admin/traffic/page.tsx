@@ -12,14 +12,36 @@ export default async function AdminTrafficPage({ searchParams }: { searchParams:
   const window = WINDOWS[key];
   const { env } = await getCloudflareContext({ async: true });
   const visitors = await loadCfAnalytics(env, windowRanges(key).current);
+  const siteLookupFailed = visitors.configured && visitors.error?.includes("couldn't find the web analytics site");
   return (
     <div className="flex flex-col gap-5">
-      <AdminPageHeader title="traffic and reach" section="traffic" description={`Cookieless Cloudflare Web Analytics for the last ${window.label}.`} windowKey={key} />
+      <AdminPageHeader title="traffic and reach" section="traffic" description={`Opt-in Cloudflare Web Analytics for the last ${window.label}; visitors who decline are not counted.`} windowKey={key} />
       {!visitors.configured ? (
-        <div className="rounded-xl border border-dashed border-border bg-white p-5 text-sm leading-6 text-text-muted-1">Cloudflare Web Analytics is not connected to the admin panel. Set the Worker secret <code className="rounded bg-cream px-1">CLOUDFLARE_ANALYTICS_TOKEN</code> to an API token with Account Analytics: Read. The account ID is in wrangler.jsonc; the site is identified from the beacon token.</div>
+        <section className="rounded-xl border border-border bg-white p-5" aria-labelledby="traffic-setup-title">
+          <h2 id="traffic-setup-title" className="font-medium">connect Cloudflare Web Analytics</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted-1">Traffic data is unavailable until this Worker has an API token with Account Analytics: Read. Set the production Worker secret <code className="rounded bg-cream px-1">CLOUDFLARE_ANALYTICS_TOKEN</code>. The account ID is already in <code className="rounded bg-cream px-1">wrangler.jsonc</code>.</p>
+        </section>
+      ) : visitors.error ? (
+        <section role="status" aria-labelledby="traffic-error-title" className="rounded-xl border border-[#fed7aa] bg-[#fff7ed] p-5 text-[#7c2d12]">
+          <h2 id="traffic-error-title" className="font-medium">{siteLookupFailed ? "connect the Web Analytics site" : "Cloudflare couldn’t return traffic data"}</h2>
+          <p className="mt-2 break-words text-sm leading-6">{visitors.error}</p>
+          <div className="mt-4 border-t border-[#fed7aa] pt-4 text-sm leading-6">
+            {siteLookupFailed ? (
+              <>
+                <p className="font-medium">To connect the site, update the production Worker:</p>
+                <ol className="mt-2 list-decimal space-y-1 pl-5">
+                  <li>Ensure the <code>CLOUDFLARE_ANALYTICS_TOKEN</code> secret is an API token with <code>Account Analytics: Read</code> for the account in <code>wrangler.jsonc</code>.</li>
+                  <li>In Cloudflare Web Analytics, copy the site tag for <code>outship.dev</code> and set it as the <code>CF_WEB_ANALYTICS_SITE_TAG</code> Worker variable if automatic site lookup still fails.</li>
+                </ol>
+              </>
+            ) : (
+              <p>Check that <code>CLOUDFLARE_ANALYTICS_TOKEN</code> has <code>Account Analytics: Read</code> for the configured account, then reload. If Cloudflare is temporarily unavailable, try again later.</p>
+            )}
+            <p className="mt-3 text-xs text-[#9a3412]">{siteLookupFailed ? "Reload this page after the Worker configuration has been deployed." : "Reload this page to try the request again."} Metrics are hidden while the request fails, so an error can&apos;t be mistaken for zero visits.</p>
+          </div>
+        </section>
       ) : (
         <>
-          {visitors.error && <p role="status" className="rounded-lg border border-[#fed7aa] bg-[#fff7ed] p-3 text-sm text-[#9a3412]">Cloudflare analytics: {visitors.error}</p>}
           <section className="grid gap-3 sm:grid-cols-2" aria-label="visitor metrics">
             <KpiCard highlight label="visits" value={fmt(visitors.visits)} deltaValue={delta(visitors.visits, visitors.previousVisits)} previous={fmt(visitors.previousVisits)} />
             <KpiCard label="page views" value={fmt(visitors.pageViews)} deltaValue={delta(visitors.pageViews, visitors.previousPageViews)} previous={fmt(visitors.previousPageViews)} note={visitors.clampedToDays ? `last ${visitors.clampedToDays} days (Cloudflare query limit)` : undefined} />
