@@ -51,8 +51,8 @@ export async function backfillShipmarks(db: D1Database) {
   const joined = await db.prepare(
     "INSERT OR IGNORE INTO Shipmark (id,builderId,code,period,earnedAt,snapshot,source)" +
     " SELECT lower(hex(randomblob(16))),b.id,'welcome-aboard',substr(b.createdAt,1,10),b.createdAt," +
-    " json_object('joinedAt',b.createdAt,'ships',(SELECT COUNT(*) FROM Ship s WHERE s.builderId=b.id)," +
-    " 'commits',COALESCE(b.historyCommits,0),'merges',(SELECT COUNT(*) FROM Ship s WHERE s.builderId=b.id AND s.shipType='MERGE')),'BACKFILL' FROM Builder b"
+    " json_object('joinedAt',b.createdAt,'ships',(SELECT COUNT(*) FROM Ship s WHERE s.builderId=b.id AND s.shippedAt <= b.createdAt)," +
+    " 'commits',(SELECT COUNT(DISTINCT s.commitSha) FROM Ship s WHERE s.builderId=b.id AND s.shippedAt <= b.createdAt),'merges',(SELECT COUNT(*) FROM Ship s WHERE s.builderId=b.id AND s.shipType='MERGE' AND s.shippedAt <= b.createdAt)),'BACKFILL' FROM Builder b"
   ).run();
   const firstShip = await db.prepare(
     "INSERT OR IGNORE INTO Shipmark (id,builderId,code,period,earnedAt,snapshot,source)" +
