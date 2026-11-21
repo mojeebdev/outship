@@ -78,6 +78,12 @@ export default function PrivacyPage() {
             your score, but their repository name and tag are never shown
             publicly; only you see them, on your own dashboard.
           </p>
+          <p>
+            public profiles also show Shipmarks calculated only from ships in
+            public repositories. private-repository ships and stored Shipmark
+            snapshots are not used to calculate or display those public
+            achievements.
+          </p>
         </Section>
 
         <Section title="unclaimed profiles">

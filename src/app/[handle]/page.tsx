@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { SiteShell } from "@/components/site-shell";
 import { ProfileBodySkeleton } from "@/components/skeletons";
 import { shipDetail, shipLabel } from "@/lib/ships";
@@ -14,6 +15,8 @@ import { ImportedNote } from "@/components/builder-bits";
 import { loadHeatmap, loadProfileFacts } from "@/lib/profile-data";
 import { ProfileHeader, ProfileStats } from "@/components/profile-parts";
 import { ContributionHeatmap, HistoryTotals } from "@/components/contribution-heatmap";
+import { PublicShipmarksSection } from "@/components/public-shipmarks-section";
+import { publicShipmarks } from "@/lib/public-shipmarks";
 
 export const dynamic = "force-dynamic";
 
@@ -71,10 +74,11 @@ export default async function BuilderProfilePage({
 async function ProfileBody({ builder }: { builder: NonNullable<Awaited<ReturnType<typeof loadBuilder>>> }) {
   const db = await getDb();
   const claimed = isClaimed(builder);
+  const { env } = await getCloudflareContext({ async: true });
   // Private ships count, but an unclaimed profile is public GitHub activity
   // only, so it leaves them out entirely, even from the count.
   const shipWhere = { builderId: builder.id, ...(claimed ? {} : { isPrivate: false }) };
-  const [facts, totalShips, recentShips, heatmap] = await Promise.all([
+  const [facts, totalShips, recentShips, heatmap, marks] = await Promise.all([
     loadProfileFacts(db, builder, { publicOnly: !claimed }),
     db.ship.count({ where: shipWhere }),
     db.ship.findMany({
@@ -84,6 +88,7 @@ async function ProfileBody({ builder }: { builder: NonNullable<Awaited<ReturnTyp
       include: { attestation: true },
     }),
     loadHeatmap(db, builder, { publicOnly: true }),
+    publicShipmarks(env.DB, builder.id),
   ]);
 
   return (
@@ -128,6 +133,8 @@ async function ProfileBody({ builder }: { builder: NonNullable<Awaited<ReturnTyp
       )}
 
       <ProfileStats builder={builder} facts={facts} totalShips={totalShips} unrankedLabel="unclaimed" />
+
+      <PublicShipmarksSection marks={marks} githubLogin={builder.githubLogin} />
 
       <div className="flex flex-col gap-4">
         <ContributionHeatmap counts={heatmap.counts} unit={heatmap.unit} label={heatmap.label} />

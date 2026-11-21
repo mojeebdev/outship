@@ -84,7 +84,7 @@ function BadgeGlyph({ kind, finish }: { kind: BadgeKind; finish: (typeof metal)[
   );
 }
 
-function Card({ mark }: { mark: Shipmark }) {
+function Card({ mark, publicView = false }: { mark: Shipmark; publicView?: boolean }) {
   const [back, setBack] = useState(false);
   const badge = styles[mark.code] ?? { title: "Shipmark", subtitle: "An Outship achievement", kind: "anchor" as const, metal: "silver" as const };
   const finish = metal[badge.metal];
@@ -100,16 +100,16 @@ function Card({ mark }: { mark: Shipmark }) {
           <span className="absolute inset-0 flex flex-col items-center justify-between overflow-hidden rounded-xl border border-white/15 bg-[#111827] p-4 text-white shadow-md [backface-visibility:hidden]">
             <span className="flex w-full items-center justify-between text-[9px] font-semibold uppercase tracking-[.19em] text-white/50"><span>OUTSHIP</span><span>SHIPMARK</span></span>
             <span className="relative block aspect-square w-[66%] max-w-32 drop-shadow-[0_8px_12px_rgba(0,0,0,.42)]"><BadgeGlyph kind={badge.kind} finish={finish} /></span>
-            <span className="text-center"><span className="block text-sm font-semibold tracking-wide">{badge.title}</span><span className="mt-1 block text-[10px] leading-4 text-white/60">{badge.subtitle}</span></span>
+            <span className="text-center"><span className="block text-sm font-semibold tracking-wide">{badge.title}</span><span className="mt-1 block text-[10px] leading-4 text-white/60">{publicView && mark.code === "first-ship" ? "First ship in a public repository" : badge.subtitle}</span></span>
             <span className="text-[9px] uppercase tracking-[.16em] text-white/45">{date}</span>
           </span>
           <span className="absolute inset-0 flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#101e2b] p-4 text-white shadow-md [backface-visibility:hidden] [transform:rotateY(180deg)]">
-            <span className="text-[9px] font-semibold uppercase tracking-[.2em] text-blue-300">YOUR RECORD</span>
+            <span className="text-[9px] font-semibold uppercase tracking-[.2em] text-blue-300">{publicView ? "PUBLIC RECORD" : "YOUR RECORD"}</span>
             <span className="mt-3 text-sm font-semibold">{badge.title}</span><span className="mt-1 text-[10px] text-white/55">{mark.period}</span>
             <span className="mt-4 flex flex-col gap-2">{stats.map(([key, value]) => <span key={key} className="flex items-center justify-between gap-2 border-b border-white/10 pb-1 text-xs"><span className="text-white/60">{key.replace(/[A-Z]/g, (letter) => " " + letter.toLowerCase())}</span><strong>{String(value)}</strong></span>)}
               {typeof data.joinedAt === "string" && <span className="mt-1 text-[10px] text-white/60">Joined {new Date(data.joinedAt).toLocaleString("en", { timeZone: "UTC", dateStyle: "medium", timeStyle: "short" })} UTC</span>}
             </span>
-            <span className="mt-auto text-[9px] uppercase tracking-[.2em] text-white/45">OUTSHIP · VERIFIED ACTIVITY</span>
+            <span className="mt-auto text-[9px] uppercase tracking-[.2em] text-white/45">OUTSHIP · {publicView ? "PUBLIC REPOSITORY ACTIVITY" : "VERIFIED ACTIVITY"}</span>
           </span>
         </span>
       </button>
@@ -118,11 +118,11 @@ function Card({ mark }: { mark: Shipmark }) {
   );
 }
 
-export function ShipmarkCollection({ marks, total = marks.length }: { marks: Shipmark[]; total?: number }) {
+export function ShipmarkCollection({ marks, total = marks.length, publicView = false, title = "earned Shipmarks" }: { marks: Shipmark[]; total?: number; publicView?: boolean; title?: string }) {
   return (
     <section aria-label="Shipmarks" className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-2"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-base-blue">Outship achievements</p><h2 className="text-xl font-medium">earned Shipmarks</h2></div><p className="text-xs tabular-nums text-text-muted-2">{total > marks.length ? `showing ${marks.length} of ${total}` : `${total} earned`}</p></div>
-      {marks.length === 0 ? <p className="rounded-xl border border-dashed border-border p-5 text-sm text-text-muted-1">Your first Shipmark in this category is waiting. Keep shipping and it will appear here.</p> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{marks.map((mark) => <Card key={mark.id} mark={mark} />)}</div>}
+      <div className="flex flex-wrap items-end justify-between gap-2"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-base-blue">{publicView ? "Public repository activity" : "Outship achievements"}</p><h2 className="text-xl font-medium">{title}</h2></div><p className="text-xs tabular-nums text-text-muted-2">{total > marks.length ? `showing ${marks.length} of ${total}` : `${total} earned`}</p></div>
+      {marks.length === 0 ? <p className="rounded-xl border border-dashed border-border p-5 text-sm text-text-muted-1">{publicView ? "Public Shipmarks appear as public-repository milestones are earned." : "Your first Shipmark in this category is waiting. Keep shipping and it will appear here."}</p> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{marks.map((mark) => <Card key={mark.id} mark={mark} publicView={publicView} />)}</div>}
     </section>
   );
 }
