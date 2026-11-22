@@ -30,6 +30,7 @@ const columns: Array<{ heading: string; links: FooterLink[]; account?: boolean }
       { label: "manifesto", href: "/manifesto" },
       { label: "changelog", href: "/changelog" },
       { label: "faq", href: "/faq" },
+      { label: "for AI assistants", href: "/for-ai" },
       { label: "token", href: "/token" },
     ],
   },
