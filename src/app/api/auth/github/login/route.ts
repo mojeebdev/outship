@@ -1,6 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { authErrorPage } from "@/lib/auth/error-page";
 import { REF_COOKIE, validRef } from "@/lib/invites";
+import { SIGNUP_SOURCE_COOKIE, signupSourceFromReferer } from "@/lib/ai-referral";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,13 @@ export async function GET(request: Request) {
   const ref = validRef(new URL(request.url).searchParams.get("ref"));
   if (ref) {
     headers.append("Set-Cookie", `${REF_COOKIE}=${ref}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`);
+  }
+
+  // Signing in straight from a page reached through an AI assistant (?ref=ai or an AI utm_source on that page):
+  // carry the source name through the sign-in so the callback can count the sign-up (src/lib/ai-referral.ts).
+  const aiSource = signupSourceFromReferer(request.headers.get("referer"), new URL(request.url).hostname);
+  if (aiSource) {
+    headers.append("Set-Cookie", `${SIGNUP_SOURCE_COOKIE}=${aiSource}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`);
   }
 
   return new Response(null, { status: 302, headers });
