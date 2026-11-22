@@ -17,6 +17,7 @@ import { sendHistoryReadyEmails } from "./src/lib/email/history-ready";
 import { sendUninstallNotes } from "./src/lib/email/uninstall-note";
 import { adminLogins } from "./src/lib/admin-logins";
 import { CRON_HEADER, cronToken } from "./src/lib/cron-auth";
+import { logAiAgentRequest } from "./src/lib/ai-agent-log";
 
 // Must match the crons in wrangler.jsonc.
 const DAILY_STREAKS = "5 0 * * *";
@@ -61,7 +62,7 @@ const WWW_HOST = "www.outship.dev";
 const APEX_ORIGIN = "https://outship.dev";
 
 const worker = {
-  fetch(request, env, ctx) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.hostname === WWW_HOST) {
       return Response.redirect(`${APEX_ORIGIN}${url.pathname}${url.search}`, 301);
@@ -69,7 +70,10 @@ const worker = {
     if (url.hostname === MTA_STS_HOST) {
       return mtaStsResponse(request);
     }
-    return nextHandler.fetch(request, env, ctx);
+    const response = await nextHandler.fetch(request, env, ctx);
+    // Count AI crawler/assistant/agent requests (status + format served). Headers only; never the body.
+    logAiAgentRequest(request, response, env);
+    return response;
   },
 
   async scheduled(controller, env, ctx) {
