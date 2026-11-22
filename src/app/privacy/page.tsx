@@ -192,8 +192,11 @@ export default function PrivacyPage() {
           <p>
             only what sign-in needs: a signed session cookie that lasts 30
             days, a cookie with no data in it that tells the menu you&apos;re
-            signed in, and a short-lived cookie that protects the github
-            sign-in step for 10 minutes. session storage remembers if you
+            signed in, and short-lived cookies (10 minutes, removed when
+            sign-in finishes) that protect the github sign-in step and carry
+            where it started: a friend&apos;s invite, or an AI assistant link
+            such as chatgpt or ?ref=ai. we count sign-ups from AI assistants
+            only as totals by assistant, never linked to you. session storage remembers if you
             dismissed the install prompt until the tab closes. optional
             analytics uses no cookies. we save your analytics choice in local
             storage on this browser for up to 180 days so your choice is

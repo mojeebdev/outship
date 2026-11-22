@@ -6,6 +6,7 @@ import { fetchPrimaryEmail, fetchUserInstallationId } from "@/lib/github-app";
 import { FROM_WELCOME, sendEmail } from "@/lib/email/send";
 import { builderWelcomeEmail } from "@/lib/email/templates";
 import { REF_COOKIE, validRef } from "@/lib/invites";
+import { SIGNUP_SOURCE_COOKIE, logAiSignup, validAiSource } from "@/lib/ai-referral";
 import { importContributionHistory, shouldSyncHistory } from "@/lib/history";
 
 export const dynamic = "force-dynamic";
@@ -167,6 +168,11 @@ async function signIn(request: Request) {
     }
   }
 
+  // Arrived from an AI assistant and signed in from that page: count the sign-up by source (aggregate only).
+  if (firstSignIn) {
+    logAiSignup(env as never, validAiSource(readCookie(request.headers.get("cookie"), SIGNUP_SOURCE_COOKIE)));
+  }
+
   // For the admin KPIs: who signed in, and when. Nothing else.
   const signedInAt = new Date();
   await Promise.all([
@@ -216,6 +222,10 @@ async function signIn(request: Request) {
   headers.append(
     "Set-Cookie",
     `${REF_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
+  );
+  headers.append(
+    "Set-Cookie",
+    `${SIGNUP_SOURCE_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
   );
 
   return new Response(null, { status: 302, headers });

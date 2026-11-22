@@ -3,6 +3,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { KpiCard, RankedBars, fmt } from "@/components/admin/charts";
 import { loadCfAnalytics } from "@/lib/cf-analytics";
 import { loadAiAgentReport } from "@/lib/ai-agent-report";
+import { loadAiReferralReport } from "@/lib/ai-referral";
 import { loadWeeklyReport } from "@/lib/ai-mentions";
 import { delta, parseWindow, windowRanges, WINDOWS, type WindowKey } from "@/lib/metrics";
 
@@ -16,6 +17,10 @@ export default async function AdminTrafficPage({ searchParams }: { searchParams:
   const visitors = await loadCfAnalytics(env, windowRanges(key).current);
   const range = windowRanges(key).current;
   const ai = await loadAiAgentReport((range.end.getTime() - range.start.getTime()) / 3_600_000, {
+    accountId: env.CLOUDFLARE_ACCOUNT_ID,
+    token: env.CLOUDFLARE_ANALYTICS_TOKEN,
+  });
+  const referrals = await loadAiReferralReport((range.end.getTime() - range.start.getTime()) / 3_600_000, {
     accountId: env.CLOUDFLARE_ACCOUNT_ID,
     token: env.CLOUDFLARE_ANALYTICS_TOKEN,
   });
@@ -81,6 +86,24 @@ export default async function AdminTrafficPage({ searchParams }: { searchParams:
               <RankedBars title="response status" rows={ai.statuses.map((row) => ({ label: String(row.status), value: row.hits }))} />
             </section>
             <p className="text-xs text-text-muted-2">Counted at the Worker from user agents: training, search, assistant (a person asked an AI) and agent. No IPs, cookies or query strings are stored, and private pages are never logged. AI fetchers that look like ordinary browsers aren&apos;t counted.</p>
+          </>
+        )}
+      </section>
+      <section className="flex flex-col gap-3" aria-labelledby="ai-referrals-title">
+        <h2 id="ai-referrals-title" className="font-medium">people arriving from AI assistants</h2>
+        {!referrals.configured ? (
+          <p role="status" className="text-sm leading-6 text-text-muted-1">{referrals.reason}</p>
+        ) : (
+          <>
+            <section className="grid gap-3 sm:grid-cols-2" aria-label="AI referral metrics">
+              <KpiCard highlight label="visits from AI assistants" value={fmt(referrals.visits)} />
+              <KpiCard label="first sign-ins from AI assistants" value={fmt(referrals.signups)} />
+            </section>
+            <section className="grid gap-3 sm:grid-cols-2" aria-label="AI referral breakdowns">
+              <RankedBars title="by assistant (visits)" empty="none yet" rows={referrals.bySource.map((row) => ({ label: `${row.source}${row.signups ? ` · ${row.signups} sign-ups` : ""}`, value: row.visits }))} />
+              <RankedBars title="landing pages" empty="none yet" rows={referrals.topLandings.slice(0, 12).map((row) => ({ label: row.path, value: row.visits }))} />
+            </section>
+            <p className="text-xs text-text-muted-2">From ?ref=ai, an AI utm_source (ChatGPT adds utm_source=chatgpt.com) or an AI assistant Referer. Totals only: no cookies for visits, no IPs, no user ids. A sign-up counts only when the person signs in from the page they landed on.</p>
           </>
         )}
       </section>

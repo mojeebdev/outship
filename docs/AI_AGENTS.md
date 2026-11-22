@@ -70,3 +70,29 @@ model, which questions mention outship, and the third-party sites AI cites. No n
 3. Set `AI_MENTION_MONITOR_ENABLED=true`. Off by default.
 
 Cost: at most 28 API calls a day plus search fees. Mention = "outship" or an outship.dev link in the answer or citations.
+
+## Step 5: Attribution
+
+**What it does.** `src/lib/ai-referral.ts`:
+- **Visits.** `worker.js` counts a person's landing on a public HTML page as "from an AI assistant" when the URL has
+  `?ref=ai` (the /for-ai link) or an AI `utm_source` (ChatGPT adds `utm_source=chatgpt.com`), or when the Referer is
+  ChatGPT, Perplexity, Claude, Gemini, Copilot, DeepSeek, Grok or Meta AI. Crawlers and agents are excluded (step 1
+  counts them). Written to the Analytics Engine dataset `outship_ai_referrals`: event, source, landing path.
+- **Sign-ups.** The GitHub sign-in link reads the same signals from its Referer (the Outship page where "sign in" was
+  clicked) and carries the source in a 10-minute `outship_signup_src` cookie, alongside the existing OAuth state cookie.
+  The callback counts a **first** sign-in by source and clears the cookie.
+- `/admin/traffic` → "people arriving from AI assistants": visits and first sign-ins by assistant, top landing pages.
+
+**Privacy.** Totals only: no IPs, cookie values, user ids or query strings. No cookie is set for visits. The sign-in
+cookie holds only the assistant name and lives for the sign-in step. `/privacy` was updated to say so.
+
+**Decisions (2026-11-22).**
+- Attribution without cross-page tracking: a person who browses to another page before signing in isn't attributed.
+  A consent-gated cookie would catch more. That's a founder decision, not taken here.
+- `?ref=ai` is on landing pages only. The invite `?ref=<login>` on `/api/auth/github/login` is untouched, so an AI link
+  can never be credited as an invite.
+- **No "how did you hear about us" field exists** in Outship (sign-up is GitHub OAuth, no form), so none was added.
+  Adding one is a product decision.
+
+**Setup.** Deploy picks up the new `AI_REFERRAL_EVENTS` binding (wrangler.jsonc); the dataset is created on first
+write. Reading it uses the same `CLOUDFLARE_ANALYTICS_TOKEN` as the rest of /admin/traffic.

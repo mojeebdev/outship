@@ -18,6 +18,7 @@ import { sendUninstallNotes } from "./src/lib/email/uninstall-note";
 import { adminLogins } from "./src/lib/admin-logins";
 import { CRON_HEADER, cronToken } from "./src/lib/cron-auth";
 import { logAiAgentRequest } from "./src/lib/ai-agent-log";
+import { logAiReferralVisit } from "./src/lib/ai-referral";
 import { advertiseMarkdown, serveMarkdown } from "./src/lib/markdown-for-agents";
 import { dueProvider, runDailyCheck } from "./src/lib/ai-mentions";
 
@@ -77,6 +78,8 @@ const worker = {
     const response = markdown ?? advertiseMarkdown(request, await nextHandler.fetch(request, env, ctx));
     // Count AI crawler/assistant/agent requests (status + format served). Headers only; never the body.
     logAiAgentRequest(request, response, env);
+    // Count people arriving from AI assistants (?ref=ai, AI utm_source or Referer). Aggregate counts only.
+    logAiReferralVisit(request, response, env);
     return response;
   },
 
