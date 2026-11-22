@@ -3,6 +3,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { KpiCard, RankedBars, fmt } from "@/components/admin/charts";
 import { loadCfAnalytics } from "@/lib/cf-analytics";
 import { loadAiAgentReport } from "@/lib/ai-agent-report";
+import { loadWeeklyReport } from "@/lib/ai-mentions";
 import { delta, parseWindow, windowRanges, WINDOWS, type WindowKey } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function AdminTrafficPage({ searchParams }: { searchParams:
     accountId: env.CLOUDFLARE_ACCOUNT_ID,
     token: env.CLOUDFLARE_ANALYTICS_TOKEN,
   });
+  const mentions = await loadWeeklyReport(env.DB as never, env as unknown as Record<string, unknown>).catch(() => null);
   const siteLookupFailed = visitors.configured && visitors.error?.includes("couldn't find the web analytics site");
   return (
     <div className="flex flex-col gap-5">
@@ -79,6 +81,24 @@ export default async function AdminTrafficPage({ searchParams }: { searchParams:
               <RankedBars title="response status" rows={ai.statuses.map((row) => ({ label: String(row.status), value: row.hits }))} />
             </section>
             <p className="text-xs text-text-muted-2">Counted at the Worker from user agents: training, search, assistant (a person asked an AI) and agent. No IPs, cookies or query strings are stored, and private pages are never logged. AI fetchers that look like ordinary browsers aren&apos;t counted.</p>
+          </>
+        )}
+      </section>
+      <section className="flex flex-col gap-3" aria-labelledby="ai-mentions-title">
+        <h2 id="ai-mentions-title" className="font-medium">AI answers to buyer questions (last 7 days)</h2>
+        {!mentions ? (
+          <p role="status" className="text-sm leading-6 text-text-muted-1">Not set up yet: review and apply <code className="rounded bg-cream px-1">migrations/0025_ai_mention_checks.sql</code>, add model API keys, then set <code className="rounded bg-cream px-1">AI_MENTION_MONITOR_ENABLED=true</code>. See docs/AI_AGENTS.md.</p>
+        ) : (
+          <>
+            {mentions.missing.length ? (
+              <p role="status" className="text-sm text-text-muted-1">Not asked (no key): {mentions.missing.map((m) => `${m.provider} (${m.key})`).join(", ")}.</p>
+            ) : null}
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="AI mention breakdowns">
+              <RankedBars title="mention rate by model (%)" empty="no answers stored yet" rows={mentions.models.map((m) => ({ label: `${m.provider} · ${m.model}${m.errors ? ` (${m.errors} errors)` : ""}`, value: Math.round(m.mentionRate * 100) }))} />
+              <RankedBars title="questions that mention outship" empty="none yet" rows={mentions.questions.filter((q) => q.mentionedBy.length).map((q) => ({ label: q.question, value: q.mentionedBy.length }))} />
+              <RankedBars title="sites AI cites (earn mentions here)" empty="no citations yet" rows={mentions.citedDomains.slice(0, 12).map((d) => ({ label: d.domain, value: d.citations }))} />
+            </section>
+            <p className="text-xs text-text-muted-2">Mention = the word &ldquo;outship&rdquo; or an outship.dev link in the answer or its citations. API answers can differ from the consumer apps; spot-check those weekly. A model that stays silent is a finding.</p>
           </>
         )}
       </section>

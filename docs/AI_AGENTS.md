@@ -54,3 +54,19 @@ agents read it), identical for everyone and also at `/for-ai.md`. Linked in the 
 
 **Decisions (2026-11-22).** Facts come only from existing public copy (about, FAQ: "outship doesn't charge anything",
 the optional Base attestation fee, public-repo-only display).
+
+## Step 4: Buyer-question monitor
+
+**What it does.** On the existing `*/10` cron, at minute 10 from 06:00 UTC, `worker.js` asks one provider per hour
+(Claude 06:10, OpenAI 07:10, Perplexity 08:10, Gemini 09:10) the seven buyer questions in `src/lib/ai-mentions.ts`,
+with web search on, and stores answer, `mentioned`, `linked` and cited URLs in D1 (`AiMentionCheck`). Each provider
+runs at most once per UTC day. `/admin/traffic` → "AI answers to buyer questions" shows the week: mention rate per
+model, which questions mention outship, and the third-party sites AI cites. No new cron trigger is added.
+
+**Setup (founder), in order. Nothing is applied by the PR.**
+1. Review `migrations/0025_ai_mention_checks.sql` (one new empty table), then `npx wrangler d1 migrations apply DB --remote`.
+2. Add any of `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `GEMINI_API_KEY` as Worker secrets
+   (optional `AI_MONITOR_<PROVIDER>_MODEL` overrides). Missing providers are skipped and named, never shown as zero.
+3. Set `AI_MENTION_MONITOR_ENABLED=true`. Off by default.
+
+Cost: at most 28 API calls a day plus search fees. Mention = "outship" or an outship.dev link in the answer or citations.
