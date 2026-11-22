@@ -2,6 +2,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { KpiCard, RankedBars, fmt } from "@/components/admin/charts";
 import { loadCfAnalytics } from "@/lib/cf-analytics";
+import { loadAiAgentReport } from "@/lib/ai-agent-report";
 import { delta, parseWindow, windowRanges, WINDOWS, type WindowKey } from "@/lib/metrics";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +13,11 @@ export default async function AdminTrafficPage({ searchParams }: { searchParams:
   const window = WINDOWS[key];
   const { env } = await getCloudflareContext({ async: true });
   const visitors = await loadCfAnalytics(env, windowRanges(key).current);
+  const range = windowRanges(key).current;
+  const ai = await loadAiAgentReport((range.end.getTime() - range.start.getTime()) / 3_600_000, {
+    accountId: env.CLOUDFLARE_ACCOUNT_ID,
+    token: env.CLOUDFLARE_ANALYTICS_TOKEN,
+  });
   const siteLookupFailed = visitors.configured && visitors.error?.includes("couldn't find the web analytics site");
   return (
     <div className="flex flex-col gap-5">
@@ -55,6 +61,27 @@ export default async function AdminTrafficPage({ searchParams }: { searchParams:
           <p className="text-xs text-text-muted-2">The beacon records page loads without cookies. Visits are Cloudflare&apos;s estimated sessions, not unique people.</p>
         </>
       )}
+      <section className="flex flex-col gap-3" aria-labelledby="ai-agents-title">
+        <h2 id="ai-agents-title" className="font-medium">AI crawlers, assistants and agents</h2>
+        {!ai.configured ? (
+          <p role="status" className="text-sm leading-6 text-text-muted-1">{ai.reason}</p>
+        ) : (
+          <>
+            <section className="grid gap-3 sm:grid-cols-3" aria-label="AI agent metrics">
+              <KpiCard highlight label="AI requests" value={fmt(ai.total)} />
+              <KpiCard label="asked for Markdown" value={fmt(ai.askedForMarkdown)} />
+              <KpiCard label="served Markdown" value={fmt(ai.servedMarkdown)} />
+            </section>
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="AI agent breakdowns">
+              <RankedBars title="by category" rows={ai.byCategory.map((row) => ({ label: row.category, value: row.hits }))} />
+              <RankedBars title="by agent" rows={ai.byAgent.slice(0, 12).map((row) => ({ label: `${row.agent} (${row.category})`, value: row.hits }))} />
+              <RankedBars title="most-read pages" rows={ai.topPaths.slice(0, 12).map((row) => ({ label: row.path, value: row.hits }))} />
+              <RankedBars title="response status" rows={ai.statuses.map((row) => ({ label: String(row.status), value: row.hits }))} />
+            </section>
+            <p className="text-xs text-text-muted-2">Counted at the Worker from user agents: training, search, assistant (a person asked an AI) and agent. No IPs, cookies or query strings are stored, and private pages are never logged. AI fetchers that look like ordinary browsers aren&apos;t counted.</p>
+          </>
+        )}
+      </section>
     </div>
   );
 }

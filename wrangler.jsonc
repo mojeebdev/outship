@@ -27,6 +27,9 @@
 			"migrations_dir": "migrations"
 		}
 	],
+	// AI crawler/assistant/agent request counts (src/lib/ai-agent-log.ts, docs/AI_AGENTS.md).
+	// Created on first write; read in /admin/traffic with CLOUDFLARE_ANALYTICS_TOKEN.
+	"analytics_engine_datasets": [{ "binding": "AI_AGENT_EVENTS", "dataset": "outship_ai_agents" }],
 	"r2_buckets": [
 		{
 			// Next.js page/route cache (see open-next.config.ts). Create with

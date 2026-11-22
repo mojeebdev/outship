@@ -35,3 +35,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `docs/previews/`, the Shipmark inspiration concept files, and `*audit.md` are local-only review materials and are ignored by Git. Keep implementation notes in this file when the audit itself should remain private.
 - Never force-add `.env*`, `.dev.vars`, private keys, or other credentials. The repository-wide `*.pem` ignore rule protects local signing keys.
 - The standalone dashboard mockups are review artifacts, not production assets. Build future changes in the live components instead of committing alternate mockups.
+
+### AI recommendation playbook
+
+- `docs/ai-recommendation-playbook.md` is the plan; `docs/AI_AGENTS.md` records what was built for each step and why.
+- AI crawler/agent logging lives in `worker.js` → `src/lib/ai-agent-log.ts` (Analytics Engine `AI_AGENT_EVENTS`). Never log query strings, IPs, cookies or private routes, and never read the response body there.
