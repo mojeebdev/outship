@@ -18,6 +18,7 @@ import { sendUninstallNotes } from "./src/lib/email/uninstall-note";
 import { adminLogins } from "./src/lib/admin-logins";
 import { CRON_HEADER, cronToken } from "./src/lib/cron-auth";
 import { logAiAgentRequest } from "./src/lib/ai-agent-log";
+import { advertiseMarkdown, serveMarkdown } from "./src/lib/markdown-for-agents";
 
 // Must match the crons in wrangler.jsonc.
 const DAILY_STREAKS = "5 0 * * *";
@@ -70,7 +71,9 @@ const worker = {
     if (url.hostname === MTA_STS_HOST) {
       return mtaStsResponse(request);
     }
-    const response = await nextHandler.fetch(request, env, ctx);
+    // Markdown for agents: `<path>.md` or `Accept: text/markdown` on key public pages (src/lib/markdown-for-agents.ts).
+    const markdown = await serveMarkdown(request, (page) => nextHandler.fetch(page, env, ctx));
+    const response = markdown ?? advertiseMarkdown(request, await nextHandler.fetch(request, env, ctx));
     // Count AI crawler/assistant/agent requests (status + format served). Headers only; never the body.
     logAiAgentRequest(request, response, env);
     return response;

@@ -22,3 +22,24 @@ Until the token is set, the section says so instead of showing zeros.
 Logged after the response, so status and format are what the agent got. Googlebot/Bingbot/Applebot count as "search"
 (they also ground AI answers). AI fetchers that look like ordinary browsers can't be detected and aren't counted.
 No change to crawler policy.
+
+## Step 2: Markdown for agents
+
+**What it does.** `worker.js` → `src/lib/markdown-for-agents.ts`:
+- `GET /<path>.md` for a key public page returns Markdown (`/index.md` for home); `Accept: text/markdown` on the page's
+  own URL does the same.
+- Key HTML pages get `Vary: Accept` and `<link rel="alternate" type="text/markdown">`; Markdown responses carry
+  `Link: <html-url>; rel="canonical"`.
+- New `/llms.txt` indexes the Markdown pages.
+
+Key pages (`src/lib/markdown-pages.ts`): `/`, `/leaderboard`, `/streaks`, `/builders`, `/stats`, `/about`, `/manifesto`,
+`/faq`, `/developers`, `/changelog`, `/privacy`, `/terms`, `/for-ai`, public profiles `/@handle`, their public Shipmarks
+`/@handle/shipmarks[/firsts|daily|weekly|monthly|streaks]`, and every page on `word.outship.dev`.
+
+**Privacy.** The Markdown is converted from the same public HTML, rendered without cookies or credentials, so a
+profile's Markdown shows exactly the public-only data its HTML shows. It never reads stored Shipmark snapshots.
+`/profile/*`, `/admin/*` and `/api/*` are never converted, and neither is any non-200, non-HTML or noindex response.
+
+**Decisions (2026-11-22).** Same content, never bot-only; anyone can request it. Converter: `node-html-markdown`.
+No robots.txt or sitemap exists in this repo today. This PR doesn't add them (that's a separate decision), so
+crawlers keep the default "allow all".
