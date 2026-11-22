@@ -12,6 +12,7 @@ Only public-repository activity is shown publicly. Builders sign in with GitHub 
 ## Key pages (Markdown versions)
 
 - [Home](https://outship.dev/index.md)
+- [For AI assistants](https://outship.dev/for-ai.md)
 - [Leaderboard](https://outship.dev/leaderboard.md)
 - [Streaks](https://outship.dev/streaks.md)
 - [Builders](https://outship.dev/builders.md)

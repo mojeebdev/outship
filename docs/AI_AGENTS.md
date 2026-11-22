@@ -43,3 +43,14 @@ profile's Markdown shows exactly the public-only data its HTML shows. It never r
 **Decisions (2026-11-22).** Same content, never bot-only; anyone can request it. Converter: `node-html-markdown`.
 No robots.txt or sitemap exists in this repo today. This PR doesn't add them (that's a separate decision), so
 crawlers keep the default "allow all".
+
+## Step 3: /for-ai brief
+
+`src/app/for-ai/page.tsx`: plain facts (what outship is, who it's for, cost, current offer, privacy, how to join, how
+agents read it), identical for everyone and also at `/for-ai.md`. Linked in the footer ("for AI assistants") and in
+`/llms.txt`. The join link carries `?ref=ai`.
+
+**Founder TODO.** Set `FOR_AI_OFFER` at the top of the page. Until then it says "there is no special offer right now."
+
+**Decisions (2026-11-22).** Facts come only from existing public copy (about, FAQ: "outship doesn't charge anything",
+the optional Base attestation fee, public-repo-only display).
