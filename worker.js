@@ -19,6 +19,7 @@ import { adminLogins } from "./src/lib/admin-logins";
 import { CRON_HEADER, cronToken } from "./src/lib/cron-auth";
 import { logAiAgentRequest } from "./src/lib/ai-agent-log";
 import { advertiseMarkdown, serveMarkdown } from "./src/lib/markdown-for-agents";
+import { dueProvider, runDailyCheck } from "./src/lib/ai-mentions";
 
 // Must match the crons in wrangler.jsonc.
 const DAILY_STREAKS = "5 0 * * *";
@@ -146,6 +147,13 @@ const worker = {
       });
       if (uninstall.sent || uninstall.failed || uninstall.stoppedOn) {
         console.log("uninstall-note:", JSON.stringify(uninstall));
+      }
+      // AI buyer-question monitor (docs/AI_AGENTS.md, step 4): off unless AI_MENTION_MONITOR_ENABLED is "true".
+      // One provider per hour at minute 10 from 06:00 UTC; each runs at most once per UTC day.
+      const mentionProvider = env.AI_MENTION_MONITOR_ENABLED === "true" ? dueProvider(controller.scheduledTime) : undefined;
+      if (mentionProvider) {
+        const status = await runDailyCheck(env.DB, mentionProvider, env).catch((error) => `failed: ${error?.message ?? error}`);
+        console.log(`ai-mentions ${mentionProvider}: ${status}`);
       }
     } else {
       console.warn(`scheduled: no job for cron "${controller.cron}"`);
