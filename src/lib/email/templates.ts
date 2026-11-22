@@ -152,6 +152,48 @@ Keep shipping. ⚓`;
   };
 }
 
+/** A new, non-backfill Shipmark earned by a builder. */
+export function shipmarkAwardEmail({
+  login,
+  title,
+  details,
+  profileUrl,
+  settingsUrl,
+}: {
+  login: string;
+  title: string;
+  details: { label: string; value: string }[];
+  profileUrl: string;
+  settingsUrl: string;
+}): Email {
+  const handle = escapeHtml(login);
+  const badgeTitle = escapeHtml(title);
+  const detailHtml = details.length
+    ? `<ul style="margin:0 0 22px;padding-left:20px">${details.map((detail) => `<li style="margin:0 0 6px">${escapeHtml(detail.label)}: ${escapeHtml(detail.value)}</li>`).join("")}</ul>`
+    : "";
+  const detailText = details.length
+    ? `\n\n${details.map((detail) => `${detail.label}: ${detail.value}`).join("\n")}`
+    : "";
+  return {
+    subject: `you earned a Shipmark: ${title}`,
+    html: layout(
+      `<p style="margin:0 0 14px">hey @${handle},</p>
+<p style="margin:0 0 8px">you earned a new Shipmark.</p>
+<p style="margin:0 0 14px;font-size:20px;font-weight:600">${badgeTitle}</p>
+${detailHtml}
+<p style="margin:0 0 22px">${button(profileUrl, "view your Shipmarks")}</p>
+<p style="margin:0;color:${MUTED};font-size:13px">turn off future Shipmark award emails in <a href="${escapeHtml(settingsUrl)}" style="color:${BLUE}">profile settings</a>.</p>`,
+      STANDARD_FOOTER,
+    ),
+    text: `hey @${login},
+
+you earned a new Shipmark: ${title}.${detailText}
+
+view your Shipmarks: ${profileUrl}
+turn off future Shipmark award emails in profile settings: ${settingsUrl}`,
+  };
+}
+
 /**
  * Sent once from reminder@, about 30 minutes after a builder signs in, when
  * the GitHub App still isn't installed: without it nothing they ship counts.
@@ -308,8 +350,10 @@ export type RecapData = {
   streaks: { login: string; streak: number }[];
 };
 
+export type PersonalRecapShipmark = { title: string; earnedAt: string };
+
 /** Sent from recap@ every Monday to confirmed subscribers. */
-export function weeklyRecapEmail(data: RecapData, token: string): Email {
+export function weeklyRecapEmail(data: RecapData, token: string, personalShipmarks: PersonalRecapShipmark[] = []): Email {
   const unsubscribeUrl = `${SITE_URL}/recap?unsubscribe=${encodeURIComponent(token)}`;
   const profile = (login: string) =>
     `<a href="${SITE_URL}/@${encodeURIComponent(login)}" style="color:${BLUE};text-decoration:none">@${escapeHtml(login)}</a>`;
@@ -350,6 +394,16 @@ export function weeklyRecapEmail(data: RecapData, token: string): Email {
     );
     textSections.push(
       `longest streaks\n${data.streaks.map((s, i) => `${i + 1}. @${s.login} · ${s.streak} day${s.streak === 1 ? "" : "s"}`).join("\n")}`,
+    );
+  }
+
+  if (personalShipmarks.length > 0) {
+    sections.push(
+      heading("your Shipmarks this week") +
+        list(personalShipmarks.map((mark) => `${escapeHtml(mark.title)} · ${new Date(mark.earnedAt).toLocaleDateString("en", { month: "short", day: "numeric", timeZone: "UTC" })}`)),
+    );
+    textSections.push(
+      `your Shipmarks this week\n${personalShipmarks.map((mark) => `- ${mark.title} · ${new Date(mark.earnedAt).toLocaleDateString("en", { month: "short", day: "numeric", timeZone: "UTC" })}`).join("\n")}`,
     );
   }
 

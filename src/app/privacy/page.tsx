@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "privacy — outship",
 };
 
-const UPDATED = "november 21, 2026";
+const UPDATED = "november 22, 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -160,16 +160,20 @@ export default function PrivacyPage() {
           </p>
           <p>
             if you signed in with github, we send one welcome email and,
-            when needed, messages about your account. the weekly ship recap
-            is off until you switch it on from your profile.
+            when needed, messages about your account. Shipmark award notices
+            are on by default; you can turn them off from profile settings.
+            the weekly ship recap stays off until you switch it on from your
+            profile or confirm the signup email.
           </p>
           <p>
             if you join the weekly ship recap from the signup form, we store
             your email address and send one email asking you to confirm. the
             recap only starts once you do; if you don&apos;t, you won&apos;t
-            hear from us again. every recap has a one-click unsubscribe link,
-            and you can always email us to be removed. we keep a record that
-            an address unsubscribed so it stays unsubscribed.
+            receive the recap. it includes Shipmarks earned in the past week
+            when account notices are on. every recap has a one-click
+            unsubscribe link, and you can always email us to be removed. we
+            keep a record that an address unsubscribed so it stays
+            unsubscribed.
           </p>
         </Section>
 

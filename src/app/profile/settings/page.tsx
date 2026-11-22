@@ -22,11 +22,14 @@ export default async function ProfileSettingsPage() {
         <SettingForm action="/api/profile/visibility" name="hidden" on={builder.hidden} title="hide my profile" description={builder.hidden ? "hidden: your public page returns not found and you're off the leaderboard, index and streaks. your ships still count, and you see everything here." : "your profile is public at /@" + builder.githubLogin + ". hide it to take it off every public page; your ships keep counting privately."} onLabel="hide" offLabel="show again" />
         {installation && <SettingForm action="/api/profile/claim-invites" name="invites" on={installation.claimInvitesEnabled} title="claim invitations in your repos" description={installation.claimInvitesEnabled ? "on: when someone who isn't on outship gets a PR merged in a public repo you installed the app on, the app leaves one short comment inviting them to claim or hide their profile. once per person, ever." : "off: the app never comments in your repos."} onLabel="turn on" offLabel="turn off" />}
         {builder.email && (
-          <form method="post" action="/api/recap/preference" className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div><p className="font-medium">weekly ship recap</p><p className="mt-1 text-sm text-text-muted-1">{recapOn ? `on: every monday to ${builder.email}.` : `off. who shipped, fresh releases and the longest streaks, every monday to ${builder.email}.`}</p></div>
-            <input type="hidden" name="recap" value={recapOn ? "off" : "on"} />
-            <button type="submit" className={recapOn ? "shrink-0 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition hover:border-void" : "shrink-0 rounded-md border border-base-blue bg-base-blue px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"}>{recapOn ? "turn off" : "turn on"}</button>
-          </form>
+          <>
+            <SettingForm action="/api/profile/shipmark-email-preference" name="shipmarks" on={builder.shipmarkEmailsEnabled} title="Shipmark award emails" description={builder.shipmarkEmailsEnabled ? `on by default: we email you when you earn a Shipmark at ${builder.email}.` : "off: Shipmarks still appear in your profile, but we won't email you when you earn one."} onLabel="turn on" offLabel="turn off" />
+            <form method="post" action="/api/recap/preference" className="flex flex-col gap-3 rounded-lg border border-border bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div><p className="font-medium">weekly ship recap</p><p className="mt-1 text-sm text-text-muted-1">{recapOn ? `on: every monday to ${builder.email}, with any Shipmarks you earned in the past week.` : `off. confirmed subscribers get who shipped, fresh releases, longest streaks, and their new Shipmarks every monday.`}</p></div>
+              <input type="hidden" name="recap" value={recapOn ? "off" : "on"} />
+              <button type="submit" className={recapOn ? "shrink-0 rounded-md border border-border px-5 py-2.5 text-sm font-medium transition hover:border-void" : "shrink-0 rounded-md border border-base-blue bg-base-blue px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"}>{recapOn ? "turn off" : "turn on"}</button>
+            </form>
+          </>
         )}
       </div>
     </div>

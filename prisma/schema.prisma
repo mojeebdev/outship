@@ -40,8 +40,12 @@ model Builder {
   githubLogin           String            @unique
   installationId        Int?
   // Primary verified email from GitHub (needs the App's "Email addresses"
-  // permission). Used for the welcome and account email only.
+  // permission). Used for account notices and, when opted in, the weekly recap.
   email                 String?
+  // Earned Shipmark notices are enabled by default; builders can turn them
+  // off from profile settings. This does not control the separately confirmed
+  // weekly recap subscription.
+  shipmarkEmailsEnabled Boolean           @default(true)
   welcomedAt            DateTime?
   // The one-time "install the GitHub App" reminder (src/lib/email/
   // install-reminder.ts). Set before sending, so at most once per builder.

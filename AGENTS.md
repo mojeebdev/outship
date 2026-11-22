@@ -27,6 +27,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Production Shipmark backfill was run successfully: 1,839 Shipmarks were created. The backfill script is available as `npm run backfill:shipmarks`; check its dry-run output before applying another remote run.
 - The Founding Builder email copy and send action are approved. Use the existing Cloudflare `EMAIL` binding from `shipmarks@mail.outship.dev`. The one-time mark/email are gated until after 2026-11-22 23:59:59 UTC; rerun the cohort query after that cutoff before any manual send. The scheduled send selects only `FOUNDING_COHORT` marks and never emails historical `BACKFILL` marks.
+- Earned Shipmark award notices are default-on through `Builder.shipmarkEmailsEnabled` and can be switched off in profile settings. Send only `SCHEDULED` and approved `FOUNDING_COHORT` rows; never email `BACKFILL` rows. Add the builder's earned Shipmarks to Monday's recap only for confirmed recap subscribers whose Shipmark notices remain enabled.
+- Keep weekly recap signup double-confirmed. Missed-day check-ins are re-engagement mail: do not send them by default or through Cloudflare Email Service without a consent/provider decision. Use an explicit opt-in preference when that feature is implemented.
 
 ### Public repository hygiene
 

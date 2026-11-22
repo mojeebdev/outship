@@ -1,6 +1,6 @@
 import { shipPoints, type WeightClass } from "@/lib/score";
 import { FROM_RECAP, STOP_CODES, sendEmail, unsubscribeHeaders } from "./send";
-import { weeklyRecapEmail, type RecapData } from "./templates";
+import { weeklyRecapEmail, type PersonalRecapShipmark, type RecapData } from "./templates";
 
 const BATCH = 50;
 
@@ -28,6 +28,44 @@ type ShipRow = {
   isPrivate: number;
   githubLogin: string;
 };
+
+type BuilderShipmark = { code: string; earnedAt: string };
+
+const SHIPMARK_TITLES: Record<string, string> = {
+  "welcome-aboard": "Welcome Aboard",
+  "founding-builder": "Founding Builder",
+  "first-ship": "First Ship",
+  "daily-ship": "Daily Shipmark",
+  "weekly-streak": "Weekly Streak",
+  "monthly-challenge": "Monthly Challenge",
+};
+
+function shipmarkTitle(code: string): string {
+  const streak = /^streak-(\d+)$/.exec(code);
+  return streak ? `${streak[1]}-Day Streak` : SHIPMARK_TITLES[code] ?? code.replaceAll("-", " ");
+}
+
+/** Keep recap personalization to a builder's own account and earned marks. */
+async function personalShipmarksFor(
+  db: D1Database,
+  email: string,
+  now: Date,
+): Promise<PersonalRecapShipmark[]> {
+  const builder = await db.prepare(
+    `SELECT "id", "shipmarkEmailsEnabled" FROM "Builder" WHERE lower("email") = lower(?1)`,
+  ).bind(email).first<{ id: string; shipmarkEmailsEnabled: number }>();
+  if (!builder || !builder.shipmarkEmailsEnabled) return [];
+
+  const since = new Date(now.getTime() - 7 * 86_400_000).toISOString();
+  const { results } = await db.prepare(
+    `SELECT "code", "earnedAt" FROM "Shipmark"
+      WHERE "builderId" = ?1 AND "source" IN ('SCHEDULED', 'FOUNDING_COHORT')
+        AND julianday("earnedAt") >= julianday(?2) AND julianday("earnedAt") <= julianday(?3)
+      ORDER BY "earnedAt" ASC LIMIT 50`,
+  ).bind(builder.id, since, now.toISOString()).all<BuilderShipmark>();
+
+  return results.map((mark) => ({ title: shipmarkTitle(mark.code), earnedAt: mark.earnedAt }));
+}
 
 /** The last seven days on outship. Private repos are counted, never named. */
 export async function buildRecapData(db: D1Database, now = new Date()): Promise<RecapData> {
@@ -119,7 +157,7 @@ export async function sendWeeklyRecap(
       const outcome = await sendEmail(emailBinding, {
         to: subscriber.email,
         from: FROM_RECAP,
-        email: weeklyRecapEmail(data, subscriber.token),
+        email: weeklyRecapEmail(data, subscriber.token, await personalShipmarksFor(db, subscriber.email, now)),
         headers: unsubscribeHeaders(subscriber.token),
       });
       if (!outcome.ok && STOP_CODES.has(outcome.code)) {

@@ -10,6 +10,7 @@ import nextHandler from "./.open-next/worker.js";
 import { expireStaleStreaks } from "./src/lib/expire-streaks";
 import { awardDailyShipmarks, awardWeeklyShipmarks, awardMonthlyShipmarks, awardStreakMilestones, awardFirstShipmarks, awardFoundingBuilderShipmarks, utcDay, utcMonday } from "./src/lib/shipmarks";
 import { sendFoundingBuilderEmails } from "./src/lib/email/founding-builder";
+import { sendShipmarkAwardEmails } from "./src/lib/email/shipmark-awards";
 import { sendWeeklyRecap } from "./src/lib/email/weekly-recap";
 import { sendInstallReminders } from "./src/lib/email/install-reminder";
 import { sendHistoryReadyEmails } from "./src/lib/email/history-ready";
@@ -93,18 +94,30 @@ const worker = {
       const milestoneAwards = await awardStreakMilestones(env.DB);
       const foundingAwards = await awardFoundingBuilderShipmarks(env.DB, now);
       const foundingEmails = await sendFoundingBuilderEmails(env.DB, env.EMAIL, now);
+      const shipmarkEmails = await sendShipmarkAwardEmails(env.DB, env.EMAIL, now);
       console.log(`expire-streaks: reset ${reset} builder(s); daily Shipmarks: ${dailyAwards}; first ships: ${firstShipAwards}; streak milestones: ${milestoneAwards}`);
       if (foundingAwards || foundingEmails.sent || foundingEmails.failed || foundingEmails.stoppedOn) {
         console.log("founding-builder:", JSON.stringify({ awarded: foundingAwards, ...foundingEmails }));
+      }
+      if (shipmarkEmails.sent || shipmarkEmails.failed || shipmarkEmails.stoppedOn) {
+        console.log("shipmark-award-email:", JSON.stringify(shipmarkEmails));
       }
     } else if (controller.cron === MONTHLY_CHALLENGE) {
       const previousMonth = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - 1, 1));
       const monthAwards = await awardMonthlyShipmarks(env.DB, previousMonth.toISOString().slice(0, 7));
       console.log(`monthly Shipmarks: ${monthAwards}`);
+      const shipmarkEmails = await sendShipmarkAwardEmails(env.DB, env.EMAIL);
+      if (shipmarkEmails.sent || shipmarkEmails.failed || shipmarkEmails.stoppedOn) {
+        console.log("shipmark-award-email:", JSON.stringify(shipmarkEmails));
+      }
     } else if (controller.cron === WEEKLY_RECAP) {
       const previousWeek = new Date(utcMonday(new Date()).getTime() - 7 * 86_400_000);
       const weeklyAwards = await awardWeeklyShipmarks(env.DB, utcDay(previousWeek));
       console.log(`weekly Shipmarks: ${weeklyAwards}`);
+      const shipmarkEmails = await sendShipmarkAwardEmails(env.DB, env.EMAIL);
+      if (shipmarkEmails.sent || shipmarkEmails.failed || shipmarkEmails.stoppedOn) {
+        console.log("shipmark-award-email:", JSON.stringify(shipmarkEmails));
+      }
       const result = await sendWeeklyRecap(env.DB, env.EMAIL);
       console.log("weekly-recap:", JSON.stringify(result));
     } else if (controller.cron === INSTALL_REMINDER) {

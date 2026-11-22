@@ -38,11 +38,14 @@ export async function awardFoundingBuilderShipmarks(db: D1Database, now = new Da
 export async function ensureWelcomeShipmark(db: D1Database, builderId: string): Promise<void> {
   await db.prepare(
     'INSERT OR IGNORE INTO "Shipmark" ("id","builderId","code","period","earnedAt","snapshot","source") ' +
-    'SELECT lower(hex(randomblob(16))),b."id",\'welcome-aboard\',substr(b."createdAt",1,10),b."createdAt", ' +
-    'json_object(\'joinedAt\',b."createdAt",\'ships\',(SELECT COUNT(*) FROM "Ship" s WHERE s."builderId"=b."id" AND s."shippedAt"<=b."createdAt"),' +
-    '\'commits\',(SELECT COUNT(DISTINCT s."commitSha") FROM "Ship" s WHERE s."builderId"=b."id" AND s."shippedAt"<=b."createdAt"),' +
-    '\'merges\',(SELECT COUNT(*) FROM "Ship" s WHERE s."builderId"=b."id" AND s."shipType"=\'MERGE\' AND s."shippedAt"<=b."createdAt")),\'BACKFILL\' ' +
-    'FROM "Builder" b WHERE b."id"=?1',
+    'SELECT lower(hex(randomblob(16))),b."id",\'welcome-aboard\',substr(b."claimedAt",1,10),b."claimedAt", ' +
+    'json_object(\'joinedAt\',b."claimedAt",\'ships\',(SELECT COUNT(*) FROM "Ship" s WHERE s."builderId"=b."id" AND s."shippedAt"<=b."claimedAt"),' +
+    '\'commits\',(SELECT COUNT(DISTINCT s."commitSha") FROM "Ship" s WHERE s."builderId"=b."id" AND s."shippedAt"<=b."claimedAt"),' +
+    '\'merges\',(SELECT COUNT(*) FROM "Ship" s WHERE s."builderId"=b."id" AND s."shipType"=\'MERGE\' AND s."shippedAt"<=b."claimedAt")),\'SCHEDULED\' ' +
+    'FROM "Builder" b WHERE b."id"=?1 AND b."claimedAt" IS NOT NULL ' +
+    'AND (b."installationId" IS NULL OR EXISTS (SELECT 1 FROM "Installation" i WHERE i."id"=b."installationId" ' +
+    'AND i."backfillQueuedAt" IS NOT NULL AND NOT EXISTS (SELECT 1 FROM "BackfillJob" j WHERE j."installationId"=i."id" AND j."status"=\'PENDING\'))) ' +
+    'AND NOT EXISTS (SELECT 1 FROM "Shipmark" m WHERE m."builderId"=b."id" AND m."code"=\'welcome-aboard\')',
   ).bind(builderId).run();
 }
 
@@ -83,9 +86,9 @@ export async function awardWeeklyShipmarks(db: D1Database, week: string): Promis
 export async function backfillShipmarks(db: D1Database) {
   const joined = await db.prepare(
     "INSERT OR IGNORE INTO Shipmark (id,builderId,code,period,earnedAt,snapshot,source)" +
-    " SELECT lower(hex(randomblob(16))),b.id,'welcome-aboard',substr(b.createdAt,1,10),b.createdAt," +
-    " json_object('joinedAt',b.createdAt,'ships',(SELECT COUNT(*) FROM Ship s WHERE s.builderId=b.id AND s.shippedAt <= b.createdAt)," +
-    " 'commits',(SELECT COUNT(DISTINCT s.commitSha) FROM Ship s WHERE s.builderId=b.id AND s.shippedAt <= b.createdAt),'merges',(SELECT COUNT(*) FROM Ship s WHERE s.builderId=b.id AND s.shipType='MERGE' AND s.shippedAt <= b.createdAt)),'BACKFILL' FROM Builder b"
+    " SELECT lower(hex(randomblob(16))),b.id,'welcome-aboard',substr(b.claimedAt,1,10),b.claimedAt," +
+    " json_object('joinedAt',b.claimedAt,'ships',(SELECT COUNT(*) FROM Ship s WHERE s.builderId=b.id AND s.shippedAt <= b.claimedAt)," +
+    " 'commits',(SELECT COUNT(DISTINCT s.commitSha) FROM Ship s WHERE s.builderId=b.id AND s.shippedAt <= b.claimedAt),'merges',(SELECT COUNT(*) FROM Ship s WHERE s.builderId=b.id AND s.shipType='MERGE' AND s.shippedAt <= b.claimedAt)),'BACKFILL' FROM Builder b WHERE b.claimedAt IS NOT NULL"
   ).run();
   const firstShip = await db.prepare(
     "INSERT OR IGNORE INTO Shipmark (id,builderId,code,period,earnedAt,snapshot,source)" +

@@ -29,6 +29,7 @@ export async function sendFoundingBuilderEmails(
         AND m."source" = 'FOUNDING_COHORT'
         AND m."notificationSentAt" IS NULL
         AND b."email" IS NOT NULL
+        AND b."shipmarkEmailsEnabled" = 1
       ORDER BY m."earnedAt", b."githubLogin"
       LIMIT ${BATCH}`,
   ).all<FoundingMark>();
