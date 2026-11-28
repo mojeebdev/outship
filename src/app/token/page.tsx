@@ -48,12 +48,12 @@ export default function TokenPage() {
               </div>
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <a
-                  href="https://launch.o1.exchange/token/0xb28b07a03f0bcab161032fed9d318be38a06aa01?chain=8453"
+                  href="https://bankr.bot/trade?in=0xd9e9df0617b3c7564e5b365cb13a939aeab75ba3&out=0x9e9b0301b6dbea2d518f2bbaa9da49b819f9bba3&chain=base"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={link}
                 >
-                  buy on o1 Exchange
+                  trade on Bankr
                   <IconArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </a>
                 <a
